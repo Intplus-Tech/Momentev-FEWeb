@@ -1,18 +1,14 @@
 import { AuthScreen } from "@/components/sections/auth/auth-screen";
-import SignUpForm from "../_components/SignUpForm";
 
-export const hero = {
-  mainText:
-    "Design Unforgettable Events that resonate deeply with your audience.",
-  subText: "Apply, Get Verified, - Earn All on  Momentev",
-};
+import { VerificationSuccessCard } from "../_components/VerificationSuccessCard";
+import { vendorHeroCopy } from "../hero";
 
 export default function VendorVerificationSuccessPage() {
   return (
     <AuthScreen
-      mainText={hero.mainText}
-      subText={hero.subText}
-      component={<SignUpForm />}
+      mainText={vendorHeroCopy.mainText}
+      subText={vendorHeroCopy.subText}
+      component={<VerificationSuccessCard />}
     />
   );
 }

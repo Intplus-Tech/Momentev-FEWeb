@@ -17,12 +17,16 @@ const navLinks = [
 export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
   return (
     <div className="relative min-h-screen bg-[url(/assets/images/sign-in-bg.png)] bg-cover bg-center">
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/50" />
 
+      {/* Header */}
       <header className="relative z-10">
         <div className="container mx-auto px-4 py-6 flex items-center justify-between">
+          {/* Logo */}
           <Logo />
 
+          {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
             {navLinks.map((link) => (
               <Link
@@ -37,6 +41,7 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
         </div>
       </header>
 
+      {/* Main Content */}
       <main className="relative z-10 flex items-center min-h-[calc(100vh-80px)]">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">

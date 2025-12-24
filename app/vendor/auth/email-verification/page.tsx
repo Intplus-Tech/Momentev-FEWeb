@@ -1,6 +1,6 @@
 import { AuthScreen } from "@/components/sections/auth/auth-screen";
 
-import AuthFormCard from "../_components/AuthFormCard";
+import { EmailVerificationCard } from "../_components/EmailVerificationCard";
 import { vendorHeroCopy } from "../hero";
 
 export default function VendorEmailVerificationPage() {
@@ -8,7 +8,7 @@ export default function VendorEmailVerificationPage() {
     <AuthScreen
       mainText={vendorHeroCopy.mainText}
       subText={vendorHeroCopy.subText}
-      component={<AuthFormCard audience="vendor" screen="email-verification" />}
+      component={<EmailVerificationCard />}
     />
   );
 }
