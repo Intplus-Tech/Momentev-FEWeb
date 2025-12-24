@@ -1,4 +1,3 @@
-import Logo from "@/components/brand/logo";
 import Link from "next/link";
 import { ReactNode } from "react";
 
@@ -24,7 +23,8 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
       <header className="relative z-10">
         <div className="container mx-auto px-4 py-6 flex items-center justify-between">
           {/* Logo */}
-          <Logo />
+          {/* <Logo /> */}
+          <p className="font bold text-4xl">Logo</p>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center gap-6">
