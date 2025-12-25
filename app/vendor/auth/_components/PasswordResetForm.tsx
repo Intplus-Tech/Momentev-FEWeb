@@ -8,14 +8,13 @@ import { Loader2 } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
   Form,
   FormControl,
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 
@@ -41,32 +40,33 @@ export function PasswordResetForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <Logo className="mx-auto" />
+    <div className="mx-auto w-full max-w-xl pb-6">
+      <Logo className="hidden xl:block" />
+      <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Reset password
-          </h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-xl">Reset password</h2>
+          <p className="text-sm text-muted-foreground">
             Enter your account email and we&apos;ll send a secure reset link.
           </p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="mx-auto w-full space-y-5 sm:px-0 md:px-10 xl:px-10"
+        >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Work email</FormLabel>
                 <FormControl>
-                  <Input
+                  <FloatingLabelInput
                     type="email"
                     inputMode="email"
-                    placeholder="studio@momentev.com"
+                    autoComplete="email"
+                    label="Work email"
                     {...field}
                   />
                 </FormControl>
@@ -91,7 +91,7 @@ export function PasswordResetForm() {
         </form>
       </Form>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="mt-2 text-center text-sm text-slate-600">
         Remembered it?{" "}
         <Link
           href="/vendor/auth/log-in"

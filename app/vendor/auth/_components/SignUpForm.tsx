@@ -9,14 +9,13 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 
@@ -50,35 +49,32 @@ export default function SignUpForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-3 text-center">
-        <Logo className="mx-auto" />
+    <div className="mx-auto w-full max-w-xl pb-6">
+      <Logo className="hidden xl:block" />
+      <div className="flex flex-col gap-y-6 text-center p-4 mt-4">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">
-            Get Started with Momentev
-          </h2>
-          <p className="text-sm text-slate-500">
-            Not a vendor?{" "}
-            <Link
-              href="/client/auth/sign-up"
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Sign in here
-            </Link>
+          <h2 className="text-xl">Get Started with Momentev</h2>
+          <p className="text-sm text-muted-foreground">
+            Not a vendor?
+            <Button variant={"link"} asChild>
+              <Link href="/client/auth/sign-in">Sign in here</Link>
+            </Button>
           </p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="mx-auto w-full space-y-4 xl:px-10 sm:px-0 md:px-10"
+        >
           <FormField
             control={form.control}
             name="companyName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Company Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="Majestic Moments" {...field} />
+                  <FloatingLabelInput label="Company Name" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,12 +86,12 @@ export default function SignUpForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
+                  <FloatingLabelInput
                     type="email"
                     inputMode="email"
-                    placeholder="jonas.kahnwald@gmail.com"
+                    autoComplete="email"
+                    label="Email"
                     {...field}
                   />
                 </FormControl>
@@ -109,29 +105,29 @@ export default function SignUpForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <div className="relative">
-                    <Input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Create a secure password"
-                      {...field}
-                    />
-                    <button
-                      type="button"
-                      className="absolute inset-y-0 right-3 flex items-center text-slate-500"
-                      onClick={() => setShowPassword((prev) => !prev)}
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
+                  <FloatingLabelInput
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    label="Password"
+                    suffix={
+                      <button
+                        type="button"
+                        className="text-muted-foreground"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    }
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -163,7 +159,7 @@ export default function SignUpForm() {
         </form>
       </Form>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="text-center text-sm text-slate-600 mt-2">
         Already have an account?{" "}
         <Link
           href="/vendor/auth/log-in"
