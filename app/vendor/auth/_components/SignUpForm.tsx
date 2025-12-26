@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 
 import { GoogleIcon } from "./GoogleIcon";
+import { Spinner } from "@/components/ui/spinner";
 
 const signUpSchema = z.object({
   companyName: z.string().min(2, "Company name must be at least 2 characters."),
@@ -137,7 +138,7 @@ export default function SignUpForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner />
                 Creating workspace...
               </span>
             ) : (

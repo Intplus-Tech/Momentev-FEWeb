@@ -17,6 +17,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { Spinner } from "@/components/ui/spinner";
 
 const resetSchema = z.object({
   email: z.string().email("Please enter the email you registered with."),
@@ -81,7 +82,7 @@ export function PasswordResetForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner />
                 Sending reset link...
               </span>
             ) : (

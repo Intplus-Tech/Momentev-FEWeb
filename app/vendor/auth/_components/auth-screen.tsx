@@ -85,7 +85,7 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
                 <p className="text-base text-white/90">{subText}</p>
               </div>
 
-              <div className="mx-auto w-full max-w-xl rounded-xl bg-white/95 p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">
+              <div className="mx-auto w-full max-w-xl rounded-xl bg-white p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">
                 <div>{component}</div>
               </div>
             </div>

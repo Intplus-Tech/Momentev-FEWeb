@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/form";
 
 import { GoogleIcon } from "./GoogleIcon";
+import { Spinner } from "@/components/ui/spinner";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -130,7 +131,7 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner />
                 Logging in...
               </span>
             ) : (
