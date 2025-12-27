@@ -8,6 +8,10 @@ import FeaturedVendors from "./_components/Featured/FeatureVendors";
 import BookedServices from "./_components/Booked/BookServices";
 import GrowBusiness from "./_components/GrowBusiness/GrowBusiness";
 import StartEvent from "./_components/StartEvent/StartEvent";
+import PeopleFeel from "./_components/PeopleFeel/PeopleFeel";
+import NewMomentev from "./_components/NewMomentev/NewMomentev";
+import BrowseCategory from "./_components/BrowseCategory/BrowseCategory";
+import Footer from "./_components/Footer";
 
 const page = () => {
   return (
@@ -19,6 +23,10 @@ const page = () => {
         <BookedServices/>
         <GrowBusiness/>
         <StartEvent/>
+        <PeopleFeel/>
+        <NewMomentev/>
+        <BrowseCategory/>
+        <Footer/>
       </ContentWrapper>
 
       

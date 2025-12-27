@@ -1,4 +1,4 @@
-import Footer from "./_components/Footer";
+// import Footer from "./_components/Footer";
 import { Inter } from "next/font/google";
 
 const inter = Inter({
@@ -19,7 +19,7 @@ export default function HomeLayout({
       <html lang="en" className={inter.variable}>
         <body className="font-inter">{children}</body>
       </html>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   );
 }
