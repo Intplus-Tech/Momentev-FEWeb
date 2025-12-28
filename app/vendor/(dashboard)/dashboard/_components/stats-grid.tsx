@@ -6,7 +6,7 @@ export function StatsGrid({ stats }: { stats: DashboardStat[] }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.title} className="border border-border shadow-sm">
+        <Card key={stat.title} className="border border-border">
           <CardHeader className="flex flex-row items-start justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">

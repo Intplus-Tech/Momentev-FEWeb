@@ -18,7 +18,7 @@ interface BookingsPanelProps {
 
 export function BookingsPanel({ bookings }: BookingsPanelProps) {
   return (
-    <Card className="border border-border shadow-sm lg:col-span-2">
+    <Card className="border border-border lg:col-span-2">
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div>
           <CardTitle>Next Bookings</CardTitle>
@@ -32,7 +32,7 @@ export function BookingsPanel({ bookings }: BookingsPanelProps) {
         {bookings.map((booking) => (
           <div
             key={`${booking.name}-${booking.time}`}
-            className="flex flex-wrap items-center gap-4 rounded-2xl border border-border px-4 py-3"
+            className="flex flex-wrap items-center gap-4 rounded-md border border-border px-4 py-3"
           >
             <div className="flex items-center gap-3">
               <div className="size-12 overflow-hidden rounded-full border border-border">
