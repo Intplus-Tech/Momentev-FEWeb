@@ -9,7 +9,7 @@ import { Loader2 } from "lucide-react";
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
   Form,
   FormControl,
@@ -20,11 +20,12 @@ import {
 } from "@/components/ui/form";
 
 import { GoogleIcon } from "./GoogleIcon";
+import { Spinner } from "@/components/ui/spinner";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
   password: z.string().min(1, "Password is required."),
-  remember: z.boolean().default(false),
+  remember: z.boolean(),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -47,30 +48,33 @@ export function LoginForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center">
-        <Logo className="mx-auto" />
+    <div className="mx-auto w-full max-w-xl pb-6">
+      <Logo className="hidden xl:block" />
+      <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
         <div>
-          <h2 className="text-2xl font-semibold text-slate-900">Login</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-xl">Welcome back</h2>
+          <p className="text-sm text-muted-foreground">
             Please login to continue your account.
           </p>
         </div>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="mx-auto w-full space-y-5 sm:px-0 md:px-10 xl:px-10"
+        >
           <FormField
             control={form.control}
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
+                  <FloatingLabelInput
                     type="email"
                     inputMode="email"
-                    placeholder="jonas.kahnwald@gmail.com"
+                    autoComplete="email"
+                    label="Email"
                     {...field}
                   />
                 </FormControl>
@@ -84,11 +88,11 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input
+                  <FloatingLabelInput
                     type="password"
-                    placeholder="Enter your password"
+                    autoComplete="current-password"
+                    label="Password"
                     {...field}
                   />
                 </FormControl>
@@ -127,7 +131,7 @@ export function LoginForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Spinner />
                 Logging in...
               </span>
             ) : (
@@ -141,7 +145,7 @@ export function LoginForm() {
         </form>
       </Form>
 
-      <p className="text-center text-sm text-slate-600">
+      <p className="mt-2 text-center text-sm text-slate-600">
         Need an account?{" "}
         <Link
           href="/vendor/auth/sign-up"

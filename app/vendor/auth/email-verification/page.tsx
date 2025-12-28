@@ -1,4 +1,4 @@
-import { AuthScreen } from "@/components/sections/auth/auth-screen";
+import { AuthScreen } from "@/app/vendor/auth/_components/auth-screen";
 
 import { EmailVerificationCard } from "../_components/EmailVerificationCard";
 import { vendorHeroCopy } from "../hero";

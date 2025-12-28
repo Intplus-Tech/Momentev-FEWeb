@@ -1,4 +1,4 @@
-import { AuthScreen } from "@/components/sections/auth/auth-screen";
+import { AuthScreen } from "@/app/vendor/auth/_components/auth-screen";
 
 import { LoginForm } from "../_components/LoginForm";
 import { vendorHeroCopy } from "../hero";
