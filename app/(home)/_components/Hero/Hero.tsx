@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Logo } from "@/components/brand/logo";
 import { Button } from "@base-ui/react";
 import { CircleUserIcon } from "lucide-react";
 import HeroMiddle from "./HeroMiddle";
+import Logo from "@/components/brand/logo";
 
 const Hero = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,12 +19,16 @@ const Hero = () => {
           <li>Post A Request</li>
 
           <li>
-         
-            <Button className="bg-white/25 p-2 rounded-lg text-[13px] flex items-center justify-between gap-2"> <CircleUserIcon /> Sign in/Sign up</Button>
+            <Button className="bg-white/25 p-2 rounded-lg text-[13px] flex items-center justify-between gap-2">
+              {" "}
+              <CircleUserIcon /> Sign in/Sign up
+            </Button>
           </li>
 
           <li>
-            <Button className="bg-primary p-2 rounded-lg text-[13px]">List your Business</Button>
+            <Button className="bg-primary p-2 rounded-lg text-[13px]">
+              List your Business
+            </Button>
           </li>
         </ul>
 
@@ -41,7 +45,11 @@ const Hero = () => {
             strokeWidth={2}
             viewBox="0 0 24 24"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M4 6h16M4 12h16M4 18h16"
+            />
           </svg>
         </button>
 
@@ -61,7 +69,7 @@ const Hero = () => {
         )}
       </nav>
       <div>
-        <HeroMiddle/>
+        <HeroMiddle />
       </div>
     </section>
   );
