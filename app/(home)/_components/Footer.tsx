@@ -12,9 +12,6 @@ export default function Footer() {
           <Logo className="text-white text-[54px]" />
 
           <div className="flex gap-4">
-           
-
-            {/* Other social icons without background */}
             <button className="flex items-center justify-center w-[44px] h-[44px]">
               <Twitter className="text-white w-[23px] h-[23px]" />
             </button>
@@ -42,19 +39,25 @@ export default function Footer() {
           <button>Contacts</button>
         </div>
 
-        {/* Divider */}
-        <div className="flex items-center justify-between">
-        <div className="w-full h-[2px] bg-white"></div>
+        {/* Divider + App Images */}
+        <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
 
-        {/* App Images */}
-        <div className="flex flex-col  gap-4 justify-center mt-4">
-          <Image src="/Apple-img.png" alt="Apple Store" width={134} height={40} />
-          <Image src="/Google-img.png" alt="Google Play Store" width={134} height={40} />
+          {/* Divider */}
+          <div className="w-full h-[2px] bg-white"></div>
+
+          {/* App Images */}
+          <div className="flex flex-col gap-4 justify-center items-center md:items-start mt-4 md:mt-0">
+            <Image src="/Apple-img.png" alt="Apple Store" width={134} height={40} />
+            <Image src="/Google-img.png" alt="Google Play Store" width={134} height={40} />
+          </div>
+
         </div>
-        </div>
-        <div className="mt-10 text-white">
+
+        {/* Copyright */}
+        <div className="mt-10 text-white  md:text-left">
           <p>© Copyright 2025, All Rights Reserved Momentev</p>
         </div>
+
       </div>
     </footer>
   );
