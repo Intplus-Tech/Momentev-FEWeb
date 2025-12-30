@@ -40,6 +40,9 @@ export default function Footer() {
           <button>Contacts</button>
         </div>
 
+        {/* Divider + App Images */}
+        <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
+
         {/* Divider */}
         <div className="flex items-center justify-between">
           <div className="w-full h-[2px] bg-white"></div>
@@ -60,9 +63,12 @@ export default function Footer() {
             />
           </div>
         </div>
-        <div className="mt-10 text-white">
+
+        {/* Copyright */}
+        <div className="mt-10 text-white  md:text-left">
           <p>© Copyright 2025, All Rights Reserved Momentev</p>
         </div>
+
       </div>
     </footer>
   );
