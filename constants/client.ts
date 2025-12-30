@@ -4,7 +4,6 @@ import {
   Home,
   MessageCircle,
   Settings,
-  Wallet,
 } from "lucide-react";
 
 export const clientNavItems = [

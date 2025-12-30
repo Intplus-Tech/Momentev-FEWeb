@@ -13,13 +13,6 @@ export const ClientHeader = () => {
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <LogoSmall className="md:hidden" />
 
-        <div className="hidden flex-1 items-center gap-2 text-xs text-muted-foreground md:flex">
-          <span className="text-foreground">Next event:</span>
-          <span className="font-medium text-primary">
-            April 18 · Austin, TX
-          </span>
-        </div>
-
         <div className="ml-auto flex items-center gap-2">
           <SidebarTrigger className="text-muted-foreground lg:hidden" />
 
@@ -30,19 +23,7 @@ export const ClientHeader = () => {
           </Button>
 
           <Button size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/client/requests">Create request</Link>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            className="hidden sm:inline-flex items-center gap-1"
-            asChild
-          >
-            <Link href="/client/bookings">
-              <CalendarPlus2 className="size-3.5" />
-              <span>New booking</span>
-            </Link>
+            <Link href="/client/requests">Create a custom request</Link>
           </Button>
         </div>
       </div>
