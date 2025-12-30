@@ -103,13 +103,6 @@ export default function VendorSettingsPage() {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
-          <div className="space-y-2">
-            <h2 className="text-xl font-semibold text-foreground">Review</h2>
-            <p className="text-sm text-muted-foreground">
-              See your customers feedback
-            </p>
-          </div>
-
           <ReviewsSection reviews={reviews} />
         </TabsContent>
 
