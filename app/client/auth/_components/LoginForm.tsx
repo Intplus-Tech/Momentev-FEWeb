@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -21,7 +22,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { GoogleIcon } from "@/components/icons/google-icon";
 
 const loginSchema = z.object({
-  email: z.string().email("Please use a valid email address."),
+  email: z.email("Please use a valid email address."),
   password: z.string().min(1, "Password is required."),
   remember: z.boolean(),
 });
@@ -29,6 +30,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function ClientLoginForm() {
+  const [showPassword, setShowPassword] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -46,21 +48,18 @@ export function ClientLoginForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="mx-auto w-full max-w-xl pb-6">
-      <Logo className="hidden xl:block" />
-      <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
-        <div>
-          <h2 className="text-xl">Sign in</h2>
-          <p className="text-sm text-muted-foreground">
-            Access your dashboard and continue planning.
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-xl">
+      <div className="space-y-3 text-center xl:text-left">
+        <h2 className="text-4xl font-bold text-foreground">Login</h2>
+        <p className="text-sm text-muted-foreground">
+          Please login to continue to your account.
+        </p>
       </div>
 
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-5 sm:px-0 md:px-10 xl:px-10"
+          className="mt-8 space-y-5"
         >
           <FormField
             control={form.control}
@@ -88,9 +87,25 @@ export function ClientLoginForm() {
               <FormItem>
                 <FormControl>
                   <FloatingLabelInput
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     label="Password"
+                    suffix={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="text-muted-foreground"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    }
                     {...field}
                   />
                 </FormControl>
@@ -137,18 +152,18 @@ export function ClientLoginForm() {
           </Button>
 
           <Button type="button" variant="outline" className="w-full gap-2">
-            <GoogleIcon /> Continue with Google
+            <GoogleIcon /> Sign in with Google
           </Button>
         </form>
       </Form>
 
-      <p className="mt-2 text-center text-sm text-slate-600">
-        New to Momentev?{" "}
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Need an account?{" "}
         <Link
           href="/client/auth/sign-up"
-          className="font-semibold text-indigo-600 hover:text-indigo-500"
+          className="font-semibold text-primary hover:underline"
         >
-          Create an account
+          Create one
         </Link>
       </p>
     </div>

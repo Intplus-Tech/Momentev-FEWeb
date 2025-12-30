@@ -1,100 +1,134 @@
-import Logo from "@/components/brand/logo";
-import Link from "next/link";
-import { ReactNode } from "react";
-import { Menu } from "lucide-react";
+"use client";
 
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import Image from "next/image";
+import { ReactNode, useEffect, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import useEmblaCarousel from "embla-carousel-react";
+
+import Logo from "@/components/brand/logo";
 
 type AuthScreenProps = {
-  mainText: string;
-  subText: string;
   component: ReactNode;
 };
 
-const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Vendors", href: "/browse" },
-  { label: "Support", href: "/contact" },
+const slides = [
+  {
+    id: 1,
+    src: "https://images.unsplash.com/photo-1554080353-321e452ccf19?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+  },
+  {
+    id: 2,
+    src: "https://images.unsplash.com/photo-1561478274-b31cda82062e?q=80&w=1129&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    alt: "Sparkler send-off at a night wedding",
+  },
+  {
+    id: 3,
+    src: "https://images.unsplash.com/photo-1666602707766-58693ea038d7?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    alt: "Elegant outdoor reception tablescape",
+  },
 ];
 
-export function ClientAuthScreen({
-  mainText,
-  subText,
-  component,
-}: AuthScreenProps) {
+export function ClientAuthScreen({ component }: AuthScreenProps) {
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    loop: true,
+    skipSnaps: false,
+  });
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const update = () => {
+      setCurrentSlide(emblaApi.selectedScrollSnap());
+      setCanScrollPrev(emblaApi.canScrollPrev());
+      setCanScrollNext(emblaApi.canScrollNext());
+    };
+
+    update();
+    emblaApi.on("select", update);
+    emblaApi.on("reInit", update);
+
+    return () => {
+      emblaApi.off("select", update);
+      emblaApi.off("reInit", update);
+    };
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const autoplay = setInterval(() => {
+      if (!emblaApi) return;
+      emblaApi.scrollNext();
+    }, 6000);
+
+    return () => clearInterval(autoplay);
+  }, [emblaApi]);
+
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[url(/assets/images/sign-in-bg.png)] bg-cover bg-center">
-      <div className="absolute inset-0 bg-black/50" />
+    <div className="relative min-h-screen bg-white">
+      <Logo className="absolute left-6 top-6 z-20 h-8 w-auto hidden xl:block" />
 
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <header className="w-full">
-          <div className="container mx-auto flex items-center justify-between px-4 py-6">
-            <Logo />
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
+        <div className="order-2 flex items-center justify-center px-4 py-12 sm:px-8 lg:order-1 lg:px-16">
+          <div className="w-full max-w-md lg:max-w-sm px-8 xl:px-0">
+            <div className="lg:hidden mb-10 flex items-center justify-center pr-12">
+              <Logo className="mb-8 w-auto mx-auto" />
+            </div>
+            {component}
+          </div>
+        </div>
 
-            <div className="flex items-center gap-4">
-              <nav className="hidden items-center gap-6 text-sm text-white opacity-90 xl:flex">
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="transition hover:opacity-100"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </nav>
-
-              <Sheet>
-                <SheetTrigger className="inline-flex items-center rounded-full border border-primary/30 bg-primary/10 p-2 text-primary shadow transition hover:bg-primary/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/80 xl:hidden">
-                  <Menu className="h-5 w-5" />
-                  <span className="sr-only">Open navigation menu</span>
-                </SheetTrigger>
-                <SheetContent side="right">
-                  <SheetHeader className="border-b px-4 py-6">
-                    <SheetTitle className="text-lg font-semibold">
-                      Navigate Momentev
-                    </SheetTitle>
-                    <p className="text-sm">Explore key client pages.</p>
-                  </SheetHeader>
-                  <div className="flex flex-col gap-4 px-4 py-6 text-base">
-                    {navLinks.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="rounded-xl border px-4 py-3 text-left font-medium transition"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                </SheetContent>
-              </Sheet>
+        <div className="hidden xl:block relative order-1 h-[55vh] min-h-80 overflow-hidden lg:order-2 lg:h-[98vh] mr-2 rounded-2xl my-auto">
+          <div className="relative h-full" ref={emblaRef}>
+            <div className="flex h-full">
+              {slides.map((slide) => (
+                <div key={slide.id} className="relative h-full min-w-full">
+                  <Image
+                    src={slide.src}
+                    alt={slide.alt ?? "Auth screen slide"}
+                    fill
+                    priority
+                    sizes="(max-width: 1024px) 100vw, 50vw"
+                    className="object-cover"
+                  />
+                </div>
+              ))}
             </div>
           </div>
-        </header>
 
-        <main className="flex flex-1 items-center py-10">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2">
-              <div className="hidden flex-col gap-4 text-center text-white xl:flex xl:text-left">
-                <h1 className="text-3xl font-semibold leading-snug sm:text-[42px]">
-                  {mainText}
-                </h1>
-                <p className="text-base text-white/90">{subText}</p>
-              </div>
+          <button
+            type="button"
+            className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white backdrop-blur-sm transition hover:bg-white/20 sm:flex"
+            onClick={() => emblaApi?.scrollPrev()}
+            disabled={!canScrollPrev}
+            aria-label="Previous slide"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            className="absolute right-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white backdrop-blur-sm transition hover:bg-white/20 sm:flex"
+            onClick={() => emblaApi?.scrollNext()}
+            disabled={!canScrollNext}
+            aria-label="Next slide"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
 
-              <div className="mx-auto w-full max-w-xl rounded-xl bg-white p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">
-                <div>{component}</div>
-              </div>
-            </div>
+          <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-2">
+            {slides.map((slide, index) => (
+              <span
+                key={slide.id}
+                className={`h-2 w-2 rounded-full transition-colors ${
+                  index === currentSlide ? "bg-white" : "bg-white/40"
+                }`}
+              />
+            ))}
           </div>
-        </main>
+        </div>
       </div>
     </div>
   );

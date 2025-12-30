@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
@@ -19,7 +18,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 
 const resetSchema = z.object({
-  email: z.string().email("Enter the email tied to your account."),
+  email: z.email("Enter the email tied to your account."),
 });
 
 type ResetFormValues = z.infer<typeof resetSchema>;
@@ -41,10 +40,9 @@ export function ClientPasswordResetForm() {
 
   return (
     <div className="mx-auto w-full max-w-xl pb-6">
-      <Logo className="hidden xl:block" />
       <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
         <div>
-          <h2 className="text-xl">Reset password</h2>
+          <h2 className="text-4xl font-bold">Reset password</h2>
           <p className="text-sm text-muted-foreground">
             We will email you a secure link that expires in 20 minutes.
           </p>

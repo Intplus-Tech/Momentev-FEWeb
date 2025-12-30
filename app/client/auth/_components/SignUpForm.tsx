@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
 
-import Logo from "@/components/brand/logo";
+import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import {
@@ -19,11 +19,10 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { GoogleIcon } from "@/components/icons/google-icon";
 
 const signUpSchema = z.object({
   fullName: z.string().min(2, "Please share your name."),
-  email: z.string().email("Use a valid email address."),
+  email: z.email("Use a valid email address."),
   password: z.string().min(8, "Password must be at least 8 characters."),
 });
 
@@ -48,24 +47,18 @@ export function ClientSignUpForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="mx-auto w-full max-w-xl pb-6">
-      <Logo className="hidden xl:block" />
-      <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
-        <div>
-          <h2 className="text-xl">Create your client space</h2>
-          <p className="text-sm text-muted-foreground">
-            Already a vendor?{" "}
-            <Button variant="link" asChild className="h-auto p-0">
-              <Link href="/vendor/auth/sign-up">Apply as vendor</Link>
-            </Button>
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-xl">
+      <div className="space-y-3 text-center xl:text-left">
+        <h2 className="text-4xl font-bold text-foreground">Sign up</h2>
+        <p className="text-sm text-muted-foreground">
+          Sign up to enjoy the features of Momentev.
+        </p>
       </div>
 
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-4 sm:px-0 md:px-10 xl:px-10"
+          className="mt-8 space-y-4"
         >
           <FormField
             control={form.control}
@@ -73,7 +66,11 @@ export function ClientSignUpForm() {
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <FloatingLabelInput label="Full name" {...field} />
+                  <FloatingLabelInput
+                    autoComplete="name"
+                    label="Full Name"
+                    {...field}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -90,7 +87,7 @@ export function ClientSignUpForm() {
                     type="email"
                     inputMode="email"
                     autoComplete="email"
-                    label="Work email"
+                    label="Email"
                     {...field}
                   />
                 </FormControl>
@@ -157,13 +154,13 @@ export function ClientSignUpForm() {
         </form>
       </Form>
 
-      <p className="mt-2 text-center text-sm text-slate-600">
-        Have an account?{" "}
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        Already have an account?{" "}
         <Link
           href="/client/auth/log-in"
-          className="font-semibold text-indigo-600 hover:text-indigo-500"
+          className="font-semibold text-primary hover:underline"
         >
-          Sign in
+          Login
         </Link>
       </p>
     </div>
