@@ -14,12 +14,12 @@ export const clientNavItems = [
     icon: Home,
   },
   {
-    label: "Bookings",
+    label: "My Bookings",
     href: "/client/bookings",
     icon: CalendarClock,
   },
   {
-    label: "Requests",
+    label: "My Requests",
     href: "/client/requests",
     icon: ClipboardList,
   },
@@ -28,11 +28,6 @@ export const clientNavItems = [
     href: "/client/messages",
     icon: MessageCircle,
     badge: "4",
-  },
-  {
-    label: "Payments",
-    href: "/client/payment",
-    icon: Wallet,
   },
   {
     label: "Settings",
