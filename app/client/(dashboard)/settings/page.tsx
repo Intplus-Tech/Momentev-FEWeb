@@ -2,24 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LifeBuoy, MessageSquare, User2, Users } from "lucide-react";
+import { Bookmark, MessageSquare, Shield, User2 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { reviews, supportPrefill, teamMembers } from "./data";
+
+import { clientReviews, savedVendors } from "./data";
 import { ProfileSection } from "./_components/profile-section";
 import { ReviewsSection } from "./_components/reviews-section";
-import { SupportSection } from "./_components/support-section";
-import { TeamSection } from "./_components/team-section";
+import { SavedVendorsSection } from "./_components/saved-vendors-section";
+import { SecuritySection } from "./_components/security-section";
 
-export default function VendorSettingsPage() {
+const validTabValues = ["profile", "saved", "reviews", "security"];
+
+export default function ClientSettingsPage() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const validTabs = useMemo(
-    () => new Set(["profile", "team", "reviews", "support"]),
-    []
-  );
+  const validTabs = useMemo(() => new Set(validTabValues), []);
 
   const initialTab = useMemo(() => {
     const fromQuery = searchParams.get("tab") ?? "profile";
@@ -59,38 +59,34 @@ export default function VendorSettingsPage() {
         onValueChange={handleTabChange}
         className="space-y-4"
       >
-        <TabsList className="bg-transparent flex items-center justify-between w-full gap-4">
+        <TabsList className="flex w-full flex-wrap gap-3 bg-transparent p-0">
           <TabsTrigger
-            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
             value="profile"
-            aria-label="Profile Settings"
+            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
           >
             <User2 className="h-4 w-4" />
             <span className="hidden sm:inline">Profile Settings</span>
           </TabsTrigger>
           <TabsTrigger
-            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
-            value="team"
-            aria-label="Team"
+            value="saved"
+            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
           >
-            <Users className="h-4 w-4" />
-            <span className="hidden sm:inline">Team</span>
+            <Bookmark className="h-4 w-4" />
+            <span className="hidden sm:inline">Saved Vendors</span>
           </TabsTrigger>
           <TabsTrigger
-            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
             value="reviews"
-            aria-label="My Reviews"
+            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
           >
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">My Reviews</span>
           </TabsTrigger>
           <TabsTrigger
-            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
-            value="support"
-            aria-label="Support"
+            value="security"
+            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
           >
-            <LifeBuoy className="h-4 w-4" />
-            <span className="hidden sm:inline">Support</span>
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
         </TabsList>
 
@@ -98,16 +94,16 @@ export default function VendorSettingsPage() {
           <ProfileSection />
         </TabsContent>
 
-        <TabsContent value="team" className="space-y-4">
-          <TeamSection members={teamMembers} />
+        <TabsContent value="saved" className="space-y-4">
+          <SavedVendorsSection vendors={savedVendors} />
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
-          <ReviewsSection reviews={reviews} />
+          <ReviewsSection reviews={clientReviews} />
         </TabsContent>
 
-        <TabsContent value="support" className="space-y-4">
-          <SupportSection prefill={supportPrefill} />
+        <TabsContent value="security" className="space-y-4">
+          <SecuritySection />
         </TabsContent>
       </Tabs>
     </section>

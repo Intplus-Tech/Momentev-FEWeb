@@ -1,8 +1,8 @@
 import { Star } from "lucide-react";
 
 import type { Review } from "../data";
-import { AvatarFallbackCircle } from "./avatar-fallback-circle";
 import { SectionShell } from "./section-shell";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export const ReviewsSection = ({ reviews }: { reviews: Review[] }) => {
   return (
@@ -14,7 +14,10 @@ export const ReviewsSection = ({ reviews }: { reviews: Review[] }) => {
             className="flex flex-col gap-2 rounded-xl border px-4 py-4 shadow-xs"
           >
             <div className="flex items-start gap-3">
-              <AvatarFallbackCircle name={review.name} />
+              <Avatar>
+                <AvatarImage src="https://github.com/shadcn.png" />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
