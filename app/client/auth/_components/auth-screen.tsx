@@ -105,7 +105,7 @@ export function ClientAuthScreen({
             </div>
           </div>
 
-          {(mainText || subText) && (
+          {/* {(mainText || subText) && (
             <div className="pointer-events-none absolute inset-0 z-10 flex items-end p-8">
               <div className="max-w-md rounded-3xl bg-black/30 p-6 text-white backdrop-blur-md">
                 {mainText && (
@@ -118,9 +118,9 @@ export function ClientAuthScreen({
                 )}
               </div>
             </div>
-          )}
+          )} */}
 
-          <button
+          {/* <button
             type="button"
             className="absolute left-4 top-1/2 hidden -translate-y-1/2 rounded-full border border-white/20 bg-white/10 p-2 text-white backdrop-blur-sm transition hover:bg-white/20 sm:flex"
             onClick={() => emblaApi?.scrollPrev()}
@@ -137,7 +137,7 @@ export function ClientAuthScreen({
             aria-label="Next slide"
           >
             <ChevronRight className="h-5 w-5" />
-          </button>
+          </button> */}
 
           <div className="pointer-events-none absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 gap-2">
             {slides.map((slide, index) => (
