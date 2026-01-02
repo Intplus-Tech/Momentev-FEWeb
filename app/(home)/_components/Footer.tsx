@@ -1,18 +1,23 @@
-// import { Logo } from "@/components/brand/logo";
+"use client";
+
+
 import Logo from "@/components/brand/logo";
 import { Twitter, Facebook, Instagram, Github } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Footer() {
+  const router = useRouter();
+
   return (
-    <footer className="bg-black">
-      <div className="max-w-6xl mx-auto px-6 md:px-0 py-10 bg-[#3E4550] space-y-10">
+    <footer className="bg-[#3E4550]">
+      <div className="max-w-6xl mx-auto px-6 md:px-0 py-10  space-y-10">
         {/* Logo + Social Icons */}
         <div className="flex flex-col md:flex-row items-center md:justify-between space-y-6 md:space-y-0">
+          {/* <Logo className="text-white text-[54px]" /> */}
           <Logo className="text-white text-[54px]" />
 
           <div className="flex gap-4">
-            {/* Other social icons without background */}
             <button className="flex items-center justify-center w-[44px] h-[44px]">
               <Twitter className="text-white w-[23px] h-[23px]" />
             </button>
@@ -32,23 +37,25 @@ export default function Footer() {
         </div>
 
         {/* Navigation */}
-        <div className="text-white flex flex-wrap gap-8 text-[13px] font-medium md:justify-start ">
-          <button>About US</button>
-          <button>FAQS</button>
-          <button>Privacy Policy</button>
-          <button>Terms of Services</button>
-          <button>Contacts</button>
+        <div className="text-white flex flex-wrap gap-8 text-[13px] font-medium md:justify-start">
+          <button onClick={() => router.push("/about")}>About US</button>
+          <button onClick={() => router.push("/faqs")}>FAQS</button>
+          <button onClick={() => router.push("/privacy-policy")}>
+            Privacy Policy
+          </button>
+          <button onClick={() => router.push("/terms-and-conditions")}>
+            Terms of Services
+          </button>
+          <button onClick={() => router.push("/contact")}>Contacts</button>
         </div>
 
         {/* Divider + App Images */}
         <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
-
-        {/* Divider */}
-        <div className="flex items-center justify-between">
+          {/* Divider */}
           <div className="w-full h-[2px] bg-white"></div>
 
           {/* App Images */}
-          <div className="flex flex-col  gap-4 justify-center mt-4">
+          <div className="flex flex-col gap-4 justify-center items-center md:items-start mt-4 md:mt-0">
             <Image
               src="/Apple-img.png"
               alt="Apple Store"
@@ -65,10 +72,9 @@ export default function Footer() {
         </div>
 
         {/* Copyright */}
-        <div className="mt-10 text-white  md:text-left">
+        <div className="mt-10 text-white md:text-left">
           <p>© Copyright 2025, All Rights Reserved Momentev</p>
         </div>
-
       </div>
     </footer>
   );
