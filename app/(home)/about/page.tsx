@@ -1,7 +1,29 @@
-import React from "react";
+"use client";
 
-const page = () => {
-  return <div>page</div>;
-};
+import AboutFind from "../_components/AboutFind";
+import AboutHelp from "../_components/AboutHelp";
+import AboutHero from "../_components/AboutHero";
+import AboutMake from "../_components/AboutMake";
+import AboutNav from "../_components/AboutNav";
+import ContentWrapper from "../_components/Common/ContentWrapper";
+import Footer from "../_components/Footer";
 
-export default page;
+export default function AboutPage() {
+  return (
+    <ContentWrapper>
+      {/* Fixed AboutNav */}
+      <div className="fixed top-0 left-0 w-full z-50">
+        <AboutNav />
+      </div>
+
+      {/* Main content with padding to push it below the nav */}
+      <main className="pt-[100px] md:pt-[120px]">
+        <AboutHero />
+        <AboutFind />
+        <AboutMake />
+        <AboutHelp />
+        <Footer />
+      </main>
+    </ContentWrapper>
+  );
+}

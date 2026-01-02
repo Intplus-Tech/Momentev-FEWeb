@@ -18,12 +18,12 @@ export default function BrowseCategory(){
   return (
     <section className="bg-white w-full">
      <div className="max-w-6xl px-6 mx-auto  md:px-0 py-10 flex flex-col items-center space-y-6">
-        <div className="max-w-5xl w-full  md:max-w-none flex items-start   ">
-          <p className="font-semibold text-lg ">Browse By Category</p>
+        <div className="max-w-7xl w-full  md:max-w-none flex    ">
+          <p className="font-semibold text-lg md:pl-20">Browse By Category</p>
         </div>
 
         {/* Cards container */}
-        <div className="flex flex-wrap justify-center gap-15 w-[850px]">
+        <div className="flex flex-wrap justify-center gap-10 w-[950px]">
           {vendors.map((vendor, index) => (
             <div
               key={index}
