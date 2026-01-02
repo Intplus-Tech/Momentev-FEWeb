@@ -6,7 +6,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { HeroSummary } from "../data";
+
+export type HeroMetric = {
+  label: string;
+  value: string;
+  helper: string;
+};
+
+export type HeroSummary = {
+  location: string;
+  name: string;
+  statement: string;
+  metrics: HeroMetric[];
+  ctaLabel: string;
+  nextDelivery: {
+    label: string;
+    engagement: string;
+    due: string;
+  };
+};
 
 export type DashboardHeroProps = {
   data: HeroSummary;
