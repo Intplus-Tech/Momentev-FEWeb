@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@base-ui/react";
 import { CircleUserIcon } from "lucide-react";
 import HeroMiddle from "./HeroMiddle";
 import Logo from "@/components/brand/logo";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 const Hero = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -19,15 +20,16 @@ const Hero = () => {
           <li>Post A Request</li>
 
           <li>
-            <Button className="bg-white/25 p-2 rounded-lg text-[13px] flex items-center justify-between gap-2">
-              {" "}
-              <CircleUserIcon /> Sign in/Sign up
+            <Button className="bg-white/25" asChild>
+              <Link href="/client/auth/log-in">
+                <CircleUserIcon /> Sign in/Sign up
+              </Link>
             </Button>
           </li>
 
           <li>
-            <Button className="bg-primary p-2 rounded-lg text-[13px]">
-              List your Business
+            <Button asChild>
+              <Link href="/vendor/auth/sign-up">List your Business</Link>
             </Button>
           </li>
         </ul>

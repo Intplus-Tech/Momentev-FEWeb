@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bookmark, MessageSquare, Shield, User2 } from "lucide-react";
 
@@ -15,6 +15,14 @@ import { SecuritySection } from "./_components/security-section";
 const validTabValues = ["profile", "saved", "reviews", "security"];
 
 export default function ClientSettingsPage() {
+  return (
+    <Suspense fallback={<SettingsSkeleton />}>
+      <SettingsContent />
+    </Suspense>
+  );
+}
+
+function SettingsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -106,6 +114,16 @@ export default function ClientSettingsPage() {
           <SecuritySection />
         </TabsContent>
       </Tabs>
+    </section>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <section className="space-y-6">
+      <div className="h-10 w-48 animate-pulse rounded-lg bg-muted" />
+      <div className="h-12 w-full animate-pulse rounded-2xl bg-muted" />
+      <div className="h-96 w-full animate-pulse rounded-3xl bg-muted" />
     </section>
   );
 }

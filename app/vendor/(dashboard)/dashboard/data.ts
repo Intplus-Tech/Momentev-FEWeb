@@ -14,6 +14,22 @@ export type DashboardStat = {
   icon: LucideIcon;
 };
 
+export type MetricBreakdown = {
+  label: string;
+  value: string;
+};
+
+export type MetricCardData = {
+  id: string;
+  title: string;
+  value: string;
+  change: string;
+  trend: "up" | "down";
+  period: string;
+  icon: LucideIcon;
+  breakdown: MetricBreakdown[];
+};
+
 export type Booking = {
   name: string;
   status: string;
@@ -29,6 +45,15 @@ export type ScheduleItem = {
   name: string;
   detail: string;
   time: string;
+};
+
+export type ScheduleBlock = {
+  id: string;
+  title: string;
+  detail: string;
+  category: "Consultation" | "Production" | "Delivery";
+  start: string;
+  end: string;
 };
 
 export type Review = {

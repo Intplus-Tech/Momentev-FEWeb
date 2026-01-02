@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp, fill } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const formatCurrency = (value: number) =>
   value.toLocaleString("en-GB", {
