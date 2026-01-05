@@ -40,10 +40,10 @@ export default function Footer() {
         <div className="text-white flex flex-wrap gap-8 text-[13px] font-medium md:justify-start">
           <button onClick={() => router.push("/about")}>About US</button>
           <button onClick={() => router.push("/faqs")}>FAQS</button>
-          <button onClick={() => router.push("/privacy-policy")}>
+          <button onClick={() => router.push("/privacy")}>
             Privacy Policy
           </button>
-          <button onClick={() => router.push("/terms-and-conditions")}>
+          <button onClick={() => router.push("/terms")}>
             Terms of Services
           </button>
           <button onClick={() => router.push("/contact")}>Contacts</button>

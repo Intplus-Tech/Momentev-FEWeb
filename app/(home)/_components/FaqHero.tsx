@@ -44,7 +44,7 @@ export default function FaqHero() {
           <p>/</p>
           <button className="text-[#142141]">Search</button>
           <p>/</p>
-          <button>About us</button>
+          <button>FAQ</button>
         </div>
 
         {/* Headline */}
@@ -81,7 +81,7 @@ export default function FaqHero() {
               className="w-[1026px] max-w-full border border-gray-300 rounded-md overflow-hidden"
             >
               <button
-                className="flex justify-between items-center w-full h-[59px] px-5 bg-white"
+                className="flex justify-between items-center w-full h-[59px] px-5 bg-transparent"
                 onClick={() => toggleAccordion(index)}
               >
                 <span className="text-[18px] font-medium">{question}</span>
@@ -91,7 +91,7 @@ export default function FaqHero() {
               </button>
 
               {openIndex === index && (
-                <div className="px-5 py-4 bg-gray-50 text-[16px]">
+                <div className="px-5 py-4 bg-transparent text-[16px]">
                   {answers[index]}
                 </div>
               )}
