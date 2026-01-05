@@ -3,7 +3,7 @@ import LogoSmall from "@/components/brand/LogoSmall";
 
 export default function BelowHero() {
   return (
-    <section className="bg-black">
+    <section className="bg-black hidden lg:block">
       <div className="max-w-7xl mx-auto px-6 md:px-0 py-10">
         <div className="flex flex-wrap justify-center md:justify-between gap-6">
           <div className="flex items-center gap-4">

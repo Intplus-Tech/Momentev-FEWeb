@@ -1,6 +1,5 @@
 import Image from "next/image";
-export default function BrowseCategory(){
-  
+export default function BrowseCategory() {
   const vendors = [
     { img: "/Event-img.png", name: "Event Photographers" },
     { img: "/Manager.png", name: "Venue Managers" },
@@ -14,10 +13,9 @@ export default function BrowseCategory(){
     { img: "/Technician-img.png", name: "Sound & Lighting Technicians" },
   ];
 
-
   return (
     <section className="bg-white w-full">
-     <div className="max-w-6xl px-6 mx-auto  md:px-0 py-10 flex flex-col items-center space-y-6">
+      <div className="max-w-6xl px-6 mx-auto  md:px-0 py-10 flex flex-col items-center space-y-6">
         <div className="max-w-7xl w-full  md:max-w-none flex    ">
           <p className="font-semibold text-lg md:pl-20">Browse By Category</p>
         </div>
@@ -37,14 +35,13 @@ export default function BrowseCategory(){
                 className="rounded-2xl object-cover"
               />
 
-              <p className="font-normal text-[11px] text-[#4F4F4F] w-[56px] h-[26px] text-center">
+              <p className="font-normal text-[11px] text-[#4F4F4F] max-w-[80%]  h-[26px] text-center">
                 {vendor.name}
               </p>
             </div>
           ))}
         </div>
-
-       </div>
+      </div>
     </section>
-  )
+  );
 }

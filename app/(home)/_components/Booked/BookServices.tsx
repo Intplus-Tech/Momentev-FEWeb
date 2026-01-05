@@ -4,20 +4,25 @@ import Image from "next/image";
 
 export default function BookedServices() {
   return (
-    <section className="bg-white">
-      <div className="flex flex-col md:flex-row gap-15 items-center justify-center max-w-8xl mx-auto mt-10 px-6">
-
+    <section className="container max-w-5xl mx-auto px-4 md:px-10 xl:px-0 mb-40 relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Text section */}
-        <div className="w-88 h-69 space-y-5">
+        <div className="flex flex-col justify-center gap-6">
           <div className="flex items-center gap-2">
-            <Minus />
-            <p className="font-medium text-sm">How we work</p>
+            <Minus className="text-muted-foreground" />
+            <p className="font-medium text-sm text-muted-foreground">
+              How we work
+            </p>
           </div>
 
-          <h2 className=" text-[#4F4F4F] font-semibold text-2xl">Book Services Instantly</h2>
+          <h2 className="font-semibold text-[36px] leading-tight">
+            Book Services Instantly
+          </h2>
 
-          <p className="text-4 font-normal text-[#4F4F4F]">
-            Find trusted vendors near you and book them in real time. From photographers to caterers, everything you need for your event or lifestyle is just a click away.
+          <p className="text-4 font-normal text-muted-foreground">
+            Find trusted vendors near you and book them in real time. From
+            photographers to caterers, everything you need for your event or
+            lifestyle is just a click away.
           </p>
 
           <Button className="bg-primary p-3 text-white w-47 rounded-lg">
@@ -26,26 +31,18 @@ export default function BookedServices() {
         </div>
 
         {/* Image section */}
-        <div className="relative flex flex-col items-center mt-20">
+        <div className="flex flex-col items-center mt-20">
           {/* Book image */}
           <Image
             src="/Book-img.png"
             alt="Book image"
-            width={300}
-            height={200}
-            className="bg-[#F5F7FF] relative z-10"
+            width={400}
+            height={400}
+            className="relative z-10"
           />
 
-          {/* Rectangle image UNDER, pushed up halfway */}
-          <Image
-            src="/rectangle-img.png"
-            alt="rectangle image"
-            width={600}
-            height={250}
-            className="bg-[#F5F7FF] -mt-[125px]"
-          />
+          <div className="absolute -bottom-20 -right-1/2 w-full h-3/5 bg-[#F5F7FF]" />
         </div>
-
       </div>
     </section>
   );

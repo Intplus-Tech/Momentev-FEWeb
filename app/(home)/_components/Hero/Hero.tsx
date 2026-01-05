@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CircleUserIcon } from "lucide-react";
+import { CircleUserIcon, Menu } from "lucide-react";
 import HeroMiddle from "./HeroMiddle";
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,7 @@ const Hero = () => {
   return (
     <section className="bg-[url('/hero-bg.png')] bg-cover bg-center h-screen w-full font-inter ">
       <nav className="flex items-center justify-between px-6 md:px-20 py-10 relative">
-        <Logo className="text-white" />
+        <Logo variant="mixed" className="text-white" />
 
         {/* Desktop Nav */}
         <ul className="hidden md:flex items-center space-x-6 text-white text-[14px]">
@@ -35,25 +35,15 @@ const Hero = () => {
         </ul>
 
         {/* Mobile Hamburger */}
-        <button
-          className="md:hidden"
+        <Button
+          className="md:hidden bg-transparent"
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
+          variant={"ghost"}
+          size="icon"
         >
-          <svg
-            className="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
+          <Menu className="text-white" />
+        </Button>
 
         {/* Mobile Menu */}
         {menuOpen && (

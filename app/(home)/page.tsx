@@ -1,4 +1,3 @@
-
 import React from "react";
 
 import ContentWrapper from "./_components/Common/ContentWrapper";
@@ -15,21 +14,19 @@ import Footer from "./_components/Footer";
 
 const page = () => {
   return (
-    <div className="h-screen">
+    <div>
       <ContentWrapper>
-        <Hero/>
-        <BelowHero/>
-        <FeaturedVendors/>
-        <BookedServices/>
-        <GrowBusiness/>
-        <StartEvent/>
-        <PeopleFeel/>
-        <NewMomentev/>
-        <BrowseCategory/>
-        <Footer/>
+        <Hero />
+        <BelowHero />
+        <FeaturedVendors />
+        <BookedServices />
+        <GrowBusiness />
+        <StartEvent />
+        <PeopleFeel />
+        <NewMomentev />
+        {/* <BrowseCategory /> */}
+        <Footer />
       </ContentWrapper>
-
-      
     </div>
   );
 };
