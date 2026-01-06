@@ -15,7 +15,7 @@ export default function TermsHero() {
           <p>/</p>
           <button className="text-[#142141]">Search</button>
           <p>/</p>
-          <button>Terms of Services</button>
+          <button className="font-semibold">Terms of Services</button>
         </div>
 
         {/* Content */}

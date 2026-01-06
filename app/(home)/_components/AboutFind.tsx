@@ -23,15 +23,15 @@ export default function AboutFind() {
               text-center lg:text-left
             "
           >
-            <h2 className="text-[#0F0202] text-[20px] font-semibold">
+            <h2 className="text-foreground text-[20px] font-semibold">
               Find the Right People, Fast
             </h2>
 
-            <p className="text-[14px] text-[#2C2C2C] font-medium leading-relaxed">
+            <p className="text-[14px] text-muted-foreground font-medium leading-relaxed">
               At Momentev, we’re redefining how people find event services. No more relying on scattered referrals or scrolling endlessly through social media.
             </p>
 
-            <p className="text-[14px] text-[#2C2C2C] leading-relaxed">
+            <p className="text-[14px] text-muted-foreground leading-relaxed">
               Our platform brings together verified professionals across every category — making it easier for you to search by location, discover trusted experts, and connect quickly with the right people for your event. We’re building a simple, reliable space where planning becomes clearer, faster, and far less stressful.
             </p>
           </div>

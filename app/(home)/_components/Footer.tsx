@@ -12,6 +12,8 @@ export default function Footer() {
     <footer className="bg-[#191D23]">
       <div className="max-w-6xl mx-auto px-6 md:px-0 py-10  space-y-6">
         {/* Logo + Social Icons */}
+
+        <div className="leading-10">
         <div className="flex flex-col md:flex-row items-center md:justify-between space-y-6 md:space-y-0">
           {/* <Logo className="text-white text-[54px]" /> */}
           <Logo variant="white" className="text-white text-[54px]" />
@@ -46,6 +48,7 @@ export default function Footer() {
             Terms of Services
           </button>
           <button onClick={() => router.push("/contact")}>Contacts</button>
+        </div>
         </div>
 
         {/* Divider + App Images */}

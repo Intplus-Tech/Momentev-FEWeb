@@ -1,6 +1,6 @@
 import {
   MapPin,
-  ShoppingCart,
+  CalendarCheck,
   Hotel,
   CircleUser,
   Check,
@@ -11,23 +11,23 @@ import Image from "next/image";
 export default function StartEvent() {
   return (
     <section>
-      <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-10 justify-center items-center  max-w-5xl mx-auto px-4 ">
+      <div className="mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-x-20 justify-center items-center  max-w-5xl mx-auto px-4 py-10 ">
         <div>
-          <div className="bg-primary w-full max-w-[420px] sm:max-w-[480px] lg:w-130 lg:max-w-none rounded-2xl">
-            <div className="flex items-center justify-center pt-5  ">
+          <div className="bg-primary w-full max-w-[410px] sm:max-w-[475px] lg:w-130 lg:max-w-none rounded-2xl">
+            <div className="flex items-center justify-center mx-auto px-8 sm:px-0"> 
               <Image
                 src="/Book-img.png"
                 alt="rectangle image"
-                width={500}
-                height={40}
-                className="h-70 "
+                width={449}
+                height={273}
+                className="h-70 rounded-2xl mt-8"
               />
             </div>
             <div className="text-white p-4 space-y-2">
-              <p className="flex items-start font-semibold text-[21px]">
+              <p className="flex items-start font-semibold text-foreground text-[21px]">
                 Start your event on Momentev
               </p>
-              <p className="text-[11px]">
+              <p className="text-[11px] text-black">
                 Discover trusted vendors, book in seconds, and keep everything
                 in one place.
               </p>
@@ -49,7 +49,7 @@ export default function StartEvent() {
             <div className="space-y-2">
               <p className="flex text-primary font-semibold gap-1">
                 <span>
-                  <ShoppingCart className="text-primary border border-primary p-1 rounded-xl" />
+                  < CalendarCheck className="text-primary border border-primary p-1 rounded-xl" />
                 </span>
                 Book
               </p>
@@ -74,18 +74,18 @@ export default function StartEvent() {
         </div>
 
         <div>
-          <div className="bg-[#FED73E] w-full max-w-[420px] sm:max-w-[480px] lg:w-130 lg:max-w-none rounded-2xl">
-            <div className="flex items-center justify-center pt-5  ">
+          <div className="bg-[#FED73E] w-full max-w-[410px] sm:max-w-[475px] lg:w-130 lg:max-w-none rounded-2xl">
+            <div className="flex items-center justify-center mx-auto px-8 sm:px-0">
               <Image
                 src="/GrowBusiness-img.png"
                 alt="rectangle image"
-                width={500}
-                height={40}
-                className="h-70 "
+                width={449}
+                height={273}
+                className="h-70 rounded-2xl mt-8"
               />
             </div>
             <div className="text-[#142141] p-4 space-y-2">
-              <p className="flex items-start font-semibold text-[21px]">
+              <p className="flex items-start font-semibold text-[21px] text-foreground">
                 Grow with Momentev
               </p>
               <p className="text-[11px]">
@@ -96,38 +96,38 @@ export default function StartEvent() {
           </div>
           <div className="p-3 space-y-3 mt-3">
             <div className="space-y-2">
-              <p className="flex text-primary font-semibold gap-1">
+              <p className="flex text-foreground font-semibold gap-1">
                 <span>
-                  <CircleUser className="text-primary border border-primary p-1 rounded-xl" />
+                  <CircleUser className="text-foreground border border-foreground p-1 rounded-xl" />
                 </span>
                 Apply
               </p>
 
-              <p className="text-[#4F4F4F] text-[13px]">
+              <p className="text-muted-foreground text-[13px]">
                 Create your profile and submit verification.
               </p>
             </div>
             <div className="space-y-2">
-              <p className="flex text-primary font-semibold gap-1">
+              <p className="flex text-foreground font-semibold gap-1">
                 <span>
-                  <Check className="text-primary border border-primary p-1 rounded-xl" />
+                  <Check className="text-foreground border border-foreground p-1 rounded-xl" />
                 </span>
                 Get verified
               </p>
 
-              <p className="text-[#4F4F4F] text-[13px]">
+              <p className="text-muted-foreground text-[13px]">
                 Once approved, your services go live.{" "}
               </p>
             </div>
             <div className="space-y-2">
-              <p className="flex text-primary font-semibold gap-1">
+              <p className="flex text-foreground font-semibold gap-1">
                 <span>
-                  <PoundSterling className="text-primary border border-primary p-1 rounded-xl" />
+                  <PoundSterling className="text-foreground border border-foreground p-1 rounded-xl" />
                 </span>
                 Earn
               </p>
 
-              <p className="text-[#4F4F4F] text-[13px]">
+              <p className="text-muted-foreground text-[13px]">
                 Receive bookings, reviews, and payments seamlessly.
               </p>
             </div>
