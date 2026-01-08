@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { type z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Eye, EyeOff } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -21,66 +21,165 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-
-const signUpSchema = z.object({
-  companyName: z.string().min(2, "Company name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
-});
+import { register, resendVerificationEmail } from "@/lib/actions/auth/auth";
+import { signUpSchema } from "@/validation/auth";
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [resendStatus, setResendStatus] = useState<
+    "idle" | "loading" | "sent" | "error"
+  >("idle");
+  const [lastEmail, setLastEmail] = useState<string>("");
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      companyName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
     },
   });
 
   async function handleSubmit(values: SignUpFormValues) {
-    // Simulate the request lifecycle until the API hook is wired in.
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    console.log("sign-up", values);
+    setServerError(null);
+    setSuccessMessage(null);
+
+    try {
+      await register({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        password: values.password,
+        role: "VENDOR",
+      });
+
+      setSuccessMessage(
+        "Account created. Check your email for the verification link."
+      );
+      setLastEmail(values.email);
+      form.reset();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to complete sign up right now.";
+      setServerError(message);
+    }
+  }
+
+  async function handleResend() {
+    if (!lastEmail) return;
+    setResendStatus("loading");
+    setServerError(null);
+    try {
+      await resendVerificationEmail({ email: lastEmail });
+      setResendStatus("sent");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to resend verification email.";
+      setServerError(message);
+      setResendStatus("error");
+    }
   }
 
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="mx-auto w-full max-w-xl pb-6">
+    <div className="mx-auto w-full max-w-xl">
       <Logo className="hidden xl:block" />
-      <div className="flex flex-col gap-y-6 text-center p-4 mt-4">
+      <div className="flex flex-col gap-y-6 text-center p-4">
         <div>
           <h2 className="text-xl">Get Started with Momentev</h2>
           <p className="text-sm text-muted-foreground">
             Not a vendor?
             <Button variant={"link"} asChild>
-              <Link href="/client/auth/sign-in">Sign in here</Link>
+              <Link href="/client/auth/log-in">Sign in here</Link>
             </Button>
           </p>
         </div>
       </div>
 
+      {serverError ? (
+        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {serverError}
+        </p>
+      ) : null}
+
+      {successMessage ? (
+        <p className="my-2 w-fit mx-auto rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {successMessage}
+        </p>
+      ) : null}
+
+      {lastEmail ? (
+        <div className="my-2 flex items-center justify-center gap-3 text-xs text-muted-foreground">
+          <span>Didn&apos;t get the email?</span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={resendStatus === "loading"}
+            onClick={handleResend}
+          >
+            {resendStatus === "loading" ? (
+              <span className="flex items-center gap-2">
+                <Spinner className="h-3 w-3" /> Sending...
+              </span>
+            ) : resendStatus === "sent" ? (
+              "Sent"
+            ) : (
+              "Resend verification"
+            )}
+          </Button>
+        </div>
+      ) : null}
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-4 xl:px-10 sm:px-0 md:px-10"
+          className="mx-auto w-full space-y-2 xl:px-4 sm:px-0 md:px-10"
         >
-          <FormField
-            control={form.control}
-            name="companyName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <FloatingLabelInput label="Company Name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="flex items-center gap-2">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FloatingLabelInput
+                      autoComplete="given-name"
+                      label="First Name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FloatingLabelInput
+                      autoComplete="family-name"
+                      label="Last Name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}

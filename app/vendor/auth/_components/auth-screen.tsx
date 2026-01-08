@@ -75,7 +75,7 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
           </div>
         </header>
 
-        <main className="flex flex-1 items-center py-10">
+        <main className="flex flex-1 items-center py-2">
           <div className="container mx-auto px-4">
             <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2">
               <div className="hidden xl:flex flex-col gap-4 text-center text-white xl:text-left">

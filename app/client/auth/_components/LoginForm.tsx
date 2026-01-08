@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -21,11 +22,12 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { loginSchema } from "@/validation/auth";
-import { loginClient } from "@/lib/actions/auth/auth";
+import { login } from "@/lib/actions/auth/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function ClientLoginForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -43,12 +45,13 @@ export function ClientLoginForm() {
     setSuccessMessage(null);
 
     try {
-      await loginClient({
+      await login({
         email: values.email,
         password: values.password,
       });
       setSuccessMessage("Login successful.");
       form.reset();
+      router.push("/client/dashboard");
     } catch (error) {
       setServerError((error as Error).message);
     }
@@ -66,13 +69,13 @@ export function ClientLoginForm() {
       </div>
 
       {serverError && (
-        <p className="mt-4 rounded-md bg-rose-100 px-4 py-2 text-sm text-rose-700">
+        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
           {serverError}
         </p>
       )}
 
       {successMessage && (
-        <p className="mt-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-700">
+        <p className="my-2 w-fit mx-auto rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
           {successMessage}
         </p>
       )}

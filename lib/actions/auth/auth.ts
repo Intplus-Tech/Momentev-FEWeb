@@ -1,6 +1,6 @@
 'use server';
 
-export type RegisterClientInput = {
+export type RegisterInput = {
   firstName: string;
   lastName: string;
   email: string;
@@ -8,7 +8,7 @@ export type RegisterClientInput = {
   role?: string;
 };
 
-export async function registerClient(input: RegisterClientInput) {
+export async function register(input: RegisterInput) {
   if (!process.env.BACKEND_URL) {
     throw new Error('BACKEND_URL is not configured');
   }
@@ -39,12 +39,12 @@ export async function registerClient(input: RegisterClientInput) {
 }
 
 
-export type LoginClientInput = {
+export type LoginInput = {
   email: string;
   password: string;
 };
 
-export async function loginClient(input: LoginClientInput) {
+export async function login(input: LoginInput) {
   if (!process.env.BACKEND_URL) {
     throw new Error('BACKEND_URL is not configured');
   }
@@ -60,11 +60,39 @@ export async function loginClient(input: LoginClientInput) {
 
   const data = await response.json().catch(() => null);
 
-  console.log('Login client response data:', data);
+  console.log('Login  response data:', data);
 
   if (!response.ok) {
     const message = (data as { message?: string } | null)?.message;
     throw new Error(message || `Failed to login (${response.status})`);
+  }
+
+  return data;
+}
+
+export type ResendVerificationInput = {
+  email: string;
+};
+
+export async function resendVerificationEmail(input: ResendVerificationInput) {
+  if (!process.env.BACKEND_URL) {
+    throw new Error('BACKEND_URL is not configured');
+  }
+
+  const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/resend-verification-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(input),
+    cache: 'no-store',
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    const message = (data as { message?: string } | null)?.message;
+    throw new Error(message || `Failed to resend verification email (${response.status})`);
   }
 
   return data;
