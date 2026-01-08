@@ -42,17 +42,17 @@ export default function FaqHero() {
         <div className="flex items-center gap-2 pb-5 text-sm sm:text-base w-full max-w-[1026px]">
           <button><Home className="text-primary" /></button>
           <p>/</p>
-          <button className="text-[#142141]">Search</button>
+          <button className="text-muted-foreground">Search</button>
           <p>/</p>
-          <button>FAQ</button>
+          <button className="text-foreground font-semibold">FAQ</button>
         </div>
 
         {/* Headline */}
         <div className="w-full max-w-[1026px] space-y-5">
-          <p className="text-[#0F0202] text-[24px] sm:text-[30px] font-semibold">
+          <p className="text-foreground text-[24px] sm:text-[30px] font-semibold">
             Everything You Need to Know, All in One Place.
           </p>
-          <p className="text-[16px] sm:text-[20px]">
+          <p className="text-[16px] text-muted-foreground sm:text-[20px]">
             Got questions about using Momentev? Whether you’re planning an event or offering your services as a vendor, we’ve got you covered.
           </p>
         </div>
@@ -78,10 +78,10 @@ export default function FaqHero() {
           {questions.map((question, index) => (
             <div
               key={index}
-              className="w-[1026px] max-w-full border border-gray-300 rounded-md overflow-hidden"
+              className="w-[1026px] max-w-full border  border-gray-300 rounded-md overflow-hidden"
             >
               <button
-                className="flex justify-between items-center w-full h-[59px] px-5 bg-transparent"
+                className="flex justify-between text-foreground items-center w-full h-[59px] px-5 bg-transparent"
                 onClick={() => toggleAccordion(index)}
               >
                 <span className="text-[18px] font-medium">{question}</span>

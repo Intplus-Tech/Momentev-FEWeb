@@ -6,11 +6,11 @@ export default function AboutHelp() {
       <div className="relative flex flex-col md:flex-row items-center md:justify-between py-10 gap-10 md:gap-0">
 
         {/* Item 1 */}
-        <div className="text-[#0F0202] space-y-5 md:text-left text-center">
-          <h3 className="text-[25px] w-[320px] mx-auto md:mx-0 font-semibold">
+        <div className=" space-y-5 md:text-left text-center">
+          <h3 className="text-[25px] text-foreground w-[320px] mx-auto md:mx-0 font-semibold">
             Looking to showcase your talent to the right clients?
           </h3>
-          <a href="#" className="text-[18px] text-[#0F0202] underline">
+          <a href="#" className="text-[18px] text-muted-foreground underline">
             Join our vendors listing
           </a>
         </div>
@@ -21,11 +21,11 @@ export default function AboutHelp() {
         </div>
 
         {/* Item 2 */}
-        <div className="text-[#0F0202] space-y-5 md:text-center text-center">
-          <h3 className="text-[25px] w-[320px] mx-auto font-semibold">
+        <div className=" space-y-5 md:text-center text-center">
+          <h3 className="text-[25px] text-foreground w-[320px] mx-auto font-semibold">
             Frustrated with slow referrals and hard-to-find event professionals?
           </h3>
-          <a href="#" className="text-[18px] text-[#0F0202] underline">
+          <a href="#" className="text-[18px] text-muted-foreground underline">
             Browse our catalogue
           </a>
         </div>
@@ -36,11 +36,11 @@ export default function AboutHelp() {
         </div>
 
         {/* Item 3 */}
-        <div className="text-[#0F0202] space-y-5 md:text-right text-center">
-          <h3 className="text-[25px] w-[320px] mx-auto md:mx-0 font-semibold">
+        <div className=" space-y-5 md:text-right text-center">
+          <h3 className="text-[25px] text-foreground w-[320px] mx-auto md:mx-0 font-semibold">
             Want more visibility and <span className="block">bookings</span>
           </h3>
-          <a href="#" className="text-[18px] text-[#0F0202] underline">
+          <a href="#" className="text-[18px] text-muted-foreground text-[#0F0202] underline">
             Get started
           </a>
         </div>
