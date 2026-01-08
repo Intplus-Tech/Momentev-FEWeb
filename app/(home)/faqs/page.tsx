@@ -1,6 +1,6 @@
 "use client";
 
-import AboutNav from "../_components/AboutNav";
+import AboutNav from "../_components/HomeHeader";
 import ContentWrapper from "../_components/Common/ContentWrapper";
 import FaqHero from "../_components/FaqHero";
 import Footer from "../_components/Footer";

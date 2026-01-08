@@ -2,56 +2,54 @@
 
 export default function AboutMake() {
   return (
-    <section className="bg-gray-200 p-10 py-15">
-      <div className="space-y-10">
+    <section className="bg-[#F0F0F0] w-full py-12">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 space-y-8">
         <div className="flex flex-col items-center">
-          <h2 className="text-foreground text-[30px] text-center">
+          <h2 className="text-foreground text-2xl md:text-3xl font-semibold text-center">
             How we make it happen
           </h2>
         </div>
 
-        <div className="flex flex-col md:flex-row items-center md:justify-between gap-10">
-          {/* Step 1 */}
-          <div className="max-w-[400px] flex flex-col items-center space-y-5">
-            <div className="bg-black p-5 rounded-lg w-[60px] h-[60px] text-white flex items-center justify-center">
-              1
-            </div>
-            <p className="text-[24px] font-semibold text-foreground text-center">
-              Verified Professionals
-            </p>
-            <p className="text-center text-muted-foreground">
-              We onboard and review service providers to ensure you’re choosing
-              from skilled, reliable, and trusted <span className="block">experts.</span>
-            </p>
-          </div>
-
-          {/* Step 2 */}
-          <div className="max-w-[350px] flex flex-col items-center space-y-5">
-            <div className="bg-black p-5 rounded-lg w-[60px] h-[60px] text-white flex items-center justify-center">
-              2
-            </div>
-            <p className="text-[24px] font-semibold text-foreground text-center">
-              Smart search & Discovery
-            </p>
-            <p className="text-center text-muted-foreground w-full">
-              Our platform helps you filter by location, service type, budget, and reviews — making it easy to find exactly  <span className="block">who you need.</span>
-            </p>
-          </div>
-
-          {/* Step 3 */}
-          <div className="max-w-[400px] flex flex-col items-center space-y-5">
-            <div className="bg-black p-5 rounded-lg w-[60px] h-[60px] text-white flex items-center justify-center">
-              3
-            </div>
-            <p className="text-[24px] font-semibold text-foreground text-center">
-              Seamless Connection
-            </p>
-            <p className="text-center text-muted-foreground">
-              We simplify communication by enabling direct enquiries, quick responses, and smooth booking processes, bringing convenience and clarity to your  <span className="block">planning.</span>
-            </p>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Step
+            number={1}
+            title="Verified Professionals"
+            description="We onboard and review service providers so you’re choosing from skilled, reliable, and trusted experts."
+          />
+          <Step
+            number={2}
+            title="Smart Search & Discovery"
+            description="Filter by location, service type, budget, and reviews — making it easy to find exactly who you need."
+          />
+          <Step
+            number={3}
+            title="Seamless Connection"
+            description="Direct enquiries, quick responses, and smooth bookings bring convenience and clarity to your planning."
+          />
         </div>
       </div>
     </section>
+  );
+}
+
+type StepProps = {
+  number: number;
+  title: string;
+  description: string;
+};
+
+function Step({ number, title, description }: StepProps) {
+  return (
+    <div className="flex flex-col items-center text-center space-y-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#142141] text-white font-semibold">
+        {number}
+      </div>
+      <p className="text-lg md:text-xl font-semibold text-foreground">
+        {title}
+      </p>
+      <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-[360px]">
+        {description}
+      </p>
+    </div>
   );
 }

@@ -1,52 +1,69 @@
 "use client";
 
+import { Separator } from "@/components/ui/separator";
+
 export default function AboutHelp() {
   return (
-    <section className="bg-[#FFFFFF] p-10">
-      <div className="relative flex flex-col md:flex-row items-center md:justify-between py-10 gap-10 md:gap-0">
+    <section className="bg-white w-full py-12">
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-10">
+          <HelpCard
+            align="start"
+            title="Looking to showcase your talent to the right clients?"
+            link="Join our vendors listing"
+          />
 
-        {/* Item 1 */}
-        <div className=" space-y-5 md:text-left text-center">
-          <h3 className="text-[25px] text-foreground w-[320px] mx-auto md:mx-0 font-semibold">
-            Looking to showcase your talent to the right clients?
-          </h3>
-          <a href="#" className="text-[18px] text-muted-foreground underline">
-            Join our vendors listing
-          </a>
+          <Divider />
+
+          <HelpCard
+            align="center"
+            title="Frustrated with slow referrals and hard-to-find event professionals?"
+            link="Browse our catalogue"
+          />
+
+          <Divider />
+
+          <HelpCard
+            align="end"
+            title="Want more visibility and bookings?"
+            link="Get started"
+          />
         </div>
-
-        {/* Divider 1 */}
-        <div className="hidden md:block absolute left-1/4 top-1/2 -translate-y-1/2">
-          <div className="w-[167px] border border-[#05717A] rotate-[-90deg]" />
-        </div>
-
-        {/* Item 2 */}
-        <div className=" space-y-5 md:text-center text-center">
-          <h3 className="text-[25px] text-foreground w-[320px] mx-auto font-semibold">
-            Frustrated with slow referrals and hard-to-find event professionals?
-          </h3>
-          <a href="#" className="text-[18px] text-muted-foreground underline">
-            Browse our catalogue
-          </a>
-        </div>
-
-        {/* Divider 2 */}
-        <div className="hidden md:block absolute left-2/3 top-1/2 -translate-y-1/2">
-          <div className="w-[167px] border border-[#05717A] rotate-[-90deg]" />
-        </div>
-
-        {/* Item 3 */}
-        <div className=" space-y-5 md:text-right text-center">
-          <h3 className="text-[25px] text-foreground w-[320px] mx-auto md:mx-0 font-semibold">
-            Want more visibility and <span className="block">bookings</span>
-          </h3>
-          <a href="#" className="text-[18px] text-muted-foreground text-[#0F0202] underline">
-            Get started
-          </a>
-        </div>
-        
-
       </div>
     </section>
+  );
+}
+
+type HelpCardProps = {
+  align: "start" | "center" | "end";
+  title: string;
+  link: string;
+};
+
+function HelpCard({ align, title, link }: HelpCardProps) {
+  const alignment =
+    align === "start"
+      ? "md:text-left"
+      : align === "end"
+      ? "md:text-right"
+      : "md:text-center";
+
+  return (
+    <div className={`space-y-4 text-center ${alignment}`}>
+      <h3 className="text-2xl text-foreground font-semibold leading-snug">
+        {title}
+      </h3>
+      <a href="#" className="text-lg text-primary underline font-medium">
+        {link}
+      </a>
+    </div>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="hidden md:flex self-stretch items-center">
+      <Separator orientation="vertical" className="h-28 w-px bg-gray-200" />
+    </div>
   );
 }
