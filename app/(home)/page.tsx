@@ -10,7 +10,6 @@ import StartEvent from "./_components/StartEvent/StartEvent";
 import PeopleFeel from "./_components/PeopleFeel/PeopleFeel";
 import NewMomentev from "./_components/NewMomentev/NewMomentev";
 import BrowseCategory from "./_components/BrowseCategory/BrowseCategory";
-import Footer from "./_components/Footer";
 
 const page = () => {
   return (
@@ -24,7 +23,6 @@ const page = () => {
       <PeopleFeel />
       <NewMomentev />
       <BrowseCategory />
-      <Footer />
     </div>
   );
 };
