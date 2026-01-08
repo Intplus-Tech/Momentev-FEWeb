@@ -1,6 +1,7 @@
-import { Button } from "@base-ui/react";
+import { Button } from "@/components/ui/button";
 import { Minus } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function BookedServices() {
   return (
@@ -15,7 +16,7 @@ export default function BookedServices() {
             </p>
           </div>
 
-          <h2 className="font-semibold text-[36px] leading-tight">
+          <h2 className="font-semibold text-xl md:text-[36px] leading-tight">
             Book Services Instantly
           </h2>
 
@@ -25,8 +26,8 @@ export default function BookedServices() {
             lifestyle is just a click away.
           </p>
 
-          <Button className="bg-primary p-3 text-white w-47 rounded-lg">
-            Find Vendors
+          <Button asChild>
+            <Link href="/search">Find Vendors</Link>
           </Button>
         </div>
 

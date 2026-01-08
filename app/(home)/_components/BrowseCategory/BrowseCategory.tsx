@@ -15,27 +15,22 @@ export default function BrowseCategory() {
 
   return (
     <section className="bg-white w-full">
-      <div className="max-w-6xl px-6 mx-auto  md:px-0 py-10 flex flex-col items-center space-y-6">
-        <div className="max-w-7xl w-full  md:max-w-none flex    ">
-          <p className="font-semibold text-lg md:pl-20">Browse By Category</p>
-        </div>
+      <div className="container max-w-5xl mx-auto py-10 px-4 flex flex-col space-y-8">
+        <p className="font-semibold text-lg ml-2 md:ml-0">Browse By Category</p>
 
         {/* Cards container */}
-        <div className="flex flex-wrap justify-center gap-10 w-[950px]">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 md:gap-8 lg:gap-12 justify-items-center">
           {vendors.map((vendor, index) => (
-            <div
-              key={index}
-              className="flex flex-col items-center space-y-2 w-[157px]"
-            >
+            <div key={index} className="flex flex-col items-center space-y-2">
               <Image
                 src={vendor.img}
                 alt={vendor.name}
-                width={157}
-                height={157}
+                width={200}
+                height={200}
                 className="rounded-2xl object-cover"
               />
 
-              <p className="font-normal text-[11px] text-[#4F4F4F] max-w-[80%]  h-[26px] text-center">
+              <p className="font-normal text-xs text-[#4F4F4F] max-w-[80%] text-center">
                 {vendor.name}
               </p>
             </div>

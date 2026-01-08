@@ -10,72 +10,91 @@ export default function Footer() {
 
   return (
     <footer className="bg-[#191D23]">
-      <div className="max-w-6xl mx-auto px-6 md:px-0 py-10  space-y-6">
+      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
         {/* Logo + Social Icons */}
-
-        <div className="leading-10">
-        <div className="flex flex-col md:flex-row items-center md:justify-between space-y-6 md:space-y-0">
-          {/* <Logo className="text-white text-[54px]" /> */}
+        <div className="flex flex-col md:flex-row items-center md:justify-between gap-6">
           <Logo variant="white" className="text-white text-[54px]" />
 
-          <div className="flex gap-4">
-            <button className="flex items-center justify-center w-[44px] h-[44px]">
-              <Twitter className="text-white w-[23px] h-[23px]" />
+          <div className="flex gap-3">
+            <button className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity">
+              <Twitter className="text-white w-6 h-6" />
             </button>
 
-            <button className="flex items-center justify-center w-[44px] h-[44px] p-2 rounded-full bg-primary">
-              <Facebook className="text-white w-[23px] h-[23px]" />
+            <button className="flex items-center justify-center w-11 h-11 rounded-full bg-primary hover:bg-primary/90 transition-colors">
+              <Facebook className="text-white w-6 h-6" />
             </button>
 
-            <button className="flex items-center justify-center w-[44px] h-[44px]">
-              <Instagram className="text-white w-[23px] h-[23px]" />
+            <button className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity">
+              <Instagram className="text-white w-6 h-6" />
             </button>
 
-            <button className="flex items-center justify-center w-[44px] h-[44px]">
-              <Github className="text-white w-[23px] h-[23px]" />
+            <button className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity">
+              <Github className="text-white w-6 h-6" />
             </button>
           </div>
         </div>
 
         {/* Navigation */}
-        <div className="text-white flex flex-wrap gap-8 text-[13px] font-medium md:justify-start">
-          <button onClick={() => router.push("/about")}>About US</button>
-          <button onClick={() => router.push("/faqs")}>FAQS</button>
-          <button onClick={() => router.push("/privacy")}>
+        <div className="text-white flex flex-wrap justify-center md:justify-start gap-6 text-sm font-medium">
+          <button
+            onClick={() => router.push("/about")}
+            className="hover:text-primary transition-colors"
+          >
+            About Us
+          </button>
+          <button
+            onClick={() => router.push("/faqs")}
+            className="hover:text-primary transition-colors"
+          >
+            FAQs
+          </button>
+          <button
+            onClick={() => router.push("/privacy")}
+            className="hover:text-primary transition-colors"
+          >
             Privacy Policy
           </button>
-          <button onClick={() => router.push("/terms")}>
-            Terms of Services
+          <button
+            onClick={() => router.push("/terms")}
+            className="hover:text-primary transition-colors"
+          >
+            Terms of Service
           </button>
-          <button onClick={() => router.push("/contact")}>Contacts</button>
-        </div>
+          <button
+            onClick={() => router.push("/contact")}
+            className="hover:text-primary transition-colors"
+          >
+            Contact
+          </button>
         </div>
 
-        {/* Divider + App Images */}
-        <div className="flex flex-col md:flex-row items-center md:items-center justify-between gap-6">
-          {/* Divider */}
-          <div className="w-full h-[1px] bg-white"></div>
+        {/* Divider */}
+        <div className="w-full h-px bg-white/20"></div>
 
-          {/* App Images */}
-          <div className="flex flex-col gap-4 justify-center items-center md:items-start mt-4 md:mt-0">
+        {/* App Images + Copyright */}
+        <div className="flex flex-col md:flex-row items-center md:justify-between gap-6">
+          {/* App Store Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center">
             <Image
               src="/Apple-img.png"
-              alt="Apple Store"
+              alt="Download on the App Store"
               width={134}
               height={40}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
             />
             <Image
               src="/Google-img.png"
-              alt="Google Play Store"
+              alt="Get it on Google Play"
               width={134}
               height={40}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
             />
           </div>
-        </div>
 
-        {/* Copyright */}
-        <div className=" text-white md:text-left">
-          <p>© Copyright 2025, All Rights Reserved Momentev</p>
+          {/* Copyright */}
+          <div className="text-white text-sm text-center md:text-right">
+            <p>© Copyright 2025, All Rights Reserved Momentev</p>
+          </div>
         </div>
       </div>
     </footer>

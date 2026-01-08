@@ -15,18 +15,16 @@ import Footer from "./_components/Footer";
 const page = () => {
   return (
     <div>
-      <ContentWrapper>
-        <Hero />
-        <BelowHero />
-        <FeaturedVendors />
-        <BookedServices />
-        <GrowBusiness />
-        <StartEvent />
-        <PeopleFeel />
-        <NewMomentev />
-        {/* <BrowseCategory /> */}
-        <Footer />
-      </ContentWrapper>
+      <Hero />
+      <BelowHero />
+      <FeaturedVendors />
+      <BookedServices />
+      <GrowBusiness />
+      <StartEvent />
+      <PeopleFeel />
+      <NewMomentev />
+      <BrowseCategory />
+      <Footer />
     </div>
   );
 };

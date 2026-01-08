@@ -5,7 +5,7 @@ export default function HomeLayout({
 }>) {
   return (
     <div>
-      <div className="font-inter">{children}</div>
+      <div className="font-inter min-h-screen overflow-hidden">{children}</div>
     </div>
   );
 }
