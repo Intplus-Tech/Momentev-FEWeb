@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function GrowBusiness() {
   return (
-    <section className="container max-w-5xl mx-auto px-4 md:px-10 xl:px-0 mb-40 relative">
+    <section className="container max-w-5xl mx-auto px-4 md:px-10 xl:px-0 mb-10 md:mb-40 relative">
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 ">
         {/* Image section */}
 

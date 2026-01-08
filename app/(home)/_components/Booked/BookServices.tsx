@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function BookedServices() {
   return (
-    <section className="container max-w-5xl mx-auto px-4 md:px-10 xl:px-0 mb-40 relative">
+    <section className="container max-w-5xl mx-auto px-4 md:px-10 xl:px-0 mb-20 md:mb-40 relative">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
         {/* Text section */}
         <div className="flex flex-col justify-center gap-6">
@@ -26,13 +26,13 @@ export default function BookedServices() {
             lifestyle is just a click away.
           </p>
 
-          <Button asChild>
+          <Button asChild className="w-fit">
             <Link href="/search">Find Vendors</Link>
           </Button>
         </div>
 
         {/* Image section */}
-        <div className="flex flex-col items-center mt-20">
+        <div className="flex flex-col items-center md:mt-20">
           {/* Book image */}
           <Image
             src="/Book-img.png"
