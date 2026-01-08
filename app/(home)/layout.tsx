@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import AboutNav from "./_components/HomeHeader";
+import Footer from "./_components/Footer";
 
 export default function HomeLayout({
   children,
@@ -15,6 +16,7 @@ export default function HomeLayout({
       <div className="font-inter min-h-screen overflow-hidden">
         {!isHome && <AboutNav />}
         {children}
+        <Footer />
       </div>
     </div>
   );

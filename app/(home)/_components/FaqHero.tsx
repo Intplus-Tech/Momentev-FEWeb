@@ -1,104 +1,128 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus, Home, X } from "lucide-react";
+import { Plus, Minus, Home } from "lucide-react";
+import Link from "next/link";
 
-const questions = [
-  "What is the 48-hour payout window?",
-  "How does the Vendor Ranking Score work?",
-  "What happens if something goes wrong with my booking?",
-  "Can I communicate with the vendor directly?",
-  "Is my money safe?",
-  "How does payment work?",
-  "Can I sync my calendar to avoid double-booking?",
-  "How does commission work?",
-  "How do disputes work for vendors?",
-];
-
-const answers = [
-  "The 48-hour payout window means that once your service is completed, your payment will be processed and available within 48 hours.",
-  "Answer 2",
-  "Answer 3",
-  "Answer 4",
-  "Answer 5",
-  "Answer 6",
-  "Answer 7",
-  "Answer 8",
-  "Answer 9",
+const faqs = [
+  {
+    question: "What is Momentev?",
+    answer:
+      "Momentev is a managed, commission-based marketplace connecting clients with rigorously vetted event service vendors. We make it easy to find, compare, and book trusted professionals for your events.",
+  },
+  {
+    question: "What is the 48-hour payout window?",
+    answer:
+      "The 48-hour payout window means that once your service is completed, your payment will be processed and available within 48 hours.",
+  },
+  {
+    question: "How does the Vendor Ranking Score work?",
+    answer:
+      "The Vendor Ranking Score (VRS) is our proprietary scoring system calculated using reliability, customer reviews, booking volume, response time, and other quality metrics to help clients find the best vendors.",
+  },
+  {
+    question: "What happens if something goes wrong with my booking?",
+    answer:
+      "If you experience any issues, you can raise a dispute within 48 hours of service completion. Our support team will review the case and work with both parties to find a fair resolution.",
+  },
+  {
+    question: "Can I communicate with the vendor directly?",
+    answer:
+      "Yes! Once a booking is confirmed, you can communicate directly with the vendor through our in-app messaging system to discuss details and coordinate your event.",
+  },
+  {
+    question: "Is my money safe?",
+    answer:
+      "Absolutely. All payments are held in escrow via Stripe Connect until the service is completed and verified. This protects both clients and vendors throughout the transaction.",
+  },
+  {
+    question: "How does payment work?",
+    answer:
+      "We offer flexible payment models including full upfront payment or deposit-based booking. All transactions are processed securely through Stripe.",
+  },
+  {
+    question: "Can I sync my calendar to avoid double-booking?",
+    answer:
+      "Yes, vendors can sync their calendars to automatically update availability and prevent double-bookings across multiple platforms.",
+  },
+  {
+    question: "How does commission work?",
+    answer:
+      "Momentev takes a small commission on each successful booking. This covers platform maintenance, payment processing, customer support, and marketing services.",
+  },
 ];
 
 export default function FaqHero() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-
-  const toggleAccordion = (index: number) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+  const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="bg-gray-200 flex flex-col items-center min-h-screen overflow-x-hidden">
-      <div className="flex flex-col items-center py-20 px-4 sm:px-10 md:px-[140px] space-y-20 w-full">
-
+    <section className="bg-[#F0F0F0] min-h-screen py-16 md:py-24">
+      <div className="max-w-4xl mx-auto px-4 md:px-8 space-y-10">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 pb-5 text-sm sm:text-base w-full max-w-[1026px]">
-          <button><Home className="text-primary" /></button>
-          <p>/</p>
-          <button className="text-muted-foreground">Search</button>
-          <p>/</p>
-          <button className="text-foreground font-semibold">FAQ</button>
-        </div>
+        <nav className="flex items-center gap-2 text-sm">
+          <Link href="/" className="hover:text-primary transition-colors">
+            <Home className="w-4 h-4 text-primary" />
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-semibold text-foreground">FAQ</span>
+        </nav>
 
-        {/* Headline */}
-        <div className="w-full max-w-[1026px] space-y-5">
-          <p className="text-foreground text-[24px] sm:text-[30px] font-semibold">
-            Everything You Need to Know, All in One Place.
+        {/* Header */}
+        <div className="space-y-4 text-center md:text-left">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground">
+            Everything You Need to Know
+          </h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl">
+            Got questions about using Momentev? Whether you&apos;re planning an
+            event or offering your services as a vendor, we&apos;ve got you
+            covered.
           </p>
-          <p className="text-[16px] text-muted-foreground sm:text-[20px]">
-            Got questions about using Momentev? Whether you’re planning an event or offering your services as a vendor, we’ve got you covered.
-          </p>
-        </div>
-
-        {/* Momentev Block (UI untouched) */}
-        <div className="w-full flex justify-center">
-          <div className="w-[1026px] max-w-full space-y-2">
-            <div className="flex items-center justify-between h-[65px] p-5 bg-white border border-2">
-              <p className="text-[18px] font-semibold">What is Momentev?</p>
-              <span className="w-[24px] h-[24px]"><X /></span>
-            </div>
-
-            <div className="flex items-center justify-between h-[65px] p-5 bg-white border border-2">
-              <p className="text-[16px] text-[#3C3C43D9] font-semibold">
-                Nibh quisque suscipit fermentum netus nulla cras porttitor euismod nulla. Orci, dictumst nec aliquet id ullamcorper venenatis.
-              </p>
-            </div>
-          </div>
         </div>
 
         {/* Accordion */}
-        <div className="flex flex-col gap-4 w-full items-center">
-          {questions.map((question, index) => (
+        <div className="space-y-3">
+          {faqs.map((faq, index) => (
             <div
               key={index}
-              className="w-[1026px] max-w-full border  border-gray-300 rounded-md overflow-hidden"
+              className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm"
             >
               <button
-                className="flex justify-between text-foreground items-center w-full h-[59px] px-5 bg-transparent"
-                onClick={() => toggleAccordion(index)}
+                className="flex justify-between items-center w-full px-5 py-4 text-left hover:bg-gray-50 transition-colors"
+                onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <span className="text-[18px] font-medium">{question}</span>
-                <span className="text-[#05717A]">
-                  {openIndex === index ? <Minus size={20} /> : <Plus size={20} />}
+                <span className="text-base md:text-lg font-medium text-foreground pr-4">
+                  {faq.question}
+                </span>
+                <span className="text-primary flex-shrink-0">
+                  {openIndex === index ? (
+                    <Minus className="w-5 h-5" />
+                  ) : (
+                    <Plus className="w-5 h-5" />
+                  )}
                 </span>
               </button>
 
               {openIndex === index && (
-                <div className="px-5 py-4 bg-transparent text-[16px]">
-                  {answers[index]}
+                <div className="px-5 pb-4 text-sm md:text-base text-muted-foreground leading-relaxed">
+                  {faq.answer}
                 </div>
               )}
             </div>
           ))}
         </div>
 
+        {/* Contact CTA */}
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">
+            Still have questions? We&apos;re here to help.
+          </p>
+          <Link
+            href="/contact"
+            className="inline-flex items-center justify-center px-6 py-3 bg-primary text-white font-medium rounded-lg hover:bg-primary/90 transition-colors"
+          >
+            Contact Support
+          </Link>
+        </div>
       </div>
     </section>
   );

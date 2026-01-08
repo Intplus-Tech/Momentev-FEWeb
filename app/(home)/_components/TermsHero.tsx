@@ -1,119 +1,218 @@
 "use client";
 
 import { Home } from "lucide-react";
+import Link from "next/link";
+
+const definitions = [
+  {
+    term: "Platform",
+    definition:
+      "refers to all Momentev websites, mobile apps, portals, dashboards, messaging systems, microservices, technology systems, and integrations.",
+  },
+  {
+    term: "Client",
+    definition: "refers to any user seeking or booking event-related services.",
+  },
+  {
+    term: "Vendor",
+    definition:
+      "refers to event service providers using the Vendor Portal to manage listings, receive bookings, and process payouts.",
+  },
+  {
+    term: "Booking",
+    definition:
+      "refers to any engagement between a Client and Vendor initiated through the Platform.",
+  },
+  {
+    term: "Deposit",
+    definition:
+      "refers to the initial payment required for certain payment models.",
+  },
+  {
+    term: "Balance Payment",
+    definition: "refers to the remaining amount due for a Booking.",
+  },
+  {
+    term: "Escrow",
+    definition:
+      "refers to the financial holding system managed by Momentev via Stripe Connect.",
+  },
+  {
+    term: "Vendor Ranking Score (VRS)",
+    definition:
+      "refers to Momentev's proprietary score calculated using reliability, reviews, volume, and other metrics.",
+  },
+];
+
+const sections = [
+  {
+    id: "definitions",
+    title: "Definitions",
+    type: "definitions",
+  },
+  {
+    id: "about",
+    title: "About Momentev",
+    content:
+      "Momentev is a managed marketplace that connects clients with verified event service providers. We facilitate bookings, payments, and communications between parties.",
+  },
+  {
+    id: "registration",
+    title: "Account Registration & Eligibility",
+    items: [
+      "You must be at least 18 years old to use Momentev.",
+      "You agree to provide accurate and complete registration information.",
+      "You are responsible for maintaining the confidentiality of your account credentials.",
+      "You must notify us immediately of any unauthorized use of your account.",
+    ],
+  },
+  {
+    id: "platform-use",
+    title: "Use of the Platform",
+    items: [
+      "Use the Platform only for lawful purposes and in accordance with these Terms.",
+      "Not engage in any conduct that restricts or inhibits others from using the Platform.",
+      "Not attempt to gain unauthorized access to any part of the Platform.",
+      "Not use automated systems to access the Platform without our permission.",
+    ],
+  },
+  {
+    id: "vendor-listings",
+    title: "Vendor Listings, Pricing & Availability",
+    content:
+      "Vendors are responsible for the accuracy of their listings, including pricing, availability, and service descriptions. Momentev reserves the right to remove listings that violate our guidelines.",
+  },
+  {
+    id: "bookings",
+    title: "Quotes, Bookings & Deposits",
+    content:
+      "Clients can request quotes from vendors. Once a quote is accepted, a booking is created. Deposits may be required based on the vendor's payment preferences and the total booking value.",
+  },
+  {
+    id: "payments",
+    title: "Payment Models & Escrow",
+    content:
+      "All payments are processed through Stripe Connect. Funds are held in escrow until the service is completed and the 48-hour dispute window has passed. Vendors receive payouts within 48 hours of service completion.",
+  },
+  {
+    id: "disputes",
+    title: "Disputes & Refunds",
+    content:
+      "Clients have 48 hours after service completion to raise disputes. Our support team reviews all disputes and determines appropriate resolutions, which may include partial or full refunds.",
+  },
+];
 
 export default function TermsHero() {
   return (
-    <section className="bg-gray-200 flex flex-col items-center min-h-screen overflow-x-hidden">
-      <div className="flex flex-col items-center py-20 px-4 sm:px-10 md:px-[140px] space-y-20 w-full">
-
+    <section className="bg-[#F0F0F0] min-h-screen py-16 md:py-24">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-10">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 pb-5 text-sm sm:text-base w-full max-w-[1026px]">
-          <button>
-            <Home className="text-primary" />
-          </button>
-          <p>/</p>
-          <button className="text-[#142141]">Search</button>
-          <p>/</p>
-          <button className="font-semibold">Terms of Services</button>
-        </div>
+        <nav className="flex items-center gap-2 text-sm">
+          <Link href="/" className="hover:text-primary transition-colors">
+            <Home className="w-4 h-4 text-primary" />
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-semibold text-foreground">
+            Terms of Service
+          </span>
+        </nav>
 
         {/* Content */}
-        <div className="w-full max-w-[1026px] space-y-5">
-          <div className="flex flex-col lg:flex-row lg:space-x-20 space-y-10 lg:space-y-0">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+          {/* Sidebar - Table of Contents */}
+          <aside className="lg:w-64 shrink-0">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              <h2 className="font-semibold text-foreground">
+                Table of Contents
+              </h2>
+              <nav className="space-y-2">
+                {sections.map((section) => (
+                  <a
+                    key={section.id}
+                    href={`#${section.id}`}
+                    className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {section.title}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </aside>
 
-            {/* Table of Content */}
-            <div className="space-y-5 w-full lg:w-auto">
-              <h2>Table of Content</h2>
-              <div>Definition</div>
-              <div>About Momentev</div>
-              <div>Account Registeration & Eligibility</div>
-              <div>Use of the platform</div>
-              <div>Vendor Listings, Pricing & Availability</div>
-              <div>Quotes, Bookings & Deposits</div>
-              <div>Payment Models & Escrow</div>
-              <div>Disputes & Refunds</div>
+          {/* Main Content */}
+          <div className="flex-1 space-y-10">
+            {/* Header */}
+            <div className="space-y-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground">
+                Terms of Service
+              </h1>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                Welcome to Momentev, a managed, commission-based marketplace
+                connecting clients with rigorously vetted event service vendors.
+                These Terms govern your access and use of the Platform.
+              </p>
+              <p className="text-sm font-medium text-foreground">
+                By accessing or using Momentev, you agree to be bound by these
+                Terms, as well as our Privacy Policy.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Last updated: January 2025
+              </p>
             </div>
 
-            {/* Main Policy Content */}
-            <div className="w-full lg:w-[726px] space-y-5">
-              <div className="space-y-5">
-                <h2 className="text-[#0F0202] text-[30px]">
-                  Terms of Services - Momentev
-                </h2>
+            {/* Sections */}
+            <div className="space-y-8">
+              {sections.map((section, idx) => (
+                <div
+                  key={section.id}
+                  id={section.id}
+                  className="scroll-mt-24 space-y-3"
+                >
+                  <h2 className="text-lg md:text-xl font-semibold text-foreground">
+                    {idx + 1}. {section.title}
+                  </h2>
 
-                <p>
-                  Welcome to Momentev, a managed, commission-based marketplace
-                  connecting clients with rigorously vetted event service vendors.
-                  These Terms of Service (“Terms”) govern your access and use of the
-                  Momentev mobile applications, vendor portal, client web portal,
-                  landing website, administrative interfaces, and all related
-                  features, services, and technologies (collectively, the
-                  “Platform”).
-                </p>
+                  {section.type === "definitions" && (
+                    <div className="space-y-3">
+                      <p className="text-sm md:text-base text-muted-foreground">
+                        For the purpose of these terms:
+                      </p>
+                      <ul className="space-y-2 ml-5">
+                        {definitions.map((def, defIdx) => (
+                          <li
+                            key={defIdx}
+                            className="text-sm md:text-base text-muted-foreground leading-relaxed list-disc"
+                          >
+                            <span className="font-semibold text-foreground">
+                              {def.term}
+                            </span>{" "}
+                            {def.definition}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
-                <p className="font-semibold">
-                  By accessing or using Momentev, you agree to be bound by these
-                  Terms, as well as our Privacy Policy and any applicable
-                  supplemental policies that may apply to your use of specific
-                  features of the Platform.
-                </p>
+                  {section.content && (
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                      {section.content}
+                    </p>
+                  )}
 
-                <p>
-                  If you do not agree with these <strong>Terms</strong>, you may not
-                  access or use the Platform.
-                </p>
-              </div>
-
-              <ol className="space-y-5">
-                <li>
-                  <h4 className="font-semibold">1.Definitions</h4>
-                  <p className="p-3">For the purpose of these terms:</p>
-                  <ul className="list-disc pl-20 space-y-2 w-full lg:w-[676px]">
-
-                    <li>
-                      <strong>Platform</strong> refers to all Momentev websites, mobile apps, portals, dashboards, messaging systems, microservices, technology systems, and integrations.
-                    </li>
-                    <li>
-                      <strong>Client</strong> refers to any user seeking or booking event-related services.
-                    </li>
-                    <li>
-                      <strong>Vendor </strong>refers to event service providers using the Vendor Portal to manage       listings, receive bookings, and process payouts.
-                    </li>
-                    <li>
-                      <strong>Booking</strong> refers to any engagement between a Client and Vendor initiated through the Platform.
-                    </li>
-                    <li>
-                      <strong>Deposit</strong> refers to the initial payment required for certain payment models.
-                    </li>
-                    <li>
-                      <strong>Balance Payment </strong>refers to the remaining amount due for a Booking.
-                    </li>
-                    <li>
-                      <strong>Escrow</strong> refers to the financial holding system managed by Momentev <span>via Stripe Connect.</span>
-                    </li>
-                    <li>
-                      <strong>Vendor Ranking Score (VRS)</strong> refers to Momentev’s proprietary score calculated using reliability, reviews, volume, and other metrics.
-                    </li>
-                    <li>
-                      <strong>Service Catalog</strong> refers to the Vendor’s publicly displayed listing including pricing, availability, service description, and media.
-                    </li>
-                    <li>
-                      <strong>Open Request</strong> refers to a Client-initiated request for quotes on items or services not explicitly listed.
-                    </li>
-                    <li>
-                      <strong>Dispute Window or 48-Hour Window</strong> refers to the period during which a Client may dispute a completed service before payout release.
-                    </li>
-                  </ul>
-                </li>
-                <p><strong>2.About Momentev</strong></p>
-              
-                
-                
-               
-
-                
-              </ol>
+                  {section.items && (
+                    <ul className="space-y-2 ml-5">
+                      {section.items.map((item, itemIdx) => (
+                        <li
+                          key={itemIdx}
+                          className="text-sm md:text-base text-muted-foreground leading-relaxed list-disc"
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
