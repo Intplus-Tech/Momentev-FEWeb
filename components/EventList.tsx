@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getEvents } from "../../lib/actions/events";
+import { getEvents } from "../lib/actions/events";
 
 type Event = {
   id?: string;

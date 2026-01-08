@@ -1,141 +1,187 @@
 "use client";
 
 import { Home } from "lucide-react";
+import Link from "next/link";
+
+interface SectionItem {
+  label?: string;
+  text: string;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  content?: string;
+  items?: SectionItem[];
+}
+
+const sections: Section[] = [
+  {
+    id: "introduction",
+    title: "Introduction",
+    content:
+      "Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal information when you use our services. By using our platform, you agree to the terms outlined here.",
+  },
+  {
+    id: "information",
+    title: "Information We Collect",
+    items: [
+      {
+        label: "Personal Information",
+        text: "Name, email, phone number, and other information you provide when registering or contacting us.",
+      },
+      {
+        label: "Usage Data",
+        text: "How you interact with our services, including pages visited, features used, and device information.",
+      },
+      {
+        label: "Cookies & Tracking",
+        text: "We use cookies and similar technologies to improve your experience.",
+      },
+    ],
+  },
+  {
+    id: "usage",
+    title: "How We Use Your Information",
+    items: [
+      { text: "To provide, maintain, and improve our services." },
+      {
+        text: "To communicate with you about updates, promotions, and support.",
+      },
+      { text: "To personalize your experience and provide relevant content." },
+      { text: "To comply with legal obligations and prevent fraud." },
+    ],
+  },
+  {
+    id: "sharing",
+    title: "How We Share Your Information",
+    items: [
+      { text: "We do not sell your personal information." },
+      {
+        text: "We may share information with trusted third-party service providers who help us operate our services.",
+      },
+      {
+        text: "We may disclose information when required by law or to protect rights, safety, or property.",
+      },
+    ],
+  },
+  {
+    id: "security",
+    title: "Data Security",
+    content:
+      "We implement reasonable security measures to protect your data, but no method is 100% secure. We continuously work to improve our security practices.",
+  },
+  {
+    id: "rights",
+    title: "Your Rights",
+    items: [
+      { text: "Access, correct, or delete your personal data." },
+      { text: "Opt out of promotional communications." },
+      { text: "Contact us for questions about your privacy." },
+    ],
+  },
+  {
+    id: "changes",
+    title: "Changes to This Policy",
+    content:
+      "We may update this policy from time to time. Changes will be posted here with the updated effective date.",
+  },
+  {
+    id: "contact",
+    title: "Contact Us",
+    content:
+      "For any questions about this Privacy Policy, please contact us at support@momentev.com.",
+  },
+];
 
 export default function PrivacyHero() {
   return (
-    <section className="bg-gray-200 flex flex-col items-center min-h-screen overflow-x-hidden">
-      <div className="flex flex-col items-center py-20 px-4 sm:px-10 md:px-[140px] space-y-20 w-full">
-
+    <section className="bg-[#F0F0F0] min-h-screen py-16 md:py-24">
+      <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-10">
         {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 pb-5 text-sm sm:text-base w-full max-w-[1026px]">
-          <button><Home className="text-primary" /></button>
-          <p>/</p>
-          <button className="text-[#142141]">Search</button>
-          <p>/</p>
-          <button>Privacy Policy</button>
-        </div>
+        <nav className="flex items-center gap-2 text-sm">
+          <Link href="/" className="hover:text-primary transition-colors">
+            <Home className="w-4 h-4 text-primary" />
+          </Link>
+          <span className="text-muted-foreground">/</span>
+          <span className="font-semibold text-foreground">Privacy Policy</span>
+        </nav>
 
         {/* Content */}
-        <div className="w-full max-w-[1026px] space-y-5">
-          <div className="flex flex-col lg:flex-row lg:space-x-20 space-y-10 lg:space-y-0">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+          {/* Sidebar - Table of Contents */}
+          <aside className="lg:w-64 shrink-0">
+            <div className="lg:sticky lg:top-24 space-y-4">
+              <h2 className="font-semibold text-foreground">
+                Table of Contents
+              </h2>
+              <nav className="space-y-2">
+                {sections.map((section) => (
+                  <a
+                    key={section.id}
+                    href={`#${section.id}`}
+                    className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {section.title}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          </aside>
 
-            {/* Table of Content */}
-            <div className="space-y-5 w-full lg:w-auto">
-              <h2>Table of Content</h2>
-              <div>Introduction</div>
-              <div>Information we collect</div>
-              <div>How We Use Your Information</div>
-              <div>How we share your Information</div>
-              <div>Data Security</div>
-              <div>Your Rights</div>
-              <div>Changes to This Policy</div>
-              <div>Contact</div>
+          {/* Main Content */}
+          <div className="flex-1 space-y-10">
+            {/* Header */}
+            <div className="space-y-4">
+              <h1 className="text-2xl md:text-3xl lg:text-4xl font-semibold text-foreground">
+                Privacy Policy
+              </h1>
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+                At Momentev, we value your privacy and trust above all. This
+                policy explains how we collect, use, and safeguard the
+                information you share with us.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Last updated: January 2025
+              </p>
             </div>
 
-            {/* Main Policy Content */}
-            <div className="w-full lg:w-[726px] space-y-5">
-              <div className="space-y-5">
-                <h2 className="text-[#0F0202] text-[30px]">
-                  Privacy Policy - Momentev
-                </h2>
-                <p>
-                  At Momentev, we value your privacy and trust above all. This policy
-                  explains how we collect, use, and safeguard the information you
-                  share with us while using our platform. Our aim is to be transparent,
-                  so you can enjoy Momentev’s services with confidence and peace of mind.
-                </p>
-              </div>
-
-              <ol className="space-y-5">
-                <li>
-                  <h4 className="font-semibold">Introduction</h4>
-                  <p className="pl-15 space-y-2 w-full lg:w-[676px]">
-                    Your privacy is important to us. This Privacy Policy explains how we
-                    collect, use, and protect your personal information when you use our
-                    services. By using our platform, you agree to the terms outlined here.
-                  </p>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">Informations we collect</h4>
-                  <ul className="list-disc pl-20 space-y-2 w-full lg:w-[676px]">
-                    <li>
-                      <span className="underline">Personal Information:</span> Name,
-                      email, phone number, and other information you provide when
-                      registering or contacting us.
-                    </li>
-                    <li>
-                      <span className="underline">Usage Data:</span> How you interact
-                      with our services, including pages visited, features used, and
-                      device information.
-                    </li>
-                    <li>
-                      <span className="underline">Cookies & Tracking:</span> We use
-                      cookies and similar technologies to improve your experience.
-                    </li>
-                  </ul>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">How we use your Information</h4>
-                  <ul className="list-disc pl-20 space-y-2 w-full lg:w-[676px]">
-                    <li>To provide, maintain, and improve our services.</li>
-                    <li>To communicate with you about updates, promotions, and support.</li>
-                    <li>To personalize your experience and provide relevant content.</li>
-                    <li>To comply with legal obligations and prevent fraud.</li>
-                  </ul>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">How we share your Information</h4>
-                  <ul className="list-disc pl-20 space-y-2 w-full lg:w-[676px]">
-                    <li>We do not sell your personal information.</li>
-                    <li>
-                      We may share information with trusted third-party service providers
-                      who help us operate our services.
-                    </li>
-                    <li>
-                      We may disclose information when required by law or to protect
-                      rights, safety, or property.
-                    </li>
-                  </ul>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">Data Security</h4>
-                  <p className="pl-20">
-                    We implement reasonable security measures to protect your data, but
-                    no method is 100% secure.
-                  </p>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">Your Right</h4>
-                  <ul className="list-disc pl-20 space-y-2 w-full lg:w-[676px]">
-                    <li>Access, correct, or delete your personal data.</li>
-                    <li>Opt out of promotional communications.</li>
-                    <li>Contact us for questions about your privacy.</li>
-                  </ul>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">Changes To this Policy</h4>
-                  <p className="pl-20">
-                    We may update this policy from time to time. Changes will be posted
-                    here with the updated effective date.
-                  </p>
-                </li>
-
-                <li>
-                  <h4 className="font-semibold">Contact Us</h4>
-                  <p className="pl-20">
-                    For any questions about this Privacy Policy, please contact us.
-                  </p>
-                </li>
-              </ol>
+            {/* Sections */}
+            <div className="space-y-8">
+              {sections.map((section, idx) => (
+                <div
+                  key={section.id}
+                  id={section.id}
+                  className="scroll-mt-24 space-y-3"
+                >
+                  <h2 className="text-lg md:text-xl font-semibold text-foreground">
+                    {idx + 1}. {section.title}
+                  </h2>
+                  {section.content && (
+                    <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+                      {section.content}
+                    </p>
+                  )}
+                  {section.items && (
+                    <ul className="space-y-2 ml-5">
+                      {section.items.map((item, itemIdx) => (
+                        <li
+                          key={itemIdx}
+                          className="text-sm md:text-base text-muted-foreground leading-relaxed list-disc"
+                        >
+                          {item.label && (
+                            <span className="font-medium text-foreground">
+                              {item.label}:{" "}
+                            </span>
+                          )}
+                          {item.text}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ))}
             </div>
-
           </div>
         </div>
       </div>

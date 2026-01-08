@@ -1,127 +1,143 @@
 "use client";
 
-import { useState } from "react";
-import {
-  MapPin,
-  BriefcaseBusiness,
-  Star,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { MapPin, BriefcaseBusiness, Star } from "lucide-react";
 import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 export default function NewMomentev() {
   const vendors = [
     {
-      img: "/Makeup-img.png",
+      img: "https://images.pexels.com/photos/3171815/pexels-photo-3171815.jpeg?auto=compress&cs=tinysrgb&w=600",
       name: "The Glow Loft",
       location: "London, Oxford",
       profession: "Makeup Artist",
       rating: "5.0 [1,142]",
     },
     {
-      img: "/Caterer-img.png",
+      img: "https://images.pexels.com/photos/1190298/pexels-photo-1190298.jpeg?auto=compress&cs=tinysrgb&w=600",
       name: "Elite Catering Co.",
-      location: "Manchester, spinningfield",
-      profession: "caterers",
+      location: "Manchester, Spinningfield",
+      profession: "Caterers",
       rating: "5.0 [856]",
     },
     {
-      img: "/Planner-img.png",
+      img: "https://images.pexels.com/photos/265856/pexels-photo-265856.jpeg?auto=compress&cs=tinysrgb&w=600",
       name: "Harmony Weddings",
       location: "Birmingham, Broad Street",
-      profession: "Caterer",
+      profession: "Wedding Planner",
       rating: "5.0 [1,025]",
     },
     {
-      img: "/sound-img.png",
+      img: "https://images.pexels.com/photos/1047442/pexels-photo-1047442.jpeg?auto=compress&cs=tinysrgb&w=600",
       name: "City Sound & Lights",
       location: "Liverpool, Baltic Triangle",
-      profession: "City Sound & Lighting",
+      profession: "Sound & Lighting",
       rating: "5.0 [732]",
+    },
+    {
+      img: "https://images.pexels.com/photos/2306203/pexels-photo-2306203.jpeg?auto=compress&cs=tinysrgb&w=600",
+      name: "Creative Decor Studio",
+      location: "Leeds, Headingley",
+      profession: "Event Decorator",
+      rating: "4.9 [615]",
+    },
+    {
+      img: "https://images.pexels.com/photos/3585089/pexels-photo-3585089.jpeg?auto=compress&cs=tinysrgb&w=600",
+      name: "Perfect Moments DJ",
+      location: "Newcastle, Quayside",
+      profession: "DJ Services",
+      rating: "5.0 [892]",
+    },
+    {
+      img: "https://images.pexels.com/photos/1395964/pexels-photo-1395964.jpeg?auto=compress&cs=tinysrgb&w=600",
+      name: "Artisan Bartenders",
+      location: "Brighton, North Laine",
+      profession: "Bar Services",
+      rating: "4.8 [543]",
+    },
+    {
+      img: "https://images.pexels.com/photos/1444442/pexels-photo-1444442.jpeg?auto=compress&cs=tinysrgb&w=600",
+      name: "Signature Transport",
+      location: "Oxford, City Centre",
+      profession: "Transport Services",
+      rating: "5.0 [721]",
     },
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  const CARD_WIDTH = 258; // image width
-  const GAP = 20; // gap-5
-  const MOVE_X = CARD_WIDTH + GAP;
-
-  const handleNext = () => {
-    setCurrentIndex((prev) =>
-      prev < vendors.length - 1 ? prev + 1 : prev
-    );
-  };
-
-  const handlePrev = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : prev));
-  };
-
   return (
-    <section className="bg-white w-full">
-      <div className="max-w-6xl mx-auto px-6 md:px-0 py-10 flex flex-col items-center space-y-6">
-
-        {/* Title + arrows */}
-        <div className="w-full max-w-5xl md:max-w-none flex items-center justify-between">
-          <p className="font-semibold text-lg text-foreground">New To Momentev</p>
-
-          <div className="flex items-center gap-2 px-10">
-            <ChevronLeft
-              onClick={handlePrev}
-              className="cursor-pointer border-2 rounded-2xl"
-            />
-            <ChevronRight
-              onClick={handleNext}
-              className="cursor-pointer border-2 rounded-2xl"
-            />
-          </div>
+    <section className="bg-white">
+      <div className="max-w-8xl mx-auto px-6 md:px-0 py-10 flex flex-col items-center space-y-6 relative">
+        {/* Title */}
+        <div className="w-full flex items-center justify-between max-w-6xl md:px-10 xl:px-5">
+          <p className="font-semibold text-lg text-foreground">
+            New To Momentev
+          </p>
         </div>
 
-        {/* Cards container — UI unchanged */}
-        {/* Cards container — UI unchanged */}
-        <div className="overflow-hidden w-full">
-          <div
-            className="flex flex-nowrap md:flex-wrap justify-center gap-5 transition-transform duration-500 ease-in-out"
-            style={{
-              transform: `translateX(-${currentIndex * MOVE_X}px)`,
+        {/* Carousel */}
+        <div className="w-full">
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
             }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+              }),
+            ]}
+            className="w-full md:px-10 xl:px-30"
           >
-            {vendors.map((vendor, index) => (
-              <div key={index} className="relative w-58 space-y-3 shrink-0">
-                <Image
-                  src={vendor.img}
-                  alt={vendor.name}
-                  width={258}
-                  height={263}
-                  className="max-w-full h-auto rounded-2xl"
-                />
+            <CarouselContent className="-ml-5">
+              {vendors.map((vendor, index) => (
+                <CarouselItem key={index} className="pl-5 basis-auto">
+                  <div className="w-50 xl:w-64.5 shrink-0">
+                    <div className="relative w-50 xl:w-64.5 h-50 xl:h-64.5 rounded-2xl overflow-hidden mb-3">
+                      <Image
+                        src={vendor.img}
+                        alt={vendor.name}
+                        fill
+                        className="object-cover"
+                      />
 
-                <div className="absolute bottom-25 right-3 bg-white/90 rounded-full px-3 py-1 flex items-center gap-1 shadow-md">
-                  <Star className="w-4 h-4 text-black" />
-                  <span className="text-sm font-medium text-black">
-                    {vendor.rating}
-                  </span>
-                </div>
+                      <div className="absolute bottom-3 right-3 bg-white/90 rounded-full px-3 py-1 flex items-center gap-1 shadow-md">
+                        <Star className="w-4 h-4 text-black" />
+                        <span className="text-sm font-medium text-black">
+                          {vendor.rating}
+                        </span>
+                      </div>
+                    </div>
 
-                <p className="font-semibold text-base text-foreground">
-                  {vendor.name}
-                </p>
+                    <p className="font-semibold text-base text-foreground mb-2">
+                      {vendor.name}
+                    </p>
 
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  <p>{vendor.location}</p>
-                </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+                      <MapPin className="w-4 h-4" />
+                      <p>{vendor.location}</p>
+                    </div>
 
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <BriefcaseBusiness className="w-4 h-4" />
-                  <p>{vendor.profession}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <BriefcaseBusiness className="w-4 h-4" />
+                      <p>{vendor.profession}</p>
+                    </div>
+                  </div>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <div className="flex items-center gap-4 absolute -top-10 right-10 xl:right-44">
+              <CarouselPrevious />
+              <CarouselNext />
+            </div>
+          </Carousel>
         </div>
-
       </div>
     </section>
   );

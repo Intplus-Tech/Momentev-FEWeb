@@ -5,14 +5,14 @@ import Logo from "@/components/brand/logo";
 import { Search, MapPin, CircleUserIcon, X } from "lucide-react";
 import { Button } from "@base-ui/react";
 
-export default function AboutNav() {
+export default function HomeHeader() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <section className="bg-[#FFFFFF]">
-      <div className="relative flex justify-between items-center px-4 sm:px-10 md:px-20 py-5 md:flex-wrap gap-4">
+    <section className="bg-background fixed w-full shadow-md">
+      <div className="relative container mx-auto flex justify-between items-center px-4 sm:px-10 md:px-20 py-5 md:flex-wrap gap-4">
         {/* Logo */}
-        <div className="flex-shrink-0 z-20">
+        <div className="shrink-0 z-20">
           <Logo />
         </div>
 
@@ -22,15 +22,16 @@ export default function AboutNav() {
           onClick={() => setIsOpen(!isOpen)}
           aria-label="Toggle menu"
         >
-          {isOpen ? <X size={28} /> : <div className="space-y-1">
-            <span className="block w-6 h-0.5 bg-black"></span>
-            <span className="block w-6 h-0.5 bg-black"></span>
-            <span className="block w-6 h-0.5 bg-black"></span>
-          </div>}
+          {isOpen ? (
+            <X size={28} />
+          ) : (
+            <div className="space-y-1">
+              <span className="block w-6 h-0.5 bg-black"></span>
+              <span className="block w-6 h-0.5 bg-black"></span>
+              <span className="block w-6 h-0.5 bg-black"></span>
+            </div>
+          )}
         </Button>
-
-        
-
 
         {/* Desktop content — keep original UI, hidden on mobile */}
         <div className="hidden md:flex flex-1 items-center justify-center gap-4">
@@ -65,8 +66,9 @@ export default function AboutNav() {
 
         {/* Mobile sidebar */}
         <div
-          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-20 transform transition-transform duration-300 md:hidden ${isOpen ? "translate-x-0" : "-translate-x-full"
-            } flex flex-col p-6 space-y-6`}
+          className={`fixed top-0 left-0 h-full w-64 bg-white shadow-lg z-20 transform transition-transform duration-300 md:hidden ${
+            isOpen ? "translate-x-0" : "-translate-x-full"
+          } flex flex-col p-6 space-y-6`}
         >
           {/* Search */}
           <div className="flex items-center gap-2 w-full rounded-lg px-3 py-2 bg-white border border-gray-200">
@@ -94,7 +96,6 @@ export default function AboutNav() {
             <CircleUserIcon /> Sign in/Sign up
           </Button>
         </div>
-
       </div>
     </section>
   );

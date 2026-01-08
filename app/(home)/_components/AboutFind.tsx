@@ -3,47 +3,37 @@ import Image from "next/image";
 
 export default function AboutFind() {
   return (
-    <section className="px-4 sm:px-8 md:px-12 lg:px-0">
-      {/* TRUE CENTER WRAPPER */}
-      <div className="mx-auto lg:max-w-[1200px]">
-        <div
-          className="
-            flex flex-col-reverse lg:flex-row
-            items-center
-            justify-center
-            py-8 sm:py-12 md:py-16 lg:py-20
-            gap-6 sm:gap-8 lg:gap-10
-          "
-        >
+    <section className="bg-white py-12 md:py-20">
+      <div className="max-w-6xl mx-auto px-4 md:px-8">
+        <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-10 lg:gap-16">
           {/* Text */}
-          <div
-            className="
-              space-y-4 sm:space-y-5
-              w-full max-w-[620px] lg:w-[582px]
-              text-center lg:text-left
-            "
-          >
-            <h2 className="text-foreground text-[20px] font-semibold">
+          <div className="space-y-5 w-full lg:w-1/2 text-center lg:text-left">
+            <h2 className="text-xl md:text-2xl font-semibold text-foreground">
               Find the Right People, Fast
             </h2>
 
-            <p className="text-[14px] text-muted-foreground font-medium leading-relaxed">
-              At Momentev, we’re redefining how people find event services. No more relying on scattered referrals or scrolling endlessly through social media.
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+              At Momentev, we&apos;re redefining how people find event services.
+              No more relying on scattered referrals or scrolling endlessly
+              through social media.
             </p>
 
-            <p className="text-[14px] text-muted-foreground leading-relaxed">
-              Our platform brings together verified professionals across every category — making it easier for you to search by location, discover trusted experts, and connect quickly with the right people for your event. We’re building a simple, reliable space where planning becomes clearer, faster, and far less stressful.
+            <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
+              Our platform brings together verified professionals across every
+              category — making it easier for you to search by location,
+              discover trusted experts, and connect quickly with the right
+              people for your event.
             </p>
           </div>
 
           {/* Image */}
-          <div className="w-full flex justify-center lg:block">
+          <div className="w-full lg:w-1/2 flex justify-center">
             <Image
               src="/aboutfind-img.png"
-              alt="About Find"
+              alt="Find the Right People"
               width={517}
               height={357}
-              className="max-w-full h-auto"
+              className="max-w-full h-auto rounded-lg"
             />
           </div>
         </div>
