@@ -21,14 +21,14 @@ export default function AboutHero() {
         <div className="space-y-5 text-center sm:text-left w-full max-w-full lg:max-w-none">
           {/* Headline */}
           <div className="max-w-full sm:max-w-[378px]">
-            <p className="text-[#0F0202] text-[24px] sm:text-[30px] font-semibold">
+            <p className="text-foreground text-[24px] sm:text-[30px] font-semibold">
               Your Moments, Made Effortlessly Simple
             </p>
           </div>
 
           {/* Description */}
           <div className="max-w-full sm:max-w-[720px] h-auto sm:h-[90px]">
-            <p className="text-[16px] sm:text-[20px]">
+            <p className="text-[16px] sm:text-[20px] text-muted-foreground">
               Discover trusted event service providers around you — from bakers to MCs and decorators — all in one seamless platform designed to take the stress out of planning your perfect day.
             </p>
           </div>

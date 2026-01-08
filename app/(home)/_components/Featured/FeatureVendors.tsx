@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { MapPin, BriefcaseBusiness, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  MapPin,
+  BriefcaseBusiness,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import Image from "next/image";
 
 export default function FeaturedVendors() {
@@ -36,45 +42,35 @@ export default function FeaturedVendors() {
     },
   ];
 
-  const extendedVendors = [...vendors, ...vendors];
+  const duplicated = [...vendors, ...vendors];
 
-  const CARD_WIDTH = 278;
-  const SIDE_GUTTER = 48; // matches px-12
-  const TOTAL_WIDTH = vendors.length * CARD_WIDTH + SIDE_GUTTER;
-
+  const CARD_WIDTH = 278; // card + gap
+  const TOTAL_SET_WIDTH = vendors.length * CARD_WIDTH;
 
   const [offset, setOffset] = useState(0);
   const [direction, setDirection] = useState<"left" | "right">("right");
-  const [isVisible, setIsVisible] = useState(false);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Detect when section enters viewport
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsVisible(entry.isIntersecting),
-      { threshold: 0.3 }
-    );
-
-    if (containerRef.current) observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Auto-scroll when visible
-  useEffect(() => {
-    if (!isVisible) return;
-
     const interval = setInterval(() => {
       setOffset((prev) => {
-        const next = direction === "right" ? prev - 1 : prev + 1;
-        if (Math.abs(next) >= TOTAL_WIDTH) return 0;
-        if (next > 0) return -TOTAL_WIDTH;
+        let next = direction === "right" ? prev - 1 : prev + 1;
+
+        // Seamless looping logic
+        if (next <= -TOTAL_SET_WIDTH) {
+          next += TOTAL_SET_WIDTH;
+        }
+        if (next >= 0) {
+          next -= TOTAL_SET_WIDTH;
+        }
+
         return next;
       });
     }, 20);
 
     return () => clearInterval(interval);
-  }, [isVisible, direction, TOTAL_WIDTH]);
+  }, [direction, TOTAL_SET_WIDTH]);
 
   return (
     <section className="bg-white" ref={containerRef}>
@@ -85,8 +81,14 @@ export default function FeaturedVendors() {
           <p className="font-semibold text-lg">Featured Vendors</p>
 
           <div className="flex items-center gap-2">
-            <ChevronLeft onClick={() => setDirection("left")} className="cursor-pointer border-2 rounded-2xl" />
-            <ChevronRight onClick={() => setDirection("right")} className="cursor-pointer border-2 rounded-2xl" />
+            <ChevronLeft
+              onClick={() => setDirection("left")}
+              className="cursor-pointer border-2 rounded-2xl"
+            />
+            <ChevronRight
+              onClick={() => setDirection("right")}
+              className="cursor-pointer border-2 rounded-2xl"
+            />
           </div>
         </div>
 
@@ -94,9 +96,12 @@ export default function FeaturedVendors() {
         <div className="w-full overflow-hidden px-6 md:px-12">
           <div
             className="flex gap-5"
-            style={{ transform: `translateX(${offset}px)` }}
+            style={{
+              transform: `translateX(${offset}px)`,
+              willChange: "transform",
+            }}
           >
-            {extendedVendors.map((vendor, index) => (
+            {duplicated.map((vendor, index) => (
               <div key={index} className="relative w-58 space-y-3 shrink-0">
                 <Image
                   src={vendor.img}
@@ -108,18 +113,22 @@ export default function FeaturedVendors() {
 
                 <div className="absolute bottom-25 right-3 bg-white/90 rounded-full px-3 py-1 flex items-center gap-1 shadow-md">
                   <Star className="w-4 h-4 text-black" />
-                  <span className="text-sm font-medium text-black">{vendor.rating}</span>
+                  <span className="text-sm font-medium text-black">
+                    {vendor.rating}
+                  </span>
                 </div>
 
-                <p className="font-semibold text-base text-[#142141]">{vendor.name}</p>
+                <p className="font-semibold text-base text-foreground">
+                  {vendor.name}
+                </p>
 
-                <div className="flex items-center gap-1 text-sm text-gray-700">
-                  <MapPin className="w-4 h-4" />
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <MapPin className="" />
                   <p>{vendor.location}</p>
                 </div>
 
-                <div className="flex items-center gap-1 text-sm text-gray-700">
-                  <BriefcaseBusiness className="w-4 h-4" />
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <BriefcaseBusiness className="" />
                   <p>{vendor.profession}</p>
                 </div>
               </div>
