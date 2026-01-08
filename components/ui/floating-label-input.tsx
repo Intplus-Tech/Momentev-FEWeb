@@ -45,7 +45,7 @@ export const FloatingLabelInput = React.forwardRef<
         />
         <label
           htmlFor={inputId}
-          className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-2  bg-background px-1 text-base text-muted-foreground transition-all duration-200 peer-focus:top-[-1] peer-focus:text-xs peer-focus:text-primary peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-muted-foreground peer-not-placeholder-shown:top-2.5 peer-not-placeholder-shown:text-xs"
+          className="pointer-events-none absolute left-4 top-2.5 z-10 -translate-y-4 bg-background px-1 text-xs text-muted-foreground transition-all duration-200 peer-placeholder-shown:top-2/3 peer-placeholder-shown:text-sm peer-focus:top-2.5 peer-focus:text-xs peer-focus:text-primary"
         >
           {label}
         </label>

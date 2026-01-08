@@ -20,17 +20,15 @@ import {
 } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
 import { GoogleIcon } from "@/components/icons/google-icon";
-
-const loginSchema = z.object({
-  email: z.email("Please use a valid email address."),
-  password: z.string().min(1, "Password is required."),
-  remember: z.boolean(),
-});
+import { loginSchema } from "@/validation/auth";
+import { loginClient } from "@/lib/actions/auth/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function ClientLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -41,8 +39,19 @@ export function ClientLoginForm() {
   });
 
   async function handleSubmit(values: LoginFormValues) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    console.log("client-login", values);
+    setServerError(null);
+    setSuccessMessage(null);
+
+    try {
+      await loginClient({
+        email: values.email,
+        password: values.password,
+      });
+      setSuccessMessage("Login successful.");
+      form.reset();
+    } catch (error) {
+      setServerError((error as Error).message);
+    }
   }
 
   const isSubmitting = form.formState.isSubmitting;
@@ -55,6 +64,18 @@ export function ClientLoginForm() {
           Please login to continue to your account.
         </p>
       </div>
+
+      {serverError && (
+        <p className="mt-4 rounded-md bg-rose-100 px-4 py-2 text-sm text-rose-700">
+          {serverError}
+        </p>
+      )}
+
+      {successMessage && (
+        <p className="mt-4 rounded-md bg-green-100 px-4 py-2 text-sm text-green-700">
+          {successMessage}
+        </p>
+      )}
 
       <Form {...form}>
         <form

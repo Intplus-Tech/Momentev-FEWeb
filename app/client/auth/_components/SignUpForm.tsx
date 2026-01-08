@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import { registerClient } from "@/lib/actions/auth/auth";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -19,29 +20,46 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-
-const signUpSchema = z.object({
-  fullName: z.string().min(2, "Please share your name."),
-  email: z.email("Use a valid email address."),
-  password: z.string().min(8, "Password must be at least 8 characters."),
-});
+import { signUpSchema } from "@/validation/auth";
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
 
 export function ClientSignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      fullName: "",
+      firstName: "",
+      lastName: "",
       email: "",
       password: "",
     },
   });
 
   async function handleSubmit(values: SignUpFormValues) {
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    console.log("client-sign-up", values);
+    setServerError(null);
+    setSuccessMessage(null);
+
+    try {
+      await registerClient({
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        password: values.password,
+        role: "CUSTOMER",
+      });
+
+      setSuccessMessage(
+        "Account created. Check your email for the verification link."
+      );
+      form.reset();
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to complete sign up.";
+      setServerError(message);
+    }
   }
 
   const isSubmitting = form.formState.isSubmitting;
@@ -55,6 +73,18 @@ export function ClientSignUpForm() {
         </p>
       </div>
 
+      {serverError ? (
+        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {serverError}
+        </p>
+      ) : null}
+
+      {successMessage ? (
+        <p className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+          {successMessage}
+        </p>
+      ) : null}
+
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
@@ -62,13 +92,32 @@ export function ClientSignUpForm() {
         >
           <FormField
             control={form.control}
-            name="fullName"
+            name="firstName"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
                   <FloatingLabelInput
-                    autoComplete="name"
-                    label="Full Name"
+                    id="firstName"
+                    autoComplete="given-name"
+                    label="First Name"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <FloatingLabelInput
+                    id="lastName"
+                    autoComplete="family-name"
+                    label="Last Name"
                     {...field}
                   />
                 </FormControl>
@@ -84,6 +133,7 @@ export function ClientSignUpForm() {
               <FormItem>
                 <FormControl>
                   <FloatingLabelInput
+                    id="email"
                     type="email"
                     inputMode="email"
                     autoComplete="email"
@@ -103,6 +153,7 @@ export function ClientSignUpForm() {
               <FormItem>
                 <FormControl>
                   <FloatingLabelInput
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     label="Password"
@@ -133,7 +184,7 @@ export function ClientSignUpForm() {
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? (
               <span className="flex items-center gap-2">
-                <Spinner /> Creating workspace...
+                <Spinner /> Creating account...
               </span>
             ) : (
               "Create account"
