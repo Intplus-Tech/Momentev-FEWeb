@@ -21,7 +21,11 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-import { register, resendVerificationEmail } from "@/lib/actions/auth/auth";
+import {
+  getGoogleAuthUrl,
+  register,
+  resendVerificationEmail,
+} from "@/lib/actions/auth/auth";
 import { signUpSchema } from "@/validation/auth";
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
@@ -34,6 +38,7 @@ export default function SignUpForm() {
     "idle" | "loading" | "sent" | "error"
   >("idle");
   const [lastEmail, setLastEmail] = useState<string>("");
+  const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
@@ -49,13 +54,18 @@ export default function SignUpForm() {
     setSuccessMessage(null);
 
     try {
-      await register({
+      const result = await register({
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
         password: values.password,
         role: "VENDOR",
       });
+
+      if (!result.success) {
+        setServerError(result.error || "Unable to complete sign up.");
+        return;
+      }
 
       setSuccessMessage(
         "Account created. Check your email for the verification link."
@@ -76,7 +86,14 @@ export default function SignUpForm() {
     setResendStatus("loading");
     setServerError(null);
     try {
-      await resendVerificationEmail({ email: lastEmail });
+      const result = await resendVerificationEmail({ email: lastEmail });
+
+      if (!result.success) {
+        setServerError(result.error || "Unable to resend verification email.");
+        setResendStatus("error");
+        return;
+      }
+
       setResendStatus("sent");
     } catch (error) {
       const message =
@@ -85,6 +102,23 @@ export default function SignUpForm() {
           : "Unable to resend verification email.";
       setServerError(message);
       setResendStatus("error");
+    }
+  }
+
+  async function handleGoogle() {
+    setServerError(null);
+    setGoogleLoading(true);
+    try {
+      const { url } = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to start Google sign-in.";
+      setServerError(message);
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -253,8 +287,22 @@ export default function SignUpForm() {
             <Separator className="flex-1" />
           </div>
 
-          <Button type="button" variant="outline" className="w-full gap-2">
-            <GoogleIcon /> Continue with Google
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner className="h-4 w-4" /> Starting...
+              </span>
+            ) : (
+              <>
+                <GoogleIcon /> Continue with Google
+              </>
+            )}
           </Button>
         </form>
       </Form>

@@ -22,7 +22,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { loginSchema } from "@/validation/auth";
-import { login } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
@@ -31,6 +31,7 @@ export function ClientLoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -45,19 +46,44 @@ export function ClientLoginForm() {
     setSuccessMessage(null);
 
     try {
-      await login({
+      const result = await login({
         email: values.email,
         password: values.password,
       });
+
+      if (!result.success) {
+        setServerError(result.error || "Unable to log in.");
+        return;
+      }
+
       setSuccessMessage("Login successful.");
       form.reset();
       router.push("/client/dashboard");
     } catch (error) {
-      setServerError((error as Error).message);
+      const message =
+        error instanceof Error ? error.message : "Unable to log in.";
+      setServerError(message);
     }
   }
 
   const isSubmitting = form.formState.isSubmitting;
+
+  async function handleGoogle() {
+    setServerError(null);
+    setGoogleLoading(true);
+    try {
+      const { url } = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to start Google sign-in.";
+      setServerError(message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-xl">
@@ -175,8 +201,22 @@ export function ClientLoginForm() {
             )}
           </Button>
 
-          <Button type="button" variant="outline" className="w-full gap-2">
-            <GoogleIcon /> Sign in with Google
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner className="h-4 w-4" /> Starting...
+              </span>
+            ) : (
+              <>
+                <GoogleIcon /> Sign in with Google
+              </>
+            )}
           </Button>
         </form>
       </Form>
