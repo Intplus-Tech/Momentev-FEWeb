@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Search } from "lucide-react";
 import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/actions/auth/auth";
 
 export const VendorSidebar = () => {
   const pathname = usePathname();
@@ -90,13 +91,16 @@ export const VendorSidebar = () => {
                   asChild
                   className="rounded-2xl px-4 py-3 text-sm font-medium hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <Button
-                    variant="ghost"
-                    className="flex w-full justify-start gap-3 text-destructive"
-                  >
-                    <LogOut className="size-4" />
-                    <span>Logout</span>
-                  </Button>
+                  <form action={() => logout("/vendor/auth/log-in")}>
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      className="flex w-full justify-start gap-3 text-destructive"
+                    >
+                      <LogOut className="size-4" />
+                      <span>Logout</span>
+                    </Button>
+                  </form>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
