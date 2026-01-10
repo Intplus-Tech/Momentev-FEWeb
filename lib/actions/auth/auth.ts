@@ -1,5 +1,9 @@
 'use server';
 
+import { redirect } from 'next/navigation';
+import { setAuthCookies, clearAuthCookies, getRefreshToken, refreshAccessToken } from '@/lib/auth/tokens';
+import type { LoginResponse } from '@/lib/auth/types';
+
 export type RegisterInput = {
   firstName: string;
   lastName: string;
@@ -47,6 +51,7 @@ export async function register(input: RegisterInput) {
 export type LoginInput = {
   email: string;
   password: string;
+  remember?: boolean;
 };
 
 export async function login(input: LoginInput) {
@@ -60,11 +65,14 @@ export async function login(input: LoginInput) {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(input),
+      body: JSON.stringify({
+        email: input.email,
+        password: input.password,
+      }),
       cache: 'no-store',
     });
 
-    const data = await response.json().catch(() => null);
+    const data = await response.json().catch(() => null) as LoginResponse | null;
 
     if (!response.ok) {
       if (response.status === 429) {
@@ -72,6 +80,14 @@ export async function login(input: LoginInput) {
       }
       const message = (data as { message?: string } | null)?.message;
       return { success: false, error: message || `Failed to login (${response.status})` };
+    }
+
+    // Store tokens in HTTP-only cookies
+    const token = data?.data?.token;
+    const refreshToken = data?.data?.refreshToken;
+
+    if (token && refreshToken) {
+      await setAuthCookies(token, refreshToken, input.remember ?? false);
     }
 
     return { success: true, data };
@@ -140,4 +156,25 @@ export async function getGoogleAuthUrl() {
   }
 
   return { url };
+}
+
+/**
+ * Logout - clears auth cookies and redirects to login page
+ */
+export async function logout(redirectTo: string = '/client/auth/log-in') {
+  await clearAuthCookies();
+  redirect(redirectTo);
+}
+
+/**
+ * Try to refresh the access token using the stored refresh token
+ */
+export async function tryRefreshToken() {
+  const refreshTokenValue = await getRefreshToken();
+
+  if (!refreshTokenValue) {
+    return { success: false, error: 'No refresh token available' };
+  }
+
+  return refreshAccessToken(refreshTokenValue);
 }
