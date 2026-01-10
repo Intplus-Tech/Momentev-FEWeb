@@ -29,6 +29,9 @@ export async function register(input: RegisterInput) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return { success: false, error: 'Too many requests. Please wait a moment and try again.' };
+      }
       const message = (data as { message?: string } | null)?.message;
       return { success: false, error: message || `Failed to register (${response.status})` };
     }
@@ -64,6 +67,9 @@ export async function login(input: LoginInput) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return { success: false, error: 'Too many login attempts. Please wait a moment and try again.' };
+      }
       const message = (data as { message?: string } | null)?.message;
       return { success: false, error: message || `Failed to login (${response.status})` };
     }
@@ -97,6 +103,9 @@ export async function resendVerificationEmail(input: ResendVerificationInput) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      if (response.status === 429) {
+        return { success: false, error: 'Too many requests. Please wait a moment and try again.' };
+      }
       const message = (data as { message?: string } | null)?.message;
       return { success: false, error: message || `Failed to resend verification email (${response.status})` };
     }
