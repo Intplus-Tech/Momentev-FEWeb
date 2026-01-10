@@ -51,6 +51,7 @@ export function LoginForm() {
       const result = await login({
         email: values.email,
         password: values.password,
+        remember: values.remember,
       });
 
       if (!result.success) {
