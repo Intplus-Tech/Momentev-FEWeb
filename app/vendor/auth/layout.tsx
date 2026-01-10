@@ -5,8 +5,7 @@ export default function VendorAuthLayout({
 }) {
   return (
     <>
-      {/* <main className="bg-[url(/assets/images/sign-in-bg.png)] bg-cover bg-center min-h-screen flex items-center justify-center"> */}
-      <main>{children}</main>
+      <main className="h-screen overflow-hidden">{children}</main>
     </>
   );
 }

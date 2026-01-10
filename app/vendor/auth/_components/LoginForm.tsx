@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { type z } from "zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2 } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -21,16 +23,17 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-
-const loginSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
-  remember: z.boolean(),
-});
+import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
+import { loginSchema } from "@/validation/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -41,11 +44,48 @@ export function LoginForm() {
   });
 
   async function handleSubmit(values: LoginFormValues) {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    console.log("login", values);
+    setServerError(null);
+    setSuccessMessage(null);
+
+    try {
+      const result = await login({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (!result.success) {
+        setServerError(result.error || "Unable to log in.");
+        return;
+      }
+
+      setSuccessMessage("Login successful.");
+      form.reset();
+      router.push("/vendor/dashboard");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to log in right now.";
+      setServerError(message);
+    }
   }
 
   const isSubmitting = form.formState.isSubmitting;
+
+  async function handleGoogle() {
+    setServerError(null);
+    setGoogleLoading(true);
+    try {
+      const { url } = await getGoogleAuthUrl();
+      window.location.href = url;
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unable to start Google sign-in.";
+      setServerError(message);
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-xl pb-6">
@@ -58,6 +98,18 @@ export function LoginForm() {
           </p>
         </div>
       </div>
+
+      {serverError ? (
+        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {serverError}
+        </p>
+      ) : null}
+
+      {successMessage ? (
+        <p className="my-2 w-fit mx-auto rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {successMessage}
+        </p>
+      ) : null}
 
       <Form {...form}>
         <form
@@ -90,9 +142,25 @@ export function LoginForm() {
               <FormItem>
                 <FormControl>
                   <FloatingLabelInput
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
                     label="Password"
+                    suffix={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="text-muted-foreground"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    }
                     {...field}
                   />
                 </FormControl>
@@ -139,8 +207,22 @@ export function LoginForm() {
             )}
           </Button>
 
-          <Button type="button" variant="outline" className="w-full gap-2">
-            <GoogleIcon /> Sign in with Google
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full gap-2"
+            onClick={handleGoogle}
+            disabled={googleLoading}
+          >
+            {googleLoading ? (
+              <span className="flex items-center gap-2">
+                <Spinner className="h-4 w-4" /> Starting...
+              </span>
+            ) : (
+              <>
+                <GoogleIcon /> Sign in with Google
+              </>
+            )}
           </Button>
         </form>
       </Form>
