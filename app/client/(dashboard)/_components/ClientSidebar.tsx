@@ -22,6 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
+import { logout } from "@/lib/actions/auth/auth";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
@@ -97,13 +98,16 @@ export const ClientSidebar = () => {
                   asChild
                   className="rounded-2xl px-4 py-3 text-sm font-medium hover:bg-muted"
                 >
-                  <Button
-                    variant="ghost"
-                    className="flex w-full justify-start gap-3 text-muted-foreground"
-                  >
-                    <LogOut className="size-4" />
-                    <span>Logout</span>
-                  </Button>
+                  <form action={() => logout("/client/auth/log-in")}>
+                    <Button
+                      type="submit"
+                      variant="ghost"
+                      className="flex w-full justify-start gap-3 text-muted-foreground"
+                    >
+                      <LogOut className="size-4" />
+                      <span>Logout</span>
+                    </Button>
+                  </form>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
