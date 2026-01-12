@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import AboutNav from "./_components/HomeHeader";
 import Footer from "./_components/Footer";
+import HomeHeader from "./_components/HomeHeader";
 
 export default function HomeLayout({
   children,
@@ -14,7 +14,7 @@ export default function HomeLayout({
   return (
     <div>
       <div className="font-inter min-h-screen overflow-hidden">
-        {!isHome && <AboutNav />}
+        {!isHome && <HomeHeader />}
         {children}
         <Footer />
       </div>
