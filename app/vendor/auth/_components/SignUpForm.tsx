@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { type z } from "zod";
+import { email, type z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -42,8 +42,7 @@ export default function SignUpForm() {
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      firstName: "",
-      lastName: "",
+      companyName: "",
       email: "",
       password: "",
     },
@@ -55,8 +54,8 @@ export default function SignUpForm() {
 
     try {
       const result = await register({
-        firstName: values.firstName,
-        lastName: values.lastName,
+        firstName: values.companyName,
+        lastName: values.companyName,
         email: values.email,
         password: values.password,
         role: "VENDOR",
@@ -125,14 +124,14 @@ export default function SignUpForm() {
   const isSubmitting = form.formState.isSubmitting;
 
   return (
-    <div className="mx-auto w-full max-w-xl">
-      <Logo className="hidden xl:block" />
-      <div className="flex flex-col gap-y-6 text-center p-4">
+    <div className="mx-auto w-full xl:min-w-sm ">
+      <Logo className="hidden xl:block mb-4" />
+      <div className="flex flex-col gap-y-8 text-center p-4">
         <div>
           <h2 className="text-xl">Get Started with Momentev</h2>
           <p className="text-sm text-muted-foreground">
             Not a vendor?
-            <Button variant={"link"} asChild>
+            <Button variant={"link"} className="underline" asChild>
               <Link href="/client/auth/log-in">Sign in here</Link>
             </Button>
           </p>
@@ -177,43 +176,24 @@ export default function SignUpForm() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-2 xl:px-4 sm:px-0 md:px-10"
+          className="mx-auto w-full space-y-4 xl:px-4 sm:px-0 md:px-10"
         >
-          <div className="flex items-center gap-2">
-            <FormField
-              control={form.control}
-              name="firstName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <FloatingLabelInput
-                      autoComplete="given-name"
-                      label="First Name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="lastName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <FloatingLabelInput
-                      autoComplete="family-name"
-                      label="Last Name"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <FloatingLabelInput
+                    autoComplete="given-name"
+                    label="Company Name"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -279,7 +259,7 @@ export default function SignUpForm() {
             )}
           </Button>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mt-2">
             <Separator className="flex-1" />
             <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
               or
@@ -290,7 +270,7 @@ export default function SignUpForm() {
           <Button
             type="button"
             variant="outline"
-            className="w-full gap-2"
+            className="w-full gap-2 mt-2"
             onClick={handleGoogle}
             disabled={googleLoading}
           >
@@ -307,7 +287,7 @@ export default function SignUpForm() {
         </form>
       </Form>
 
-      <p className="text-center text-sm text-slate-600 mt-2">
+      <p className="text-center text-sm text-slate-600 mt-4">
         Already have an account?{" "}
         <Link
           href="/vendor/auth/log-in"

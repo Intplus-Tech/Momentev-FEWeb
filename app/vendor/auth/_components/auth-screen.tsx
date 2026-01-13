@@ -30,8 +30,8 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
 
       <div className="relative z-10 flex min-h-screen flex-col">
         <header className="w-full">
-          <div className="container mx-auto flex items-center justify-between px-4 py-6">
-            <Logo />
+          <div className="container max-w-7xl 2xl:max-w-[1400px] mx-auto flex items-center justify-between px-8 py-6">
+            <Logo variant="mixed" />
 
             <div className="flex items-center gap-4">
               <nav className="hidden items-center gap-6 text-sm text-white opacity-90 xl:flex">
@@ -76,16 +76,16 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
         </header>
 
         <main className="flex flex-1 items-center py-2">
-          <div className="container mx-auto px-4">
+          <div className="container max-w-7xl 2xl:max-w-[1400px] mx-auto px-4">
             <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2">
               <div className="hidden xl:flex flex-col gap-4 text-center text-white xl:text-left">
-                <h1 className="text-3xl font-semibold leading-snug sm:text-[42px]">
+                <h1 className="2xl:text-5xl text-3xl font-semibold leading-snug sm:text-[42px]">
                   {mainText}
                 </h1>
-                <p className="text-base text-white/90">{subText}</p>
+                <p className="2xl:text-xl text-base text-white/90">{subText}</p>
               </div>
 
-              <div className="mx-auto w-full max-w-xl rounded-xl bg-white p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">
+              <div className="mx-auto w-fit max-w-xl rounded-xl bg-white p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">
                 <div>{component}</div>
               </div>
             </div>
