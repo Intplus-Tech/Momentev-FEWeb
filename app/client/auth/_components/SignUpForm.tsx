@@ -24,9 +24,9 @@ import {
 } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
-import { signUpSchema } from "@/validation/auth";
+import { clientSignUpSchema } from "@/validation/auth";
 
-type SignUpFormValues = z.infer<typeof signUpSchema>;
+type SignUpFormValues = z.infer<typeof clientSignUpSchema>;
 
 export function ClientSignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +38,7 @@ export function ClientSignUpForm() {
   const [lastEmail, setLastEmail] = useState<string>("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<SignUpFormValues>({
-    resolver: zodResolver(signUpSchema),
+    resolver: zodResolver(clientSignUpSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
