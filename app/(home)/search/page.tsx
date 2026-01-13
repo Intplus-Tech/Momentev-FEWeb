@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Home } from "lucide-react";
@@ -17,7 +17,7 @@ import { promotedVendors, allVendors } from "./_data/vendors";
 
 const ITEMS_PER_PAGE = 4;
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
 
   // Read URL parameters
@@ -187,5 +187,21 @@ export default function SearchPage() {
         )}
       </main>
     </div>
+  );
+}
+
+function SearchLoading() {
+  return (
+    <div className="min-h-screen pt-40 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<SearchLoading />}>
+      <SearchContent />
+    </Suspense>
   );
 }
