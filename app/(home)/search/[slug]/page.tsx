@@ -26,13 +26,13 @@ export default async function VendorPage({ params }: VendorPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12">
+    <div className="min-h-screen pt-24 pb-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
-          className="mb-6 gap-2 text-muted-foreground hover:text-foreground"
+          className="mb-6 bg-gray-300 gap-2 text-muted-foreground hover:text-foreground"
           asChild
         >
           <Link href="/search">
@@ -57,7 +57,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
             />
 
             {/* About Section */}
-            <div className="space-y-4">
+            <div className="space-y-4 bg-white p-4 rounded-2xl">
               <h2 className="text-lg font-semibold">About the company</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 {vendor.about}

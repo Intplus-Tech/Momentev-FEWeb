@@ -10,7 +10,7 @@ interface PromotedVendorCardProps {
 export function PromotedVendorCard({ vendor }: PromotedVendorCardProps) {
   return (
     <Link href={`/search/${vendor.slug}`} className="group">
-      <div className="bg-background">
+      <div className="">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-transparent">
           <Image

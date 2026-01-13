@@ -40,11 +40,11 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
   const maxCount = Math.max(...stats.distribution.map((d) => d.count));
 
   return (
-    <div className="bg-card rounded-2xl p-6">
+    <div className="">
       <h2 className="text-lg font-semibold mb-6">Reviews</h2>
 
       {/* Stats Overview */}
-      <div className="flex flex-col md:flex-row gap-6 mb-8">
+      <div className="flex flex-col md:flex-row gap-6 mb-8 bg-white rounded-2xl p-6">
         {/* Rating */}
         <div className="flex flex-col items-start">
           <div className="text-4xl font-bold text-foreground">
@@ -98,7 +98,10 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
       <div className="flex items-center justify-between mb-6">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 text-sm font-normal h-9">
+            <Button
+              variant="secondary"
+              className="gap-2 text-sm font-normal h-9"
+            >
               Sort by {sortBy === "newest" ? "newest" : "highest rating"} review
               <ChevronDown className="w-4 h-4" />
             </Button>
@@ -117,7 +120,7 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
       </div>
 
       {/* Reviews List */}
-      <div className="space-y-6">
+      <div className="space-y-6 bg-white rounded-2xl p-6">
         {reviews.map((review) => (
           <div key={review.id} className="border-t pt-6">
             <div className="flex items-center gap-1 mb-1">

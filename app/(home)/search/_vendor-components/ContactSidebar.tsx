@@ -24,7 +24,7 @@ export function ContactSidebar({
   tags,
 }: ContactSidebarProps) {
   return (
-    <div className="bg-card rounded-2xl p-6 space-y-6">
+    <div className="bg-white rounded-2xl p-6 space-y-6">
       {/* Contact Information */}
       <div className="space-y-4">
         <h3 className="font-medium text-foreground">Contact Information</h3>

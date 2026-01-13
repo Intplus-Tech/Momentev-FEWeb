@@ -15,7 +15,7 @@ export function VendorGallery({ images, vendorName }: VendorGalleryProps) {
   const thumbnails = images.slice(0, 5);
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 rounded-2xl p-2">
       {/* Main Image */}
       <div className="relative flex-1 aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
         <Image
