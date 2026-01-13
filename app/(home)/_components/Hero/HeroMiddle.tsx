@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 // Dummy vendor data
 const vendors = [
@@ -125,6 +126,20 @@ const services = [
   "Decorators",
 ];
 
+// Searchable categories - kept for reference but not used in dropdown anymore
+const searchableCategories = [
+  { id: "makeup", name: "Makeup Artists" },
+  { id: "photography", name: "Photography" },
+  { id: "catering", name: "Caterers" },
+  { id: "dj", name: "DJs & Entertainment" },
+  { id: "decoration", name: "Decorators" },
+  { id: "wedding", name: "Wedding Planning" },
+  { id: "event", name: "Event Planners" },
+  { id: "venue", name: "Venue & Spaces" },
+  { id: "cake", name: "Cakes & Desserts" },
+  { id: "flowers", name: "Florists" },
+];
+
 const categories = [
   { name: "Birthday Party", icon: Gift, searchTerm: "birthday" },
   { name: "Photography", icon: Camera, searchTerm: "Photographers" },
@@ -132,7 +147,11 @@ const categories = [
   { name: "Baby Shower", icon: Bath, searchTerm: "baby shower" },
 ];
 
-export default function HeroMiddle() {
+interface HeroMiddleProps {
+  onServiceChange?: (index: number) => void;
+}
+
+export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
   const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
   const [displayText, setDisplayText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -140,25 +159,11 @@ export default function HeroMiddle() {
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("East London");
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [filteredVendors, setFilteredVendors] = useState<typeof vendors>([]);
 
-  // Filter vendors based on search query and location
+  // Notify parent when service index changes
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredVendors([]);
-      return;
-    }
-
-    const query = searchQuery.toLowerCase();
-    const filtered = vendors.filter(
-      (vendor) =>
-        (vendor.name.toLowerCase().includes(query) ||
-          vendor.category.toLowerCase().includes(query)) &&
-        vendor.location === selectedLocation
-    );
-    setFilteredVendors(filtered);
-  }, [searchQuery, selectedLocation]);
+    onServiceChange?.(currentServiceIndex);
+  }, [currentServiceIndex, onServiceChange]);
 
   // Typewriter effect
   useEffect(() => {
@@ -188,26 +193,27 @@ export default function HeroMiddle() {
     return () => clearTimeout(timeout);
   }, [displayText, isDeleting, currentServiceIndex]);
 
+  const router = useRouter();
+
   const handleSearch = () => {
-    console.log("Searching for:", searchQuery, "in", selectedLocation);
-    alert(
-      `Searching for "${searchQuery}" in ${selectedLocation}\n\nFound ${filteredVendors.length} vendors`
-    );
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) {
+      params.set("q", searchQuery);
+    }
+    params.set("location", selectedLocation);
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleCategoryClick = (searchTerm: string) => {
-    setSearchQuery(searchTerm);
-    setIsSearchOpen(true);
-  };
-
-  const handleVendorSelect = (vendorName: string) => {
-    setSearchQuery(vendorName);
-    setIsSearchOpen(false);
+    const params = new URLSearchParams();
+    params.set("q", searchTerm);
+    params.set("location", selectedLocation);
+    router.push(`/search?${params.toString()}`);
   };
 
   return (
     <section className="w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      <div className="max-w-5xl w-full mx-auto text-center space-y-6 md:space-y-8">
+      <div className="max-w-5xl w-full mx-auto text-center space-y-6 md:space-y-4">
         <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">
           <span>Book Trusted</span> <br className="md:hidden" />
           <span className="text-yellow-400 underline underline-offset-4 decoration-2">
@@ -218,14 +224,14 @@ export default function HeroMiddle() {
         </h1>
 
         {/* Subtitle */}
-        <p className="text-white/80 text-sm sm:text-base lg:text-lg px-4 max-w-2xl mx-auto">
+        <p className="text-white/80 text-sm sm:text-base lg:text-lg px-4 max-w-3xl mx-auto">
           Discover, compare, and secure caterers, photographers, and more—all in
           one place.
         </p>
 
         {/* Search bar */}
         <div className="w-full max-w-3xl mx-auto">
-          <div className="flex flex-col sm:flex-row bg-white rounded-xl shadow-lg overflow-visible">
+          <div className="flex flex-col sm:flex-row bg-white shadow-lg overflow-visible">
             {/* Search input with dropdown */}
             <div className="relative flex-1">
               <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
@@ -233,18 +239,11 @@ export default function HeroMiddle() {
                 <Input
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    if (e.target.value) setIsSearchOpen(true);
-                  }}
-                  onFocus={() => searchQuery && setIsSearchOpen(true)}
-                  onBlur={(e) => {
-                    // Delay closing to allow clicks on dropdown items
-                    setTimeout(() => {
-                      if (!e.currentTarget.contains(document.activeElement)) {
-                        setIsSearchOpen(false);
-                      }
-                    }, 150);
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
                   }}
                   placeholder="Find a vendor for your event"
                   className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 text-sm md:text-base placeholder:text-gray-400"
@@ -256,61 +255,12 @@ export default function HeroMiddle() {
                     className="h-8 w-8 shrink-0"
                     onClick={() => {
                       setSearchQuery("");
-                      setIsSearchOpen(false);
                     }}
                   >
                     <X className="w-4 h-4 text-gray-400" />
                   </Button>
                 )}
               </div>
-
-              {/* Search suggestions dropdown */}
-              {isSearchOpen && searchQuery && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-background rounded-lg shadow-lg border border-border z-50 overflow-hidden">
-                  <ScrollArea className="max-h-64">
-                    {filteredVendors.length > 0 ? (
-                      <>
-                        <div className="px-4 py-2 text-xs text-muted-foreground bg-muted/50 font-medium border-b">
-                          Vendors in {selectedLocation}
-                        </div>
-                        {filteredVendors.map((vendor) => (
-                          <button
-                            key={vendor.id}
-                            onMouseDown={(e) => e.preventDefault()}
-                            onClick={() => handleVendorSelect(vendor.name)}
-                            className="w-full px-4 py-3 text-left hover:bg-accent transition-colors border-b border-border/50 last:border-b-0"
-                          >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {vendor.name}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {vendor.category}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-1 text-xs text-yellow-600">
-                                <span>★</span>
-                                <span>{vendor.rating}</span>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="px-4 py-6 text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No vendors found for &quot;{searchQuery}&quot; in{" "}
-                          {selectedLocation}
-                        </p>
-                        <p className="text-xs text-muted-foreground/70 mt-1">
-                          Try a different search term or location
-                        </p>
-                      </div>
-                    )}
-                  </ScrollArea>
-                </div>
-              )}
             </div>
 
             {/* Divider for desktop */}
@@ -350,7 +300,7 @@ export default function HeroMiddle() {
 
               <Button
                 onClick={handleSearch}
-                className="flex-1 sm:flex-none sm:px-6"
+                className="flex-1 sm:flex-none sm:px-6 min-w-34"
               >
                 Find
               </Button>
@@ -369,7 +319,7 @@ export default function HeroMiddle() {
             <Button
               key={category.name}
               onClick={() => handleCategoryClick(category.searchTerm)}
-              className="bg-black/40 hover:bg-black/50 backdrop-blur-sm py-2 px-4 sm:px-5 rounded-full text-xs sm:text-sm text-white flex items-center gap-2 transition-colors border border-white/20"
+              className="bg-black/10 hover:bg-black/50 backdrop-blur-sm py-2 px-4 sm:px-5 rounded-full text-xs sm:text-sm text-white flex items-center gap-2 transition-colors"
             >
               <category.icon className="w-4 h-4" />
               {category.name}
