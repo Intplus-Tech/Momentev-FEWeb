@@ -10,7 +10,7 @@ interface ServicesSectionProps {
 
 export function ServicesSection({ services }: ServicesSectionProps) {
   return (
-    <div className="bg-card rounded-2xl p-6">
+    <div className="bg-white rounded-2xl p-6">
       <h2 className="text-lg font-semibold mb-6">Services</h2>
 
       <div className="space-y-6">

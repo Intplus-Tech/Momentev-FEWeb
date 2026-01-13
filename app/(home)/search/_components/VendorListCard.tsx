@@ -10,7 +10,7 @@ interface VendorListCardProps {
 
 export function VendorListCard({ vendor }: VendorListCardProps) {
   return (
-    <div className="bg-card rounded-xl overflow-hidden">
+    <div className="rounded-xl overflow-hidden">
       <div className="flex flex-col md:flex-row">
         {/* Image */}
         <div className="relative w-full md:w-72 lg:w-80 shrink-0">
@@ -37,7 +37,7 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
           {/* Vendor Info */}
           <div className="flex-1 space-y-3">
             <h3 className="text-lg md:text-xl font-semibold">{vendor.name}</h3>
-            <div className="flex items-start gap-1.5 text-primary">
+            <div className="flex items-start gap-1.5 text-muted-foreground">
               <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
               <p className="text-sm">{vendor.address}</p>
             </div>
