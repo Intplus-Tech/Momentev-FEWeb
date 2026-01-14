@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -26,7 +26,11 @@ import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function ClientLoginForm() {
+type ClientLoginFormProps = {
+  verificationToken?: string;
+};
+
+export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -40,6 +44,17 @@ export function ClientLoginForm() {
       remember: true,
     },
   });
+
+  // If token is present, redirect to verification-successful page
+  useEffect(() => {
+    if (verificationToken) {
+      router.replace(
+        `/client/auth/verification-successful?token=${encodeURIComponent(
+          verificationToken
+        )}`
+      );
+    }
+  }, [verificationToken, router]);
 
   async function handleSubmit(values: LoginFormValues) {
     setServerError(null);
