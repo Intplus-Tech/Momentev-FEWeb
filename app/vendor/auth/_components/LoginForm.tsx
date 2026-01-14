@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,11 @@ import { loginSchema } from "@/validation/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+type LoginFormProps = {
+  verificationToken?: string;
+};
+
+export function LoginForm({ verificationToken }: LoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -42,6 +46,17 @@ export function LoginForm() {
       remember: true,
     },
   });
+
+  // If token is present, redirect to verification-successful page
+  useEffect(() => {
+    if (verificationToken) {
+      router.replace(
+        `/vendor/auth/verification-successful?token=${encodeURIComponent(
+          verificationToken
+        )}`
+      );
+    }
+  }, [verificationToken, router]);
 
   async function handleSubmit(values: LoginFormValues) {
     setServerError(null);

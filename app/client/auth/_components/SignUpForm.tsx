@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import {
-  getGoogleAuthUrl,
-  register,
-  resendVerificationEmail,
-} from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, register } from "@/lib/actions/auth/auth";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -29,13 +26,9 @@ import { clientSignUpSchema } from "@/validation/auth";
 type SignUpFormValues = z.infer<typeof clientSignUpSchema>;
 
 export function ClientSignUpForm() {
+  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [resendStatus, setResendStatus] = useState<
-    "idle" | "loading" | "sent" | "error"
-  >("idle");
-  const [lastEmail, setLastEmail] = useState<string>("");
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(clientSignUpSchema),
@@ -49,7 +42,6 @@ export function ClientSignUpForm() {
 
   async function handleSubmit(values: SignUpFormValues) {
     setServerError(null);
-    setSuccessMessage(null);
 
     try {
       const result = await register({
@@ -65,37 +57,16 @@ export function ClientSignUpForm() {
         return;
       }
 
-      setSuccessMessage(
-        "Account created. Check your email for the verification link."
+      // Redirect to email verification page with email
+      router.push(
+        `/client/auth/email-verification?email=${encodeURIComponent(
+          values.email
+        )}`
       );
-      setLastEmail(values.email);
-      form.reset();
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to complete sign up.";
       setServerError(message);
-    }
-  }
-
-  async function handleResend() {
-    if (!lastEmail) return;
-    setResendStatus("loading");
-    setServerError(null);
-    try {
-      const result = await resendVerificationEmail({ email: lastEmail });
-      if (!result.success) {
-        setServerError(result.error || "Unable to resend verification email.");
-        setResendStatus("error");
-        return;
-      }
-      setResendStatus("sent");
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to resend verification email.";
-      setServerError(message);
-      setResendStatus("error");
     }
   }
 
@@ -128,38 +99,9 @@ export function ClientSignUpForm() {
       </div>
 
       {serverError ? (
-        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-[8px] text-destructive">
           {serverError}
         </p>
-      ) : null}
-
-      {successMessage ? (
-        <p className="mt-4 rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {successMessage}
-        </p>
-      ) : null}
-
-      {lastEmail ? (
-        <div className="mt-2 flex items-center justify-center gap-3 text-xs text-muted-foreground">
-          <span>Didn&apos;t get the email?</span>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={resendStatus === "loading"}
-            onClick={handleResend}
-          >
-            {resendStatus === "loading" ? (
-              <span className="flex items-center gap-2">
-                <Spinner className="h-3 w-3" /> Sending...
-              </span>
-            ) : resendStatus === "sent" ? (
-              "Sent"
-            ) : (
-              "Resend verification"
-            )}
-          </Button>
-        </div>
       ) : null}
 
       <Form {...form}>
