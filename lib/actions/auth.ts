@@ -1,8 +1,8 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { setAuthCookies, clearAuthCookies, getRefreshToken, refreshAccessToken } from '@/lib/auth/tokens';
-import type { LoginResponse } from '@/lib/auth/types';
+import { setAuthCookies, clearAuthCookies, getRefreshToken, refreshAccessToken } from '@/lib/session';
+import type { LoginResponse } from '@/types/auth';
 
 export type RegisterInput = {
   firstName: string;

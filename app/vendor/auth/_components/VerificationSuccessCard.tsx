@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, PartyPopper, Loader2, XCircle } from "lucide-react";
+import { PartyPopper, Loader2, XCircle } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { verifyEmail } from "@/lib/actions/auth/auth";
+import { verifyEmail } from "@/lib/actions/auth";
 
 type VerificationSuccessCardProps = {
   token?: string;
@@ -74,7 +75,7 @@ export function VerificationSuccessCard({
   }, [status, router, redirectPath]);
 
   return (
-    <div className="mx-auto w-full max-w-xl pb-6 text-center">
+    <div className="mx-auto w-full max-w-xl xl:min-w-md pb-6 text-center">
       <div className="w-full flex items-center justify-center">
         <Logo className="hidden xl:block" />
       </div>
@@ -95,9 +96,13 @@ export function VerificationSuccessCard({
         {status === "success" && (
           <>
             <div className="space-y-3">
-              <div className="relative mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
-                <CheckCircle2 className="h-10 w-10" />
-                <PartyPopper className="absolute -bottom-2 -right-1 h-5 w-5 text-rose-400" />
+              <div className="relative mx-auto flex items-center justify-center">
+                <Image
+                  src="/assets/svg/success-svg.svg"
+                  alt="Verification Successful"
+                  width={250}
+                  height={250}
+                />
               </div>
               <h2 className="text-xl">Verification Successful!</h2>
               <p className="text-sm text-muted-foreground">

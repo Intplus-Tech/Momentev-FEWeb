@@ -22,7 +22,7 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-import { getGoogleAuthUrl, register } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, register } from "@/lib/actions/auth";
 import { signUpSchema } from "@/validation/auth";
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;

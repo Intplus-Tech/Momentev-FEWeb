@@ -7,7 +7,7 @@ import { MailCheck, RotateCcw, ExternalLink } from "lucide-react";
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { resendVerificationEmail } from "@/lib/actions/auth/auth";
+import { resendVerificationEmail } from "@/lib/actions/auth";
 
 type EmailVerificationCardProps = {
   email?: string;
@@ -73,12 +73,6 @@ export function ClientEmailVerificationCard({
         )}
 
         <div className="space-y-4">
-          <Button className="w-full gap-2" asChild>
-            <a href="mailto:" target="_blank" rel="noopener noreferrer">
-              <ExternalLink className="h-4 w-4" />
-              Open email app
-            </a>
-          </Button>
           <Button
             type="button"
             variant="outline"

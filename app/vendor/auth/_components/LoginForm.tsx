@@ -23,7 +23,7 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, login } from "@/lib/actions/auth";
 import { loginSchema } from "@/validation/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
