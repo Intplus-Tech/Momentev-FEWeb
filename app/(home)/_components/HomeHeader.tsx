@@ -65,6 +65,7 @@ export default function HomeHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const isSearchPage = pathname === "/search";
+  const isSearchRoute = pathname.startsWith("/search");
 
   const [selectedLocation, setSelectedLocation] = useState("East London");
   const [searchQuery, setSearchQuery] = useState("");
@@ -285,7 +286,7 @@ export default function HomeHeader() {
       </div>
 
       {/* Category Filter Bar - Only on Search Page */}
-      {isSearchPage && (
+      {isSearchRoute && (
         <div className="backdrop-blur-sm">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollArea className="w-full whitespace-nowrap">

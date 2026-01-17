@@ -26,7 +26,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
   }
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-40 pb-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         {/* Back Button */}
         <Button
