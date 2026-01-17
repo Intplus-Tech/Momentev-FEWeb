@@ -1,49 +1,62 @@
-import Logo from "@/components/brand/logo";
+"use client";
+
 import LogoSmall from "@/components/brand/LogoSmall";
+
+const items = [
+  "Event photographers",
+  "Makeup Artists",
+  "Caterers",
+  "DJs / Musicians",
+  "Event planners",
+  "Decorators / Floral Designers",
+];
 
 export default function BelowHero() {
   return (
-    <section className="bg-black hidden lg:block">
-      <div className="max-w-7xl mx-auto px-6 md:px-0 py-4">
-        <div className="flex flex-wrap justify-center md:justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm whitespace-nowrap">
-              Event photographers
-            </p>
-            <LogoSmall size={28} />
+    <section className="bg-black hidden lg:block overflow-hidden py-4">
+      {/* Inline styles for the marquee animation */}
+      <style jsx>{`
+        @keyframes marquee {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-50%);
+          }
+        }
+        .animate-marquee {
+          animation: marquee 30s linear infinite;
+        }
+        .animate-marquee:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      <div className="w-full">
+        {/* Inner container with double width for seamless looping */}
+        <div className="flex w-max animate-marquee">
+          {/* First set of items */}
+          <div className="flex gap-12 px-6">
+            {items.map((item, index) => (
+              <div key={`a-${index}`} className="flex items-center gap-4">
+                <p className="text-white text-sm whitespace-nowrap uppercase tracking-wider font-medium">
+                  {item}
+                </p>
+                <LogoSmall size={28} />
+              </div>
+            ))}
           </div>
 
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm whitespace-nowrap">
-              Makeup Artists
-            </p>
-            <LogoSmall size={28} />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm whitespace-nowrap">Caterers</p>
-            <LogoSmall size={28} />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm whitespace-nowrap">
-              DJs / Musicians
-            </p>
-            <LogoSmall size={28} />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm whitespace-nowrap">
-              Event planners
-            </p>
-            <LogoSmall size={28} />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <p className="text-white text-sm  whitespace-nowrap">
-              Decorators / Floral Designers
-            </p>
-            <LogoSmall size={28} />
+          {/* Second set of items (duplicate for loop) */}
+          <div className="flex gap-12 px-6">
+            {items.map((item, index) => (
+              <div key={`b-${index}`} className="flex items-center gap-4">
+                <p className="text-white text-sm whitespace-nowrap uppercase tracking-wider font-medium">
+                  {item}
+                </p>
+                <LogoSmall size={28} />
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Logo from "@/components/brand/logo";
 import {
@@ -66,11 +66,51 @@ export default function HomeHeader() {
   const router = useRouter();
   const isSearchPage = pathname === "/search";
   const isSearchRoute = pathname.startsWith("/search");
+  const isHome = pathname === "/";
 
   const [selectedLocation, setSelectedLocation] = useState("East London");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("makeup");
 
+  // State for simple/complex toggle on homepage
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+  const [isScrolledSlightly, setIsScrolledSlightly] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!isHome) {
+      setIsScrolledPastHero(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Transition to complex header after scrolling past roughly the hero height
+      const heroHeight = window.innerHeight - 100;
+      setIsScrolledPastHero(scrollY > heroHeight);
+
+      // Add blur to simple header after a slight scroll
+      setIsScrolledSlightly(scrollY > 50);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // check initial
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [isHome]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+  // Existing handlers
   const handleSearch = () => {
     if (searchQuery.trim()) {
       router.push(
@@ -98,8 +138,132 @@ export default function HomeHeader() {
     );
   };
 
+  // --- SIMPLE HEADER (Transparent) ---
+  if (isHome && !isScrolledPastHero) {
+    return (
+      <>
+        <nav
+          className={`fixed top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4 lg:py-6 z-50 transition-all duration-300 ${
+            isScrolledSlightly
+              ? "bg-black/20 backdrop-blur-md shadow-sm"
+              : "bg-transparent"
+          }`}
+        >
+          <Logo variant="mixed" className="text-white" />
+
+          {/* Desktop Nav */}
+          <ul className="hidden lg:flex items-center gap-4 xl:gap-6 text-white text-sm">
+            <li>
+              <button className="relative px-3 py-2 font-medium group">
+                <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
+                  Post A Request
+                </span>
+                <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
+              </button>
+            </li>
+            <li>
+              <Button
+                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
+                asChild
+              >
+                <Link href="/client/auth/log-in">
+                  <CircleUserIcon className="w-4 h-4" />
+                  <span className="hidden xl:inline">Sign in/Sign up</span>
+                  <span className="xl:hidden">Sign in</span>
+                </Link>
+              </Button>
+            </li>
+            <li>
+              <Button
+                asChild
+                className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
+              >
+                <Link href="/vendor/auth/sign-up">List your Business</Link>
+              </Button>
+            </li>
+          </ul>
+
+          {/* Mobile Hamburger - Animated */}
+          <button
+            className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            <div className="w-6 h-5 relative flex flex-col justify-between">
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
+                  menuOpen ? "rotate-45 translate-y-[9px]" : ""
+                }`}
+              />
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
+                  menuOpen ? "opacity-0 scale-0" : ""
+                }`}
+              />
+              <span
+                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
+                  menuOpen ? "-rotate-45 -translate-y-[9px]" : ""
+                }`}
+              />
+            </div>
+          </button>
+        </nav>
+
+        {/* Mobile Menu Overlay */}
+        <div
+          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${
+            menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setMenuOpen(false)}
+        />
+
+        {/* Mobile Menu Content */}
+        <div
+          className={`fixed top-0 left-0 right-0 bg-white lg:hidden z-40 shadow-2xl transition-all duration-500 ease-out ${
+            menuOpen
+              ? "translate-y-0 opacity-100"
+              : "-translate-y-full opacity-0"
+          }`}
+        >
+          <div className="pt-20 pb-8 px-6">
+            <ul className="flex flex-col items-center gap-4">
+              <li className="w-full max-w-xs">
+                <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
+                  Post A Request
+                </button>
+              </li>
+              <li className="w-full max-w-xs">
+                <Button
+                  className="w-full"
+                  variant="outline"
+                  asChild
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Link href="/client/auth/log-in">
+                    <CircleUserIcon className="w-4 h-4" />
+                    Sign in/Sign up
+                  </Link>
+                </Button>
+              </li>
+              <li className="w-full max-w-xs">
+                <Button
+                  className="w-full"
+                  asChild
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Link href="/vendor/auth/sign-up">List your Business</Link>
+                </Button>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // --- COMPLEX HEADER (Search & Filters) ---
   return (
-    <header className="bg-background fixed top-0 left-0 right-0 w-full shadow-sm z-50 border-b">
+    <header className="bg-background fixed top-0 left-0 right-0 w-full shadow-sm z-50 border-b animate-in fade-in slide-in-from-top-5 duration-300">
       {/* Main Header Row */}
       <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 gap-4">
         {/* Logo */}

@@ -25,7 +25,7 @@ export default function HomeLayout({
           <div className="absolute inset-0 bg-gray-200/50 pointer-events-none" />
         )}
         <div className="relative z-10">
-          {!isHome && <HomeHeader />}
+          <HomeHeader />
           {children}
           <Footer />
         </div>

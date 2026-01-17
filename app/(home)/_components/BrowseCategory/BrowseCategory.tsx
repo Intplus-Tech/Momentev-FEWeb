@@ -15,7 +15,7 @@ export default function BrowseCategory() {
 
   return (
     <section className="bg-white w-full">
-      <div className="container max-w-5xl mx-auto py-10 px-4 flex flex-col space-y-8">
+      <div className="container max-w-6xl mx-auto py-10 px-4 flex flex-col space-y-8">
         <p className="font-semibold text-lg ml-2 md:ml-0">Browse By Category</p>
 
         {/* Cards container */}
