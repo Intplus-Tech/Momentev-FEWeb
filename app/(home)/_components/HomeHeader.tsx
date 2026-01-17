@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/brand/logo";
 import {
   Search,
@@ -39,6 +39,9 @@ import {
   Cake,
   Users,
   Palette,
+  Video,
+  Car,
+  Zap,
 } from "lucide-react";
 
 const locations = [
@@ -51,26 +54,49 @@ const locations = [
 
 // Category filters
 const categories = [
-  { id: "bachelors", label: "Bachelor's Party", icon: PartyPopper },
-  { id: "photography", label: "Photography", icon: Camera },
-  { id: "wedding", label: "Wedding", icon: Sparkles },
+  { id: "photography", label: "Event Photographers", icon: Camera },
+  // { id: "venue", label: "Venue Managers", icon: Building2 },
+  { id: "caterer", label: "Caterers", icon: Cake },
+  { id: "entertainment", label: "DJs / Musicians", icon: Music },
   { id: "planners", label: "Event Planners", icon: Users },
-  { id: "caterer", label: "Caterer", icon: Cake },
-  { id: "makeup", label: "Make-Up Artist", icon: Palette },
-  { id: "entertainment", label: "Entertainment & DJ", icon: Music },
-  { id: "venue", label: "Venue Decorator", icon: Building2 },
+  { id: "videography", label: "Videographers", icon: Video },
+  { id: "decorator", label: "Venue Decorators", icon: Sparkles },
+  { id: "makeup", label: "Makeup Artists", icon: Palette },
+  // { id: "transport", label: "Transportation", icon: Car },
+  { id: "technical", label: "Sound & Lighting", icon: Zap },
 ];
 
 export default function HomeHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const isSearchPage = pathname === "/search";
   const isSearchRoute = pathname.startsWith("/search");
   const isHome = pathname === "/";
 
   const [selectedLocation, setSelectedLocation] = useState("East London");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("makeup");
+  const [selectedCategory, setSelectedCategory] = useState("");
+
+  // Sync state with URL params
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category) {
+      setSelectedCategory(category);
+    } else {
+      setSelectedCategory("");
+    }
+
+    const location = searchParams.get("location");
+    if (location) {
+      setSelectedLocation(location);
+    }
+
+    const q = searchParams.get("q");
+    if (q) {
+      setSearchQuery(q);
+    }
+  }, [searchParams]);
 
   // State for simple/complex toggle on homepage
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
@@ -112,15 +138,12 @@ export default function HomeHeader() {
 
   // Existing handlers
   const handleSearch = () => {
-    if (searchQuery.trim()) {
-      router.push(
-        `/search?q=${encodeURIComponent(
-          searchQuery
-        )}&location=${encodeURIComponent(selectedLocation)}`
-      );
-    } else {
-      router.push(`/search?location=${encodeURIComponent(selectedLocation)}`);
-    }
+    const params = new URLSearchParams();
+    if (searchQuery.trim()) params.set("q", searchQuery);
+    if (selectedLocation) params.set("location", selectedLocation);
+    if (selectedCategory) params.set("category", selectedCategory);
+
+    router.push(`/search?${params.toString()}`);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -130,12 +153,20 @@ export default function HomeHeader() {
   };
 
   const handleCategoryClick = (categoryId: string) => {
-    setSelectedCategory(categoryId);
-    router.push(
-      `/search?category=${categoryId}&location=${encodeURIComponent(
-        selectedLocation
-      )}`
-    );
+    const params = new URLSearchParams(searchParams.toString());
+
+    // Toggle: if clicked again, remove it? Or just select it.
+    // Usually filters toggle. Let's assume toggle for better UX if the user wants to clear.
+    if (selectedCategory === categoryId) {
+      params.delete("category");
+      setSelectedCategory("");
+    } else {
+      params.set("category", categoryId);
+      setSelectedCategory(categoryId);
+    }
+
+    // Preserve other params is handled by initializing with searchParams
+    router.push(`/search?${params.toString()}`);
   };
 
   // --- SIMPLE HEADER (Transparent) ---
@@ -454,7 +485,7 @@ export default function HomeHeader() {
         <div className="backdrop-blur-sm">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex items-center justify-center gap-2 py-3">
+              <div className="flex flex-wrap items-center justify-center gap-2 py-3">
                 {categories.map((category) => {
                   const Icon = category.icon;
                   const isActive = selectedCategory === category.id;
@@ -462,13 +493,13 @@ export default function HomeHeader() {
                     <button
                       key={category.id}
                       onClick={() => handleCategoryClick(category.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
+                      className={`flex items-center gap-2 px-2 py-1 xl:py-2 2xl:py-3 xl:px-4 rounded-full text-[10px] xl:text-xs 2xl:text-sm whitespace-nowrap transition-all ${
                         isActive
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-3 h-3 xl:w-4 xl:h-4 2xl:w-5 2xl:h-5  " />
                       <span>{category.label}</span>
                     </button>
                   );
