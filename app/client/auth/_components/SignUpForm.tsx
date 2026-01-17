@@ -9,6 +9,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { getGoogleAuthUrl, register } from "@/lib/actions/auth";
+import { toast } from "sonner";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Button } from "@/components/ui/button";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -28,7 +29,6 @@ type SignUpFormValues = z.infer<typeof clientSignUpSchema>;
 export function ClientSignUpForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(clientSignUpSchema),
@@ -41,8 +41,6 @@ export function ClientSignUpForm() {
   });
 
   async function handleSubmit(values: SignUpFormValues) {
-    setServerError(null);
-
     try {
       const result = await register({
         firstName: values.firstName,
@@ -53,7 +51,7 @@ export function ClientSignUpForm() {
       });
 
       if (!result.success) {
-        setServerError(result.error || "Unable to complete sign up.");
+        toast.error(result.error || "Unable to complete sign up.");
         return;
       }
 
@@ -66,14 +64,13 @@ export function ClientSignUpForm() {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to complete sign up.";
-      setServerError(message);
+      toast.error(message);
     }
   }
 
   const isSubmitting = form.formState.isSubmitting;
 
   async function handleGoogle() {
-    setServerError(null);
     setGoogleLoading(true);
     try {
       const { url } = await getGoogleAuthUrl();
@@ -83,14 +80,14 @@ export function ClientSignUpForm() {
         error instanceof Error
           ? error.message
           : "Unable to start Google sign-in.";
-      setServerError(message);
+      toast.error(message);
     } finally {
       setGoogleLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl">
+    <div className="mx-auto w-full max-w-xl xl:pt-10">
       <div className="space-y-3 text-center xl:text-left">
         <h2 className="text-4xl font-bold text-foreground">Sign up</h2>
         <p className="text-sm text-muted-foreground">
@@ -98,52 +95,45 @@ export function ClientSignUpForm() {
         </p>
       </div>
 
-      {serverError ? (
-        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-[8px] text-destructive">
-          {serverError}
-        </p>
-      ) : null}
-
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="mt-8 space-y-4"
-        >
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <FloatingLabelInput
-                    id="firstName"
-                    autoComplete="given-name"
-                    label="First Name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8">
+          <div className="flex items-center gap-4">
+            <FormField
+              control={form.control}
+              name="firstName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FloatingLabelInput
+                      id="firstName"
+                      autoComplete="given-name"
+                      label="First Name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <FloatingLabelInput
-                    id="lastName"
-                    autoComplete="family-name"
-                    label="Last Name"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+            <FormField
+              control={form.control}
+              name="lastName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <FloatingLabelInput
+                      id="lastName"
+                      autoComplete="family-name"
+                      label="Last Name"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <FormField
             control={form.control}
@@ -200,41 +190,43 @@ export function ClientSignUpForm() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Spinner /> Creating account...
-              </span>
-            ) : (
-              "Create account"
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner /> Creating account...
+                </span>
+              ) : (
+                "Create account"
+              )}
+            </Button>
 
-          <div className="flex items-center gap-3">
-            <Separator className="flex-1" />
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              or
-            </span>
-            <Separator className="flex-1" />
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                or
+              </span>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleGoogle}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Starting...
+                </span>
+              ) : (
+                <>
+                  <GoogleIcon /> Continue with Google
+                </>
+              )}
+            </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner className="h-4 w-4" /> Starting...
-              </span>
-            ) : (
-              <>
-                <GoogleIcon /> Continue with Google
-              </>
-            )}
-          </Button>
         </form>
       </Form>
 

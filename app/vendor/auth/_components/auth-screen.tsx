@@ -76,13 +76,15 @@ export function AuthScreen({ mainText, subText, component }: AuthScreenProps) {
         </header>
 
         <main className="flex flex-1 items-center py-2">
-          <div className="container max-w-7xl 2xl:max-w-[1400px] mx-auto px-4">
+          <div className="container max-w-6xl 2xl:max-w-[1400px] mx-auto px-4">
             <div className="grid grid-cols-1 items-center gap-10 xl:grid-cols-2">
               <div className="hidden xl:flex flex-col gap-4 text-center text-white xl:text-left">
-                <h1 className="2xl:text-5xl text-3xl font-semibold leading-snug sm:text-[42px]">
+                <h1 className="xl:text-4xl 2xl:text-5xl text-3xl font-semibold leading-snug sm:text-[42px]">
                   {mainText}
                 </h1>
-                <p className="2xl:text-xl text-base text-white/90">{subText}</p>
+                <p className="xl:text-base 2xl:text-xl text-base text-white/90">
+                  {subText}
+                </p>
               </div>
 
               <div className="mx-auto w-fit max-w-xl rounded-xl bg-white p-4 shadow-2xl backdrop-blur-sm sm:p-6 xl:ml-auto xl:max-w-lg">

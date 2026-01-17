@@ -29,8 +29,6 @@ export async function getUserProfile() {
 
     const data = await response.json().catch(() => null) as { data: UserProfile, message: string } | null;
 
-    console.log(" getUserProfile", data);
-
     if (!response.ok) {
       if (response.status === 401) {
         // Token might be expired
