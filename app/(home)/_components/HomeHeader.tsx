@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/brand/logo";
 import {
@@ -66,7 +66,7 @@ const categories = [
   { id: "technical", label: "Sound & Lighting", icon: Zap },
 ];
 
-export default function HomeHeader() {
+function HomeHeaderContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -510,5 +510,15 @@ export default function HomeHeader() {
         </div>
       )}
     </header>
+  );
+}
+
+export default function HomeHeader() {
+  return (
+    <Suspense
+      fallback={<div className="h-20 w-full fixed top-0 bg-transparent" />}
+    >
+      <HomeHeaderContent />
+    </Suspense>
   );
 }
