@@ -20,9 +20,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Spinner } from "@/components/ui/spinner";
+import { Separator } from "@/components/ui/separator";
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { loginSchema } from "@/validation/auth";
-import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, login } from "@/lib/actions/auth";
+import { toast } from "sonner";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
@@ -33,8 +35,6 @@ type ClientLoginFormProps = {
 export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -57,9 +57,6 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
   }, [verificationToken, router]);
 
   async function handleSubmit(values: LoginFormValues) {
-    setServerError(null);
-    setSuccessMessage(null);
-
     try {
       const result = await login({
         email: values.email,
@@ -68,24 +65,23 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
       });
 
       if (!result.success) {
-        setServerError(result.error || "Unable to log in.");
+        toast.error(result.error || "Unable to log in.");
         return;
       }
 
-      setSuccessMessage("Login successful.");
+      toast.success("Login successful.");
       form.reset();
       router.push("/client/dashboard");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to log in.";
-      setServerError(message);
+      toast.error(message);
     }
   }
 
   const isSubmitting = form.formState.isSubmitting;
 
   async function handleGoogle() {
-    setServerError(null);
     setGoogleLoading(true);
     try {
       const { url } = await getGoogleAuthUrl();
@@ -95,14 +91,14 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
         error instanceof Error
           ? error.message
           : "Unable to start Google sign-in.";
-      setServerError(message);
+      toast.error(message);
     } finally {
       setGoogleLoading(false);
     }
   }
 
   return (
-    <div className="mx-auto w-full max-w-xl">
+    <div className="mx-auto w-full max-w-xl xl:pt-10">
       <div className="space-y-3 text-center xl:text-left">
         <h2 className="text-4xl font-bold text-foreground">Login</h2>
         <p className="text-sm text-muted-foreground">
@@ -110,23 +106,8 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
         </p>
       </div>
 
-      {serverError && (
-        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {serverError}
-        </p>
-      )}
-
-      {successMessage && (
-        <p className="my-2 w-fit mx-auto rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-          {successMessage}
-        </p>
-      )}
-
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(handleSubmit)}
-          className="mt-8 space-y-5"
-        >
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="mt-8">
           <FormField
             control={form.control}
             name="email"
@@ -199,41 +180,53 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
               )}
             />
 
-            <Link
-              href="/client/auth/password-reset"
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Forgot password?
-            </Link>
+            <Button variant={"link"}>
+              <Link
+                href="/client/auth/password-reset"
+                className="font-semibold text-indigo-600 hover:text-indigo-500"
+              >
+                Forgot password?
+              </Link>
+            </Button>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Spinner /> Signing in...
-              </span>
-            ) : (
-              "Sign in"
-            )}
-          </Button>
+          <div className="space-y-4">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner /> Signing in...
+                </span>
+              ) : (
+                "Sign in"
+              )}
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner className="h-4 w-4" /> Starting...
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                or
               </span>
-            ) : (
-              <>
-                <GoogleIcon /> Sign in with Google
-              </>
-            )}
-          </Button>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleGoogle}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Starting...
+                </span>
+              ) : (
+                <>
+                  <GoogleIcon /> Sign in with Google
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
 

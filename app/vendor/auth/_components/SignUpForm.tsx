@@ -22,7 +22,8 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-import { getGoogleAuthUrl, register } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, register } from "@/lib/actions/auth";
+import { toast } from "sonner";
 import { signUpSchema } from "@/validation/auth";
 
 type SignUpFormValues = z.infer<typeof signUpSchema>;
@@ -30,7 +31,6 @@ type SignUpFormValues = z.infer<typeof signUpSchema>;
 export default function SignUpForm() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<SignUpFormValues>({
     resolver: zodResolver(signUpSchema),
@@ -42,8 +42,6 @@ export default function SignUpForm() {
   });
 
   async function handleSubmit(values: SignUpFormValues) {
-    setServerError(null);
-
     try {
       const result = await register({
         firstName: values.companyName,
@@ -54,7 +52,7 @@ export default function SignUpForm() {
       });
 
       if (!result.success) {
-        setServerError(result.error || "Unable to complete sign up.");
+        toast.error(result.error || "Unable to complete sign up.");
         return;
       }
 
@@ -69,12 +67,11 @@ export default function SignUpForm() {
         error instanceof Error
           ? error.message
           : "Unable to complete sign up right now.";
-      setServerError(message);
+      toast.error(message);
     }
   }
 
   async function handleGoogle() {
-    setServerError(null);
     setGoogleLoading(true);
     try {
       const { url } = await getGoogleAuthUrl();
@@ -84,7 +81,7 @@ export default function SignUpForm() {
         error instanceof Error
           ? error.message
           : "Unable to start Google sign-in.";
-      setServerError(message);
+      toast.error(message);
     } finally {
       setGoogleLoading(false);
     }
@@ -94,8 +91,8 @@ export default function SignUpForm() {
 
   return (
     <div className="mx-auto w-full xl:min-w-sm ">
-      <Logo className="hidden xl:block mb-4" />
-      <div className="flex flex-col gap-y-8 text-center p-4">
+      <Logo className="hidden xl:block" />
+      <div className="flex flex-col gap-y-4 text-center p-4">
         <div>
           <h2 className="text-xl">Get Started with Momentev</h2>
           <p className="text-sm text-muted-foreground">
@@ -107,16 +104,10 @@ export default function SignUpForm() {
         </div>
       </div>
 
-      {serverError ? (
-        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-[8px] text-destructive">
-          {serverError}
-        </p>
-      ) : null}
-
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-4 xl:px-4 sm:px-0 md:px-10"
+          className="mx-auto w-full xl:px-4 sm:px-0 md:px-10"
         >
           <FormField
             control={form.control}
@@ -188,42 +179,44 @@ export default function SignUpForm() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Spinner />
-                Creating workspace...
-              </span>
-            ) : (
-              "Sign up"
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner />
+                  Creating workspace...
+                </span>
+              ) : (
+                "Sign up"
+              )}
+            </Button>
 
-          <div className="flex items-center gap-3 mt-2">
-            <Separator className="flex-1" />
-            <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
-              or
-            </span>
-            <Separator className="flex-1" />
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                or
+              </span>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleGoogle}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Starting...
+                </span>
+              ) : (
+                <>
+                  <GoogleIcon /> Continue with Google
+                </>
+              )}
+            </Button>
           </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2 mt-2"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner className="h-4 w-4" /> Starting...
-              </span>
-            ) : (
-              <>
-                <GoogleIcon /> Continue with Google
-              </>
-            )}
-          </Button>
         </form>
       </Form>
 

@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import type { AuthTokens, RefreshResponse } from './types';
+import type { AuthTokens, RefreshResponse } from '@/types/auth';
 
 const AUTH_TOKEN_KEY = 'auth-token';
 const REFRESH_TOKEN_KEY = 'refresh-token';
@@ -129,4 +129,17 @@ export async function refreshAccessToken(refreshToken: string): Promise<{ succes
   } catch {
     return { success: false, error: 'Token refresh failed' };
   }
+}
+
+/**
+ * Try to refresh the access token using the stored refresh token
+ */
+export async function tryRefreshToken() {
+  const refreshTokenValue = await getRefreshToken();
+
+  if (!refreshTokenValue) {
+    return { success: false, error: 'No refresh token available' };
+  }
+
+  return refreshAccessToken(refreshTokenValue);
 }

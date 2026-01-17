@@ -7,7 +7,7 @@ import { MailCheck, RotateCcw, ExternalLink } from "lucide-react";
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
-import { resendVerificationEmail } from "@/lib/actions/auth/auth";
+import { resendVerificationEmail } from "@/lib/actions/auth";
 
 type EmailVerificationCardProps = {
   email?: string;

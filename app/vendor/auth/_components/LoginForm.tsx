@@ -12,6 +12,7 @@ import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -23,7 +24,8 @@ import {
 
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
-import { getGoogleAuthUrl, login } from "@/lib/actions/auth/auth";
+import { getGoogleAuthUrl, login } from "@/lib/actions/auth";
+import { toast } from "sonner";
 import { loginSchema } from "@/validation/auth";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -35,8 +37,6 @@ type LoginFormProps = {
 export function LoginForm({ verificationToken }: LoginFormProps) {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -59,9 +59,6 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
   }, [verificationToken, router]);
 
   async function handleSubmit(values: LoginFormValues) {
-    setServerError(null);
-    setSuccessMessage(null);
-
     try {
       const result = await login({
         email: values.email,
@@ -70,24 +67,23 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
       });
 
       if (!result.success) {
-        setServerError(result.error || "Unable to log in.");
+        toast.error(result.error || "Unable to log in.");
         return;
       }
 
-      setSuccessMessage("Login successful.");
+      toast.success("Login successful.");
       form.reset();
       router.push("/vendor/dashboard");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unable to log in right now.";
-      setServerError(message);
+      toast.error(message);
     }
   }
 
   const isSubmitting = form.formState.isSubmitting;
 
   async function handleGoogle() {
-    setServerError(null);
     setGoogleLoading(true);
     try {
       const { url } = await getGoogleAuthUrl();
@@ -97,7 +93,7 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
         error instanceof Error
           ? error.message
           : "Unable to start Google sign-in.";
-      setServerError(message);
+      toast.error(message);
     } finally {
       setGoogleLoading(false);
     }
@@ -106,31 +102,19 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
   return (
     <div className="mx-auto w-full max-w-xl pb-6">
       <Logo className="hidden xl:block" />
-      <div className="mt-4 flex flex-col gap-y-6 p-4 text-center">
+      <div className="mt-4 flex flex-col gap-y-6 my-4 sm:px-0 md:px-10 xl:px-10">
         <div>
-          <h2 className="text-xl">Welcome back</h2>
+          <h2 className="text-xl">Login</h2>
           <p className="text-sm text-muted-foreground">
             Please login to continue your account.
           </p>
         </div>
       </div>
 
-      {serverError ? (
-        <p className="my-2 w-fit mx-auto rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-          {serverError}
-        </p>
-      ) : null}
-
-      {successMessage ? (
-        <p className="my-2 w-fit mx-auto rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-          {successMessage}
-        </p>
-      ) : null}
-
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
-          className="mx-auto w-full space-y-5 sm:px-0 md:px-10 xl:px-10"
+          className="mx-auto w-full sm:px-0 md:px-10 xl:px-10"
         >
           <FormField
             control={form.control}
@@ -204,42 +188,54 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
               )}
             />
 
-            <Link
-              href="/vendor/auth/password-reset"
-              className="font-semibold text-indigo-600 hover:text-indigo-500"
-            >
-              Forgot password?
-            </Link>
+            <Button variant="link">
+              <Link
+                href="/vendor/auth/password-reset"
+                className="font-semibold "
+              >
+                Forgot password?
+              </Link>
+            </Button>
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <Spinner />
-                Logging in...
-              </span>
-            ) : (
-              "Log in"
-            )}
-          </Button>
+          <div className="space-y-2">
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Spinner />
+                  Logging in...
+                </span>
+              ) : (
+                "Log in"
+              )}
+            </Button>
 
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full gap-2"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-          >
-            {googleLoading ? (
-              <span className="flex items-center gap-2">
-                <Spinner className="h-4 w-4" /> Starting...
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                or
               </span>
-            ) : (
-              <>
-                <GoogleIcon /> Sign in with Google
-              </>
-            )}
-          </Button>
+              <Separator className="flex-1" />
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-2"
+              onClick={handleGoogle}
+              disabled={googleLoading}
+            >
+              {googleLoading ? (
+                <span className="flex items-center gap-2">
+                  <Spinner className="h-4 w-4" /> Starting...
+                </span>
+              ) : (
+                <>
+                  <GoogleIcon /> Sign in with Google
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </Form>
 
