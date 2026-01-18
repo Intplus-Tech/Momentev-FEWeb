@@ -58,8 +58,8 @@ export function ClientSignUpForm() {
       // Redirect to email verification page with email
       router.push(
         `/client/auth/email-verification?email=${encodeURIComponent(
-          values.email
-        )}`
+          values.email,
+        )}`,
       );
     } catch (error) {
       const message =
@@ -73,7 +73,7 @@ export function ClientSignUpForm() {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
-      const { url } = await getGoogleAuthUrl();
+      const { url } = await getGoogleAuthUrl("customer");
       window.location.href = url;
     } catch (error) {
       const message =

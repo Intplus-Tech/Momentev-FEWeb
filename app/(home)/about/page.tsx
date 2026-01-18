@@ -13,7 +13,6 @@ export default function AboutPage() {
       <AboutFind />
       <AboutMake />
       <AboutHelp />
-      <Footer />
     </main>
   );
 }

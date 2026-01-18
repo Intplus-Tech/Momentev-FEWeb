@@ -171,7 +171,7 @@ export async function verifyEmail(token: string) {
   }
 }
 
-export async function getGoogleAuthUrl() {
+export async function getGoogleAuthUrl(role?: 'customer' | 'vendor') {
   if (!process.env.BACKEND_URL) {
     throw new Error('BACKEND_URL is not configured');
   }
@@ -188,9 +188,19 @@ export async function getGoogleAuthUrl() {
     throw new Error(message || `Failed to fetch Google auth URL (${response.status})`);
   }
 
-  const url = data?.data?.url;
+  let url = data?.data?.url;
   if (!url) {
     throw new Error('Google auth URL not available');
+  }
+
+  // Add role to state parameter if provided
+  if (role) {
+    const urlObj = new URL(url);
+    const currentState = urlObj.searchParams.get('state') || '';
+    // Encode role in state parameter (Google will return this to our callback)
+    const stateWithRole = currentState ? `${currentState}|role:${role}` : `role:${role}`;
+    urlObj.searchParams.set('state', stateWithRole);
+    url = urlObj.toString();
   }
 
   return { url };
@@ -215,4 +225,84 @@ export async function tryRefreshToken() {
   }
 
   return refreshAccessToken(refreshTokenValue);
+}
+
+/**
+ * Handle Google OAuth callback - exchange authorization code for tokens
+ */
+export async function handleGoogleCallback(code: string, role?: 'customer' | 'vendor') {
+  try {
+    if (!code) {
+      return { success: false, error: 'Authorization code is required' };
+    }
+
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    // Build URL with code and optional role
+    const params = new URLSearchParams({ code });
+    if (role) {
+      params.append('role', role);
+    }
+
+    const response = await fetch(
+      `${process.env.BACKEND_URL}/api/v1/auth/google/callback?${params}`,
+      {
+        method: 'GET',
+        cache: 'no-store',
+      }
+    );
+
+    const data = await response.json().catch(() => null) as {
+      message?: string;
+      data?: {
+        user?: {
+          _id: string;
+          email: string;
+          firstName: string;
+          lastName: string;
+          authProvider?: string;
+          role?: string;
+        };
+        token?: string;
+        refreshToken?: string;
+        isNewUser?: boolean;
+      };
+    } | null;
+
+    if (!response.ok) {
+      if (response.status === 400) {
+        return { success: false, error: 'Authorization code is missing or invalid' };
+      }
+      if (response.status === 401) {
+        return { success: false, error: 'Failed to authenticate with Google' };
+      }
+      const message = data?.message;
+      return { success: false, error: message || `Google authentication failed (${response.status})` };
+    }
+
+    const token = data?.data?.token;
+    const refreshToken = data?.data?.refreshToken;
+    const user = data?.data?.user;
+    const isNewUser = data?.data?.isNewUser ?? false;
+
+    if (!token || !refreshToken || !user) {
+      return { success: false, error: 'Invalid response from server' };
+    }
+
+    // Store tokens in HTTP-only cookies
+    await setAuthCookies(token, refreshToken, true);
+
+    return {
+      success: true,
+      data: {
+        user,
+        isNewUser,
+      },
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
 }
