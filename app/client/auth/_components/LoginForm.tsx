@@ -50,8 +50,8 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
     if (verificationToken) {
       router.replace(
         `/client/auth/verification-successful?token=${encodeURIComponent(
-          verificationToken
-        )}`
+          verificationToken,
+        )}`,
       );
     }
   }, [verificationToken, router]);
@@ -84,7 +84,7 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
-      const { url } = await getGoogleAuthUrl();
+      const { url } = await getGoogleAuthUrl("customer");
       window.location.href = url;
     } catch (error) {
       const message =

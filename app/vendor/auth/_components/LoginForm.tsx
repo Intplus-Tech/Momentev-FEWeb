@@ -52,8 +52,8 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
     if (verificationToken) {
       router.replace(
         `/vendor/auth/verification-successful?token=${encodeURIComponent(
-          verificationToken
-        )}`
+          verificationToken,
+        )}`,
       );
     }
   }, [verificationToken, router]);
@@ -86,7 +86,7 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
-      const { url } = await getGoogleAuthUrl();
+      const { url } = await getGoogleAuthUrl("vendor");
       window.location.href = url;
     } catch (error) {
       const message =

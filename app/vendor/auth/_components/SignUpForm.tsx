@@ -59,8 +59,8 @@ export default function SignUpForm() {
       // Redirect to email verification page with email
       router.push(
         `/vendor/auth/email-verification?email=${encodeURIComponent(
-          values.email
-        )}`
+          values.email,
+        )}`,
       );
     } catch (error) {
       const message =
@@ -74,7 +74,7 @@ export default function SignUpForm() {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
-      const { url } = await getGoogleAuthUrl();
+      const { url } = await getGoogleAuthUrl("vendor");
       window.location.href = url;
     } catch (error) {
       const message =
