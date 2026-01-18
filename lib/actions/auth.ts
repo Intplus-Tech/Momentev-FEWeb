@@ -188,19 +188,14 @@ export async function getGoogleAuthUrl(role?: 'customer' | 'vendor') {
     throw new Error(message || `Failed to fetch Google auth URL (${response.status})`);
   }
 
-  let url = data?.data?.url;
+  const url = data?.data?.url;
   if (!url) {
     throw new Error('Google auth URL not available');
   }
 
-  // Add role to state parameter if provided
-  if (role) {
-    const urlObj = new URL(url);
-    const currentState = urlObj.searchParams.get('state') || '';
-    // Encode role in state parameter (Google will return this to our callback)
-    const stateWithRole = currentState ? `${currentState}|role:${role}` : `role:${role}`;
-    urlObj.searchParams.set('state', stateWithRole);
-    url = urlObj.toString();
+  // Store role in sessionStorage to retrieve after Google redirect
+  if (role && typeof window !== 'undefined') {
+    sessionStorage.setItem('google_auth_role', role);
   }
 
   return { url };
