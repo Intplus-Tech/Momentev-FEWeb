@@ -16,7 +16,6 @@ function GoogleCallbackContent() {
   useEffect(() => {
     async function processCallback() {
       const code = searchParams.get("code");
-      const state = searchParams.get("state");
 
       if (!code) {
         setError("No authorization code received from Google");
@@ -24,17 +23,20 @@ function GoogleCallbackContent() {
         return;
       }
 
-      // Extract role from state parameter (format: "role:customer" or "somestate|role:vendor")
-      let role: "customer" | "vendor" | undefined;
-      if (state) {
-        const roleMatch = state.match(/role:(customer|vendor)/);
-        if (roleMatch) {
-          role = roleMatch[1] as "customer" | "vendor";
-        }
+      // Retrieve role from sessionStorage (set before redirecting to Google)
+      const role = (
+        typeof window !== "undefined"
+          ? sessionStorage.getItem("google_auth_role")
+          : null
+      ) as "customer" | "vendor" | null;
+
+      // Clean up sessionStorage
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("google_auth_role");
       }
 
       try {
-        const result = await handleGoogleCallback(code, role);
+        const result = await handleGoogleCallback(code, role || undefined);
 
         if (!result.success) {
           setError(result.error || "Failed to complete Google sign-in");
