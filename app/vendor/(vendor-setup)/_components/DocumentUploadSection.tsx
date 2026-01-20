@@ -125,14 +125,22 @@ function UploadedFileCard({
 }
 
 export function DocumentUploadSection() {
-  const { documents, updateDocuments, setDocumentsValid } = useBusinessSetup();
+  const {
+    documents,
+    updateDocuments,
+    setDocumentsValid,
+    uploadedFilesMetadata,
+    updateUploadedFilesMetadata,
+  } = useBusinessSetup();
   const [identificationFiles, setIdentificationFiles] = React.useState<
     UploadedFile[]
-  >([]);
+  >(uploadedFilesMetadata.identification);
   const [registrationFiles, setRegistrationFiles] = React.useState<
     UploadedFile[]
-  >([]);
-  const [licenseFiles, setLicenseFiles] = React.useState<UploadedFile[]>([]);
+  >(uploadedFilesMetadata.registration);
+  const [licenseFiles, setLicenseFiles] = React.useState<UploadedFile[]>(
+    uploadedFilesMetadata.license,
+  );
 
   // Update validation based on uploaded files
   useEffect(() => {
@@ -152,15 +160,18 @@ export function DocumentUploadSection() {
       "identification",
       convertUploadedToFile(identificationFiles),
     );
-  }, [identificationFiles, updateDocuments]);
+    updateUploadedFilesMetadata("identification", identificationFiles);
+  }, [identificationFiles, updateDocuments, updateUploadedFilesMetadata]);
 
   useEffect(() => {
     updateDocuments("registration", convertUploadedToFile(registrationFiles));
-  }, [registrationFiles, updateDocuments]);
+    updateUploadedFilesMetadata("registration", registrationFiles);
+  }, [registrationFiles, updateDocuments, updateUploadedFilesMetadata]);
 
   useEffect(() => {
     updateDocuments("license", convertUploadedToFile(licenseFiles));
-  }, [licenseFiles, updateDocuments]);
+    updateUploadedFilesMetadata("license", licenseFiles);
+  }, [licenseFiles, updateDocuments, updateUploadedFilesMetadata]);
 
   const handleFileSelect = (
     setter: (files: UploadedFile[]) => void,

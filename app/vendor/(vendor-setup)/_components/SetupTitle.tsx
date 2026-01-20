@@ -1,6 +1,8 @@
 "use client";
 
 import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 const STEP_TITLES = {
   1: "Business Basics",
@@ -9,9 +11,25 @@ const STEP_TITLES = {
   4: "Profile Completion",
 } as const;
 
+const ROUTE_TO_STEP: Record<string, number> = {
+  "/vendor/business-setup": 1,
+  "/vendor/service-setup": 2,
+  "/vendor/payment-setup": 3,
+  "/vendor/profile-setup": 4,
+};
+
 export default function SetupTitle() {
-  const { currentStep } = useBusinessSetup();
+  const pathname = usePathname();
+  const { currentStep, setCurrentStep } = useBusinessSetup();
   const totalSteps = 4;
+
+  // Auto-detect step from route
+  useEffect(() => {
+    const detectedStep = ROUTE_TO_STEP[pathname];
+    if (detectedStep && detectedStep !== currentStep) {
+      setCurrentStep(detectedStep);
+    }
+  }, [pathname, currentStep, setCurrentStep]);
 
   return (
     <div className="fixed z-50 bg-background w-full px-4 py-4 border-b h-13 flex items-center justify-between">

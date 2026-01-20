@@ -7,6 +7,7 @@ import { LifeBuoy, MessageSquare, User2, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { reviews, supportPrefill, teamMembers } from "./data";
 import { ProfileSection } from "./_components/profile-section";
+import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
 import { SupportSection } from "./_components/support-section";
 import { TeamSection } from "./_components/team-section";
@@ -103,6 +104,7 @@ function VendorSettingsContent() {
 
         <TabsContent value="profile" className="space-y-4">
           <ProfileSection />
+          <AddressSection />
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4">

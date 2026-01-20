@@ -8,6 +8,7 @@ import { BusinessInformationForm } from "./BusinessInformationForm";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { ArrowLeft } from "lucide-react";
 import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useEffect } from "react";
 
 export function BusinessSetupForm() {
   const {
@@ -22,12 +23,32 @@ export function BusinessSetupForm() {
     saveAsDraft,
     continueLater,
     currentStep,
+    setExpandedSection,
   } = useBusinessSetup();
 
+  // Auto-expand Section 1 on mount
+  useEffect(() => {
+    if (expandedSection === null) {
+      setExpandedSection(1);
+    }
+  }, []);
+
+  // Check if current section is valid
   const canProceed = () => {
-    // Both sections must be valid to proceed
-    return isBusinessInfoValid && isDocumentsValid;
+    if (expandedSection === 1) return isBusinessInfoValid;
+    if (expandedSection === 2) return isDocumentsValid;
+    return false;
   };
+
+  // Determine button text based on current section
+  const getButtonText = () => {
+    if (isSubmitting) return "Saving...";
+    if (expandedSection === 2) return "Submit & Continue to Step 2";
+    return "Save & Continue";
+  };
+
+  // Check if Section 2 is locked
+  const isSection2Locked = !completedSections.has(1);
 
   return (
     <div className="space-y-6 flex flex-col min-h-[70vh]">
@@ -55,13 +76,14 @@ export function BusinessSetupForm() {
           </div>
 
           {/* Section 2: Document Upload */}
-          <div className="space-y-4 border-2 rounded-lg">
+          <div className="space-y-4 border-2 rounded-lg opacity-100">
             <StepSection
               number={2}
               title="Document Upload"
               isCompleted={completedSections.has(2)}
               isExpanded={expandedSection === 2}
-              onToggle={() => toggleSection(2)}
+              onToggle={() => !isSection2Locked && toggleSection(2)}
+              isLocked={isSection2Locked}
             />
             {expandedSection === 2 && <DocumentUploadSection />}
           </div>
@@ -95,7 +117,7 @@ export function BusinessSetupForm() {
             disabled={isSubmitting || !canProceed()}
             className="w-full sm:w-auto"
           >
-            {isSubmitting ? "Submitting..." : "Submit Business Setup"}
+            {getButtonText()}
           </Button>
         </div>
       </div>

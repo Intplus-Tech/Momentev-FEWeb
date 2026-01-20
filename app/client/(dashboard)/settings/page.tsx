@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { clientReviews, savedVendors } from "./data";
 import { ProfileSection } from "./_components/profile-section";
+import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
 import { SavedVendorsSection } from "./_components/saved-vendors-section";
 import { SecuritySection } from "./_components/security-section";
@@ -100,6 +101,7 @@ function SettingsContent() {
 
         <TabsContent value="profile" className="space-y-4">
           <ProfileSection />
+          <AddressSection />
         </TabsContent>
 
         <TabsContent value="saved" className="space-y-4">
