@@ -185,3 +185,76 @@ export async function deleteAccount() {
     return { success: false, error: message };
   }
 }
+
+/**
+ * Set password for Google OAuth users
+ * Allows users who signed up via Google to set a password and enable dual authentication
+ */
+export async function setPassword(password: string) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/set-password`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ password }),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token might be expired
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          // Retry with new token
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/set-password`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ password }),
+            cache: 'no-store',
+          });
+
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true };
+          }
+
+          const retryMessage = (retryData as any)?.message;
+          return { success: false, error: retryMessage || `Failed to set password (${retryResponse.status})` };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      // Handle 409 - Password already set or user is not a Google OAuth user
+      if (response.status === 409) {
+        const message = (data as any)?.message || 'Password already set or user is not a Google OAuth user';
+        return { success: false, error: message };
+      }
+
+      const message = (data as any)?.message;
+      return { success: false, error: message || `Failed to set password (${response.status})` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
