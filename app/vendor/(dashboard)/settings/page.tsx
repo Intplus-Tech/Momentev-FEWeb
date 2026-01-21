@@ -2,17 +2,18 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LifeBuoy, MessageSquare, User2, Users } from "lucide-react";
+import { LifeBuoy, MessageSquare, Shield, User2, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { reviews, supportPrefill, teamMembers } from "./data";
 import { ProfileSection } from "./_components/profile-section";
 import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
+import { SecuritySection } from "./_components/security-section";
 import { SupportSection } from "./_components/support-section";
 import { TeamSection } from "./_components/team-section";
 
-const vendorTabValues = ["profile", "team", "reviews", "support"];
+const vendorTabValues = ["profile", "team", "reviews", "security", "support"];
 
 export default function VendorSettingsPage() {
   return (
@@ -94,6 +95,14 @@ function VendorSettingsContent() {
           </TabsTrigger>
           <TabsTrigger
             className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
+            value="security"
+            aria-label="Security"
+          >
+            <Shield className="h-4 w-4" />
+            <span className="hidden sm:inline">Security</span>
+          </TabsTrigger>
+          <TabsTrigger
+            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
             value="support"
             aria-label="Support"
           >
@@ -113,6 +122,10 @@ function VendorSettingsContent() {
 
         <TabsContent value="reviews" className="space-y-4">
           <ReviewsSection reviews={reviews} />
+        </TabsContent>
+
+        <TabsContent value="security" className="space-y-4">
+          <SecuritySection />
         </TabsContent>
 
         <TabsContent value="support" className="space-y-4">

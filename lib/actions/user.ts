@@ -121,3 +121,67 @@ export async function updateUserProfile(input: UpdateProfileInput) {
     return { success: false, error: message };
   }
 }
+
+/**
+ * Delete the currently logged-in user's account
+ */
+export async function deleteAccount() {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/users/profile`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token might be expired
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          // Retry with new token
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/users/profile`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
+
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true };
+          }
+
+          const retryMessage = (retryData as any)?.message;
+          return { success: false, error: retryMessage || `Failed to delete account (${retryResponse.status})` };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const message = (data as any)?.message;
+      return { success: false, error: message || `Failed to delete account (${response.status})` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
