@@ -1,6 +1,6 @@
 "use client";
 
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
@@ -20,7 +20,8 @@ const ROUTE_TO_STEP: Record<string, number> = {
 
 export default function SetupTitle() {
   const pathname = usePathname();
-  const { currentStep, setCurrentStep } = useBusinessSetup();
+  const currentStep = useVendorSetupStore((state) => state.currentStep);
+  const setCurrentStep = useVendorSetupStore((state) => state.setCurrentStep);
   const totalSteps = 4;
 
   // Auto-detect step from route

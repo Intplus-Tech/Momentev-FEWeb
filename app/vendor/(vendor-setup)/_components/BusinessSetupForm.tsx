@@ -7,31 +7,98 @@ import { ProgressBar } from "./ProgressBar";
 import { BusinessInformationForm } from "./BusinessInformationForm";
 import { DocumentUploadSection } from "./DocumentUploadSection";
 import { ArrowLeft } from "lucide-react";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function BusinessSetupForm() {
-  const {
-    expandedSection,
-    completedSections,
-    isBusinessInfoValid,
-    isDocumentsValid,
-    isSubmitting,
-    toggleSection,
-    goToPreviousSection,
-    handleSaveAndContinue,
-    saveAsDraft,
-    continueLater,
-    currentStep,
-    setExpandedSection,
-  } = useBusinessSetup();
+  const router = useRouter();
 
-  // Auto-expand Section 1 on mount
+  // Zustand selective subscriptions (only re-render when these specific values change)
+  const expandedSection = useVendorSetupStore((state) => state.expandedSection);
+  const completedSections = useVendorSetupStore(
+    (state) => state.completedSections,
+  );
+  const isBusinessInfoValid = useVendorSetupStore(
+    (state) => state.isBusinessInfoValid,
+  );
+  const isDocumentsValid = useVendorSetupStore(
+    (state) => state.isDocumentsValid,
+  );
+  const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
+  const currentStep = useVendorSetupStore((state) => state.currentStep);
+
+  // Actions
+  const toggleSection = useVendorSetupStore((state) => state.toggleSection);
+  const setExpandedSection = useVendorSetupStore(
+    (state) => state.setExpandedSection,
+  );
+  const goToPreviousSection = useVendorSetupStore(
+    (state) => state.goToPreviousSection,
+  );
+  const markSectionComplete = useVendorSetupStore(
+    (state) => state.markSectionComplete,
+  );
+  const setIsSubmitting = useVendorSetupStore((state) => state.setIsSubmitting);
+  const setErrors = useVendorSetupStore((state) => state.setErrors);
+
+  // Auto-expand Section 1 on mount (always reset to section 1 for this step)
   useEffect(() => {
-    if (expandedSection === null) {
-      setExpandedSection(1);
+    setExpandedSection(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - we want this to run only once on mount
+
+  // Handle save and continue logic
+  const handleSaveAndContinue = async () => {
+    if (expandedSection === null) return;
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      if (expandedSection === 1) {
+        if (!isBusinessInfoValid) {
+          setErrors({
+            general:
+              "Please complete all required business information fields.",
+          });
+          toast.error("Please complete all required fields");
+          setIsSubmitting(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log("✅ Step 1 - Section 1 validated");
+        markSectionComplete(1, 1); // Step 1, Section 1
+        setExpandedSection(2);
+      } else if (expandedSection === 2) {
+        if (!isDocumentsValid) {
+          setErrors({ general: "Please upload all required documents." });
+          toast.error("Please upload all required documents");
+          setIsSubmitting(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log("🎉 Step 1 Complete - Navigating to Step 2");
+        markSectionComplete(1, 2); // Step 1, Section 2
+        router.push("/vendor/service-setup");
+      }
+    } catch (error) {
+      console.error("❌ Failed to save:", error);
+      setErrors({ general: "Failed to save. Please try again." });
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-  }, []);
+  };
+
+  // Save as draft - Zustand automatically persists to localStorage
+  const saveAsDraft = () => {
+    toast.success("Draft saved successfully");
+    console.log("✅ Draft auto-saved to localStorage");
+  };
 
   // Check if current section is valid
   const canProceed = () => {
@@ -48,7 +115,7 @@ export function BusinessSetupForm() {
   };
 
   // Check if Section 2 is locked
-  const isSection2Locked = !completedSections.has(1);
+  const isSection2Locked = !completedSections.has("step1-section1");
 
   return (
     <div className="space-y-6 flex flex-col min-h-[70vh]">
@@ -68,7 +135,7 @@ export function BusinessSetupForm() {
             <StepSection
               number={1}
               title="Business Information"
-              isCompleted={completedSections.has(1)}
+              isCompleted={completedSections.has("step1-section1")}
               isExpanded={expandedSection === 1}
               onToggle={() => toggleSection(1)}
             />
@@ -80,7 +147,7 @@ export function BusinessSetupForm() {
             <StepSection
               number={2}
               title="Document Upload"
-              isCompleted={completedSections.has(2)}
+              isCompleted={completedSections.has("step1-section2")}
               isExpanded={expandedSection === 2}
               onToggle={() => !isSection2Locked && toggleSection(2)}
               isLocked={isSection2Locked}
@@ -92,7 +159,7 @@ export function BusinessSetupForm() {
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
-        <ProgressBar />
+        <ProgressBar currentStep={1} />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
           <Button

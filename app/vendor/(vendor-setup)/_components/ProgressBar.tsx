@@ -1,11 +1,19 @@
 "use client";
 
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
-export function ProgressBar() {
-  const { completedSections } = useBusinessSetup();
-  const total = 2;
-  const percentage = (completedSections.size / total) * 100;
+export function ProgressBar({ currentStep }: { currentStep: number }) {
+  const completedSections = useVendorSetupStore(
+    (state) => state.completedSections,
+  );
+  const total = 2; // Each step has 2 sections
+
+  // Count only sections completed for the current step
+  const completedForCurrentStep = Array.from(completedSections).filter(
+    (sectionId) => sectionId.startsWith(`step${currentStep}-`),
+  ).length;
+
+  const percentage = (completedForCurrentStep / total) * 100;
 
   return (
     <div className="space-y-0 w-full pt-3 sm:pt-5">
@@ -17,7 +25,7 @@ export function ProgressBar() {
         />
       </div>
       <span className="text-xs text-muted-foreground">
-        {completedSections.size} of {total} completed
+        {completedForCurrentStep} of {total} completed
       </span>
     </div>
   );

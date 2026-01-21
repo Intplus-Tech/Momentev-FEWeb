@@ -4,12 +4,18 @@ import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import MobileSidebar from "./mobile-sidebar";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import LogoSmall from "@/components/brand/LogoSmall";
 import Logo from "@/components/brand/logo";
 
 export default function Header() {
-  const { continueLater } = useBusinessSetup();
+  const router = useRouter();
+
+  const continueLater = () => {
+    toast.success("Draft saved successfully");
+    router.push("/vendor/dashboard");
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 border-b bg-muted z-40">

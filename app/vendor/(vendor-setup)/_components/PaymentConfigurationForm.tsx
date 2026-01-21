@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
 import { ArrowLeft, Check } from "lucide-react";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -26,16 +28,25 @@ import {
 import { Info } from "lucide-react";
 
 export function PaymentConfigurationForm() {
-  const {
-    expandedSection,
-    completedSections,
-    isSubmitting,
-    toggleSection,
-    setExpandedSection,
-    handleSaveAndContinue,
-    saveAsDraft,
-    markSectionComplete,
-  } = useBusinessSetup();
+  const router = useRouter();
+
+  // Zustand selective subscriptions
+  const expandedSection = useVendorSetupStore((state) => state.expandedSection);
+  const completedSections = useVendorSetupStore(
+    (state) => state.completedSections,
+  );
+  const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
+
+  // Actions
+  const toggleSection = useVendorSetupStore((state) => state.toggleSection);
+  const setExpandedSection = useVendorSetupStore(
+    (state) => state.setExpandedSection,
+  );
+  const markSectionComplete = useVendorSetupStore(
+    (state) => state.markSectionComplete,
+  );
+  const setIsSubmitting = useVendorSetupStore((state) => state.setIsSubmitting);
+  const setErrors = useVendorSetupStore((state) => state.setErrors);
 
   const [paymentModel, setPaymentModel] = useState<string>("upfront");
   const [depositPercentage, setDepositPercentage] = useState<string>("50");
@@ -46,19 +57,18 @@ export function PaymentConfigurationForm() {
   const [paymentsProtected, setPaymentsProtected] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
 
-  // Auto-expand Section 1 on mount
+  // Auto-expand Section 1 on mount (always reset to section 1 for this step)
   useEffect(() => {
-    if (expandedSection === null) {
-      setExpandedSection(1);
-    }
-  }, []);
+    setExpandedSection(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - we want this to run only once on mount
 
   const handlePaymentModelSelect = (value: string) => {
     setPaymentModel(value);
   };
 
   const handleSavePaymentModel = () => {
-    markSectionComplete(1);
+    markSectionComplete(3, 1); // Step 3, Section 1
     setExpandedSection(2);
   };
 
@@ -75,9 +85,44 @@ export function PaymentConfigurationForm() {
     // Auto-close modal after 3 seconds
     setTimeout(() => {
       setShowSuccessModal(false);
-      markSectionComplete(2);
+      markSectionComplete(3, 2); // Step 3, Section 2
       setExpandedSection(3);
     }, 3000);
+  };
+
+  // Save as draft
+  const saveAsDraft = () => {
+    toast.success("Draft saved successfully");
+    console.log("✅ Draft auto-saved to localStorage");
+  };
+
+  // Handle final save and continue to next step
+  const handleSaveAndContinue = async () => {
+    if (expandedSection === null) return;
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      if (expandedSection === 3) {
+        if (!canProceed()) {
+          toast.error("Please agree to all terms");
+          setIsSubmitting(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log("🎉 Step 3 Complete - Navigating to Step 4");
+        markSectionComplete(3, 3); // Step 3, Section 3
+        router.push("/vendor/profile-setup");
+      }
+    } catch (error) {
+      console.error("❌ Failed to save:", error);
+      setErrors({ general: "Failed to save. Please try again." });
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const canProceed = () => {
@@ -90,12 +135,12 @@ export function PaymentConfigurationForm() {
 
   const getButtonText = () => {
     if (isSubmitting) return "Saving...";
-    if (expandedSection === 3) return "Save & Continue";
+    if (expandedSection === 3) return "Save & Continue to Step 4";
     return "Save & Continue";
   };
 
-  const isSection2Locked = !completedSections.has(1);
-  const isSection3Locked = !completedSections.has(2);
+  const isSection2Locked = !completedSections.has("step3-section1");
+  const isSection3Locked = !completedSections.has("step3-section2");
 
   return (
     <>
@@ -116,7 +161,7 @@ export function PaymentConfigurationForm() {
               <StepSection
                 number={1}
                 title="Payment Model Selection"
-                isCompleted={completedSections.has(1)}
+                isCompleted={completedSections.has("step3-section1")}
                 isExpanded={expandedSection === 1}
                 onToggle={() => toggleSection(1)}
               />
@@ -234,7 +279,7 @@ export function PaymentConfigurationForm() {
               <StepSection
                 number={2}
                 title="Stripe Connect Integration"
-                isCompleted={completedSections.has(2)}
+                isCompleted={completedSections.has("step3-section2")}
                 isExpanded={expandedSection === 2}
                 onToggle={() => !isSection2Locked && toggleSection(2)}
                 isLocked={isSection2Locked}
@@ -304,7 +349,7 @@ export function PaymentConfigurationForm() {
               <StepSection
                 number={3}
                 title="Commission Agreement"
-                isCompleted={completedSections.has(3)}
+                isCompleted={completedSections.has("step3-section3")}
                 isExpanded={expandedSection === 3}
                 onToggle={() => !isSection3Locked && toggleSection(3)}
                 isLocked={isSection3Locked}
@@ -386,7 +431,7 @@ export function PaymentConfigurationForm() {
 
         {/* Action Buttons */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
-          <ProgressBar />
+          <ProgressBar currentStep={3} />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
             <Button

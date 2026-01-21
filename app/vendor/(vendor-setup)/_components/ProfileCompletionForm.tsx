@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -16,6 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUploadCard } from "./FileUploadCard";
+import type { UploadedFile } from "@/lib/actions/upload";
 
 const TIME_OPTIONS = [
   "00:00",
@@ -45,22 +49,43 @@ const TIME_OPTIONS = [
 ];
 
 export function ProfileCompletionForm() {
-  const {
-    expandedSection,
-    completedSections,
-    isSubmitting,
-    toggleSection,
-    setExpandedSection,
-    handleSaveAndContinue,
-    saveAsDraft,
-    markSectionComplete,
-  } = useBusinessSetup();
+  const router = useRouter();
 
-  // Section 1: Media Upload
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [coverPhoto, setCoverPhoto] = useState<File | null>(null);
-  const [portfolioPhotos, setPortfolioPhotos] = useState<File[]>([]);
-  const [uploadingPortfolio, setUploadingPortfolio] = useState(false);
+  // Zustand selective subscriptions
+  const expandedSection = useVendorSetupStore((state) => state.expandedSection);
+  const completedSections = useVendorSetupStore(
+    (state) => state.completedSections,
+  );
+  const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
+  const profilePhotoId = useVendorSetupStore((state) => state.profilePhotoId);
+  const coverPhotoId = useVendorSetupStore((state) => state.coverPhotoId);
+  const portfolioImageIds = useVendorSetupStore(
+    (state) => state.portfolioImageIds,
+  );
+
+  // Actions
+  const toggleSection = useVendorSetupStore((state) => state.toggleSection);
+  const setExpandedSection = useVendorSetupStore(
+    (state) => state.setExpandedSection,
+  );
+  const markSectionComplete = useVendorSetupStore(
+    (state) => state.markSectionComplete,
+  );
+  const setIsSubmitting = useVendorSetupStore((state) => state.setIsSubmitting);
+  const setErrors = useVendorSetupStore((state) => state.setErrors);
+
+  // File upload metadata selectors
+  const profilePhoto = useVendorSetupStore((state) => state.profilePhoto);
+  const coverPhoto = useVendorSetupStore((state) => state.coverPhoto);
+  const portfolioImages = useVendorSetupStore((state) => state.portfolioImages);
+  const setProfilePhoto = useVendorSetupStore((state) => state.setProfilePhoto);
+  const setCoverPhoto = useVendorSetupStore((state) => state.setCoverPhoto);
+  const addPortfolioImage = useVendorSetupStore(
+    (state) => state.addPortfolioImage,
+  );
+  const removePortfolioImage = useVendorSetupStore(
+    (state) => state.removePortfolioImage,
+  );
 
   // Section 2: Availability
   const [workingDays, setWorkingDays] = useState({
@@ -75,43 +100,68 @@ export function ProfileCompletionForm() {
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
 
-  // Auto-expand Section 1 on mount
+  // Auto-expand Section 1 on mount (always reset to section 1 for this step)
   useEffect(() => {
-    if (expandedSection === null) {
-      setExpandedSection(1);
-    }
-  }, []);
+    setExpandedSection(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intentionally empty - we want this to run only once on mount
 
-  const handleProfilePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setProfilePhoto(e.target.files[0]);
-    }
+  // Upload handlers connected to Zustand
+  const handleProfilePhotoUpload = (data: UploadedFile) => {
+    setProfilePhoto({ id: data._id, url: data.url, name: data.originalName });
   };
 
-  const handleCoverPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setCoverPhoto(e.target.files[0]);
-    }
+  const handleCoverPhotoUpload = (data: UploadedFile) => {
+    setCoverPhoto({ id: data._id, url: data.url, name: data.originalName });
   };
 
-  const handlePortfolioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setPortfolioPhotos((prev) => [...prev, ...newFiles]);
-    }
-  };
-
-  const removePortfolioPhoto = (index: number) => {
-    setPortfolioPhotos((prev) => prev.filter((_, i) => i !== index));
+  const handlePortfolioUpload = (data: UploadedFile) => {
+    addPortfolioImage({ id: data._id, url: data.url, name: data.originalName });
   };
 
   const handleSaveMediaUpload = () => {
-    markSectionComplete(1);
+    markSectionComplete(4, 1); // Step 4, Section 1
     setExpandedSection(2);
   };
 
+  // Save as draft
+  const saveAsDraft = () => {
+    toast.success("Draft saved successfully");
+    console.log("✅ Draft auto-saved to localStorage");
+  };
+
+  // Handle final save and continue to review
+  const handleSaveAndContinue = async () => {
+    if (expandedSection === null) return;
+
+    setIsSubmitting(true);
+    setErrors({});
+
+    try {
+      if (expandedSection === 2) {
+        if (!canProceedSection2()) {
+          toast.error("Please complete availability settings");
+          setIsSubmitting(false);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        console.log("🎉 Step 4 Complete - Setup finished!");
+        markSectionComplete(4, 2); // Step 4, Section 2
+        toast.success("Profile setup complete!");
+        router.push("/vendor/setup-review");
+      }
+    } catch (error) {
+      console.error("❌ Failed to save:", error);
+      setErrors({ general: "Failed to save. Please try again." });
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const canProceedSection1 = () => {
-    return profilePhoto && coverPhoto && portfolioPhotos.length >= 5;
+    return profilePhoto && coverPhoto && portfolioImages.length >= 5;
   };
 
   const canProceedSection2 = () => {
@@ -131,7 +181,7 @@ export function ProfileCompletionForm() {
     return "Save & Continue";
   };
 
-  const isSection2Locked = !completedSections.has(1);
+  const isSection2Locked = !completedSections.has("step4-section1");
 
   return (
     <div className="space-y-6 flex flex-col min-h-[70vh]">
@@ -153,7 +203,7 @@ export function ProfileCompletionForm() {
             <StepSection
               number={1}
               title="Profile Media Upload"
-              isCompleted={completedSections.has(1)}
+              isCompleted={completedSections.has("step4-section1")}
               isExpanded={expandedSection === 1}
               onToggle={() => toggleSection(1)}
             />
@@ -166,41 +216,18 @@ export function ProfileCompletionForm() {
                       Profile Photo ( Professional headshot or logo )
                     </h3>
                   </div>
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    {profilePhoto ? (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">
-                          {profilePhoto.name}
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setProfilePhoto(null)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          Drag your file(s) or{" "}
-                          <label className="text-primary cursor-pointer hover:underline">
-                            browse
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/jpeg,image/png"
-                              onChange={handleProfilePhotoUpload}
-                            />
-                          </label>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Upload JPG/PNG • Recommended: 1500×500px
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <FileUploadCard
+                    onUploadComplete={handleProfilePhotoUpload}
+                    uploadedFile={profilePhoto}
+                    onRemove={() => setProfilePhoto(null)}
+                    accept={{
+                      "image/jpeg": [".jpg", ".jpeg"],
+                      "image/png": [".png"],
+                      "image/webp": [".webp"],
+                    }}
+                    maxSize={10 * 1024 * 1024}
+                    variant="avatar"
+                  />
                 </div>
 
                 {/* Cover Photo */}
@@ -210,39 +237,17 @@ export function ProfileCompletionForm() {
                       Cover Photo ( Showcases your work )
                     </h3>
                   </div>
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
-                    {coverPhoto ? (
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium">{coverPhoto.name}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setCoverPhoto(null)}
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Upload className="h-8 w-8 mx-auto text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">
-                          Drag your file(s) or{" "}
-                          <label className="text-primary cursor-pointer hover:underline">
-                            browse
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/jpeg,image/png"
-                              onChange={handleCoverPhotoUpload}
-                            />
-                          </label>
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Upload JPG/PNG • Recommended: 1500×500px
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <FileUploadCard
+                    onUploadComplete={handleCoverPhotoUpload}
+                    uploadedFile={coverPhoto}
+                    onRemove={() => setCoverPhoto(null)}
+                    accept={{
+                      "image/jpeg": [".jpg", ".jpeg"],
+                      "image/png": [".png"],
+                      "image/webp": [".webp"],
+                    }}
+                    maxSize={10 * 1024 * 1024}
+                  />
                 </div>
 
                 {/* Portfolio Gallery */}
@@ -254,54 +259,43 @@ export function ProfileCompletionForm() {
                     </h3>
                   </div>
 
-                  <div className="space-y-4">
-                    {portfolioPhotos.map((photo, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 bg-muted rounded flex items-center justify-center overflow-hidden">
-                            <span className="text-xs text-muted-foreground">
-                              IMG
-                            </span>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">{photo.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {(photo.size / 1024).toFixed(0)}KB
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removePortfolioPhoto(index)}
-                        >
-                          <X className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                    ))}
+                  <div className="space-y-3">
+                    {/* Always show 5 slots - filled with uploads or empty upload buttons */}
+                    {Array.from({ length: 5 }).map((_, index) => {
+                      const uploadedFile = portfolioImages[index];
 
-                    {portfolioPhotos.length < 5 && (
-                      <div className="border-2 border-dashed rounded-lg p-6 text-center">
-                        <label className="cursor-pointer">
-                          <div className="space-y-2">
-                            <Upload className="h-6 w-6 mx-auto text-muted-foreground" />
-                            <p className="text-sm text-primary hover:underline">
-                              Upload Image
-                            </p>
-                          </div>
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept="image/jpeg,image/png"
-                            multiple
-                            onChange={handlePortfolioUpload}
+                      if (uploadedFile) {
+                        // Show uploaded file
+                        return (
+                          <FileUploadCard
+                            key={uploadedFile.id}
+                            uploadedFile={uploadedFile}
+                            onRemove={() =>
+                              removePortfolioImage(uploadedFile.id)
+                            }
+                            accept={{
+                              "image/jpeg": [".jpg", ".jpeg"],
+                              "image/png": [".png"],
+                              "image/webp": [".webp"],
+                            }}
                           />
-                        </label>
-                      </div>
-                    )}
+                        );
+                      } else {
+                        // Show upload slot
+                        return (
+                          <FileUploadCard
+                            key={`slot-${index}`}
+                            onUploadComplete={handlePortfolioUpload}
+                            accept={{
+                              "image/jpeg": [".jpg", ".jpeg"],
+                              "image/png": [".png"],
+                              "image/webp": [".webp"],
+                            }}
+                            maxSize={10 * 1024 * 1024}
+                          />
+                        );
+                      }
+                    })}
                   </div>
                 </div>
 
@@ -321,7 +315,7 @@ export function ProfileCompletionForm() {
             <StepSection
               number={2}
               title="Availability Settings"
-              isCompleted={completedSections.has(2)}
+              isCompleted={completedSections.has("step4-section2")}
               isExpanded={expandedSection === 2}
               onToggle={() => !isSection2Locked && toggleSection(2)}
               isLocked={isSection2Locked}
@@ -398,7 +392,7 @@ export function ProfileCompletionForm() {
 
       {/* Action Buttons */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
-        <ProgressBar />
+        <ProgressBar currentStep={4} />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
           <Button

@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus } from "lucide-react";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
 const PRICING_TYPES = [
   { value: "hourly", label: "Hourly Rate" },
@@ -42,8 +42,16 @@ const EVENT_SIZE_OPTIONS = [
 ];
 
 export function PricingStructureForm() {
-  const { pricingStructure, updatePricingStructure, setPricingStructureValid } =
-    useBusinessSetup();
+  // Zustand selective subscriptions
+  const pricingStructure = useVendorSetupStore(
+    (state) => state.pricingStructure,
+  );
+  const updatePricingStructure = useVendorSetupStore(
+    (state) => state.updatePricingStructure,
+  );
+  const setPricingStructureValid = useVendorSetupStore(
+    (state) => state.setPricingStructureValid,
+  );
 
   const isUpdatingFromContext = useRef(false);
   const hasLoadedInitialData = useRef(false);

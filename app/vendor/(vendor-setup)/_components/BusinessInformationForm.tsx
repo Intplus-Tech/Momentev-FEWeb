@@ -15,12 +15,19 @@ import {
   businessRegistrationTypeOptions,
   maximumTravelDistanceOptions,
 } from "../_schemas/businessInfoSchema";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useState } from "react";
 
 export function BusinessInformationForm() {
-  const { businessInfo, updateBusinessInfo, setBusinessInfoValid } =
-    useBusinessSetup();
+  // Zustand selective subscriptions
+  const businessInfo = useVendorSetupStore((state) => state.businessInfo);
+  const updateBusinessInfo = useVendorSetupStore(
+    (state) => state.updateBusinessInfo,
+  );
+  const setBusinessInfoValid = useVendorSetupStore(
+    (state) => state.setBusinessInfoValid,
+  );
+
   const [serviceLocations, setServiceLocations] = useState<string[]>([]);
   const [locationInput, setLocationInput] = useState("");
   const isUpdatingFromContext = useRef(false);

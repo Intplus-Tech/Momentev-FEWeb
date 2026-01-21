@@ -11,7 +11,7 @@ import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
 const SERVICE_CATEGORIES = [
   { value: "photography", label: "Photography & Videography" },
@@ -91,11 +91,17 @@ const MAXIMUM_EVENT_SIZE = [
 
 export function ServiceCategoriesForm() {
   const [keywordInput, setKeywordInput] = useState("");
-  const {
-    serviceCategories,
-    updateServiceCategories,
-    setServiceCategoriesValid,
-  } = useBusinessSetup();
+
+  // Zustand selective subscriptions
+  const serviceCategories = useVendorSetupStore(
+    (state) => state.serviceCategories,
+  );
+  const updateServiceCategories = useVendorSetupStore(
+    (state) => state.updateServiceCategories,
+  );
+  const setServiceCategoriesValid = useVendorSetupStore(
+    (state) => state.setServiceCategoriesValid,
+  );
 
   const isUpdatingFromContext = useRef(false);
   const hasLoadedInitialData = useRef(false);

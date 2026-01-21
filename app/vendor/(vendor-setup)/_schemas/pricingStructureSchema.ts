@@ -21,7 +21,7 @@ const equipmentFeeSchema = z.object({
 export const pricingStructureSchema = z.object({
   // Pricing Configuration
   pricingType: z.enum(["hourly", "package", "custom"], {
-    required_error: "Please select how you charge",
+    message: "Please select how you charge",
   }),
 
   // Hourly Rate (conditional)
