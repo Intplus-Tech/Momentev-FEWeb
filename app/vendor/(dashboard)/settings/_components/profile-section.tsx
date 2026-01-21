@@ -45,7 +45,6 @@ const profileSchema = z.object({
   email: z.email("Enter a valid email"),
   phone: z.string().min(7, "Phone is required"),
   dob: z.date({ message: "Date of birth is required" }),
-  address: z.string().min(5, "Address is required"),
   avatar: z.string().optional(),
 });
 
@@ -64,10 +63,9 @@ export const ProfileSection = () => {
       email: "",
       phone: "",
       dob: "" as unknown as Date,
-      address: "",
       avatar: "",
     }),
-    []
+    [],
   );
 
   const form = useForm<ProfileFormValues>({
@@ -77,19 +75,11 @@ export const ProfileSection = () => {
 
   useEffect(() => {
     if (user) {
-      const address =
-        typeof user.addressId === "object" && user.addressId
-          ? `${user.addressId.street}, ${user.addressId.city}, ${user.addressId.state}`
-          : typeof user.addressId === "string"
-          ? user.addressId
-          : "";
-
       form.reset({
         fullName: `${user.firstName} ${user.lastName}`,
         email: user.email,
         phone: user.phoneNumber || "",
         dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
-        address: address,
         avatar: user.avatar?.url || "",
       });
     }
@@ -130,7 +120,6 @@ export const ProfileSection = () => {
       delete payload.avatar;
       delete payload.phone; // Mapped to phoneNumber
       delete payload.dob; // Mapped to dateOfBirth
-      delete payload.address; // Not supported by API yet
 
       if (finalAvatarId) {
         payload.avatar = finalAvatarId;
@@ -156,19 +145,11 @@ export const ProfileSection = () => {
   const onReset = () => {
     setSelectedFile(null);
     if (user) {
-      const address =
-        typeof user.addressId === "object" && user.addressId
-          ? `${user.addressId.street}, ${user.addressId.city}, ${user.addressId.state}`
-          : typeof user.addressId === "string"
-          ? user.addressId
-          : "";
-
       form.reset({
         fullName: `${user.firstName} ${user.lastName}`,
         email: user.email,
         phone: user.phoneNumber || "",
         dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
-        address: address,
         avatar: user.avatar?.url || "",
       });
     }
@@ -303,23 +284,6 @@ export const ProfileSection = () => {
                 )}
               />
             </div>
-
-            <FormField
-              control={form.control}
-              name="address"
-              render={({ field }) => (
-                <FormItem>
-                  <FormControl>
-                    <FloatingLabelInput
-                      label="Address"
-                      autoComplete="street-address"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <div className="flex items-center gap-4">
               <Button

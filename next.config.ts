@@ -25,6 +25,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb", // Increased from default 1MB to support image uploads
+    },
+  },
 };
 
 export default nextConfig;

@@ -52,20 +52,18 @@ export const businessInfoSchema = z.object({
 export type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
 
 export const yearsInBusinessOptions = [
-  { value: "0-1", label: "0-1 years" },
-  { value: "1-3", label: "1-3 years" },
-  { value: "3-5", label: "3-5 years" },
-  { value: "5-10", label: "5-10 years" },
-  { value: "10+", label: "10+ years" },
+  { value: "less_than_1_year", label: "Less than 1 year" },
+  { value: "1_to_5_years", label: "1-5 years" },
+  { value: "6_to_12_years", label: "6-12 years" },
+  { value: "13_to_20_years", label: "13-20 years" },
+  { value: "more_than_20_years", label: "More than 20 years" },
 ];
 
 export const businessRegistrationTypeOptions = [
-  { value: "sole-proprietorship", label: "Sole Proprietorship" },
+  { value: "company", label: "Company" },
+  { value: "sole_trader", label: "Sole Trader" },
   { value: "partnership", label: "Partnership" },
-  { value: "llc", label: "Limited Liability Company (LLC)" },
-  { value: "corporation", label: "Corporation" },
-  { value: "cooperative", label: "Cooperative" },
-  { value: "non-profit", label: "Non-Profit Organization" },
+  { value: "limited_liability_partnership", label: "Limited Liability Partnership (LLP)" },
 ];
 
 export const maximumTravelDistanceOptions = [

@@ -15,15 +15,23 @@ import {
   businessRegistrationTypeOptions,
   maximumTravelDistanceOptions,
 } from "../_schemas/businessInfoSchema";
-import { useBusinessSetup } from "../_context/BusinessSetupContext";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useState } from "react";
 
 export function BusinessInformationForm() {
-  const { businessInfo, updateBusinessInfo, setBusinessInfoValid } =
-    useBusinessSetup();
+  // Zustand selective subscriptions
+  const businessInfo = useVendorSetupStore((state) => state.businessInfo);
+  const updateBusinessInfo = useVendorSetupStore(
+    (state) => state.updateBusinessInfo,
+  );
+  const setBusinessInfoValid = useVendorSetupStore(
+    (state) => state.setBusinessInfoValid,
+  );
+
   const [serviceLocations, setServiceLocations] = useState<string[]>([]);
   const [locationInput, setLocationInput] = useState("");
   const isUpdatingFromContext = useRef(false);
+  const [formKey, setFormKey] = useState(0); // Key to force re-render
 
   const {
     control,
@@ -54,18 +62,38 @@ export function BusinessInformationForm() {
     },
   });
 
-  // Load from context on mount
+  const hasLoadedInitialData = useRef(false);
+  const isMounted = useRef(true);
+
+  // Load from context when component mounts
   useEffect(() => {
-    if (businessInfo) {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // Load from context on mount or when businessInfo changes initially
+  useEffect(() => {
+    if (businessInfo && !hasLoadedInitialData.current) {
       isUpdatingFromContext.current = true;
-      reset(businessInfo as BusinessInfoFormData);
+      console.log("Loading form data from context:", businessInfo);
+      // Reset with keepDefaultValues: false to ensure all fields update
+      reset(businessInfo as BusinessInfoFormData, {
+        keepDefaultValues: false,
+      });
       if (businessInfo.serviceLocations) {
         setServiceLocations(businessInfo.serviceLocations);
       }
+      hasLoadedInitialData.current = true;
+      // Force form re-render
+      setFormKey((prev) => prev + 1);
       // Use setTimeout to ensure the flag is reset after all updates
       setTimeout(() => {
-        isUpdatingFromContext.current = false;
-      }, 0);
+        if (isMounted.current) {
+          isUpdatingFromContext.current = false;
+        }
+      }, 100); // Increased timeout to ensure form has re-rendered
     }
   }, [businessInfo, reset]);
 
@@ -73,6 +101,7 @@ export function BusinessInformationForm() {
   useEffect(() => {
     const subscription = watch((formData) => {
       if (!isUpdatingFromContext.current) {
+        console.log("Updating context with form data:", formData);
         updateBusinessInfo(formData as Partial<BusinessInfoFormData>);
       }
     });
@@ -110,7 +139,11 @@ export function BusinessInformationForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form
+      key={formKey}
+      onSubmit={handleSubmit(handleFormSubmit)}
+      className="space-y-6"
+    >
       {/* Company Information Section */}
       <div className="space-y-4">
         <div className="bg-primary/5 px-4 py-4">
