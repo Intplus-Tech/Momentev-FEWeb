@@ -46,7 +46,11 @@ export const SecuritySection = () => {
     const checkAuthProvider = async () => {
       const result = await getUserProfile();
       if (result.success && result.data) {
-        setIsGoogleUser(result.data.authProvider === "google");
+        // Show "Set Password" only for Google users who haven't set a password yet
+        const shouldShowSetPassword =
+          result.data.authProvider === "google" &&
+          result.data.hasPassword === false;
+        setIsGoogleUser(shouldShowSetPassword);
       }
       setIsLoading(false);
     };

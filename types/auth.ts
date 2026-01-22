@@ -57,6 +57,7 @@ export interface UserProfile {
   createdAt: string;
   updatedAt: string;
   stripeCustomerId?: string | null;
+  hasPassword?: boolean;
 }
 
 export interface LoginResponse {
