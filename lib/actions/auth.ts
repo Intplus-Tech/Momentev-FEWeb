@@ -193,11 +193,6 @@ export async function getGoogleAuthUrl(role?: 'customer' | 'vendor') {
     throw new Error('Google auth URL not available');
   }
 
-  // Store role in sessionStorage to retrieve after Google redirect
-  if (role && typeof window !== 'undefined') {
-    sessionStorage.setItem('google_auth_role', role);
-  }
-
   return { url };
 }
 

@@ -84,6 +84,9 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
+      // Store role in sessionStorage before redirecting to Google
+      sessionStorage.setItem("google_auth_role", "customer");
+
       const { url } = await getGoogleAuthUrl("customer");
       window.location.href = url;
     } catch (error) {
@@ -92,7 +95,6 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
           ? error.message
           : "Unable to start Google sign-in.";
       toast.error(message);
-    } finally {
       setGoogleLoading(false);
     }
   }
