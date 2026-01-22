@@ -74,6 +74,9 @@ export default function SignUpForm() {
   async function handleGoogle() {
     setGoogleLoading(true);
     try {
+      // Store role in sessionStorage before redirecting to Google
+      sessionStorage.setItem("google_auth_role", "vendor");
+
       const { url } = await getGoogleAuthUrl("vendor");
       window.location.href = url;
     } catch (error) {
@@ -82,7 +85,6 @@ export default function SignUpForm() {
           ? error.message
           : "Unable to start Google sign-in.";
       toast.error(message);
-    } finally {
       setGoogleLoading(false);
     }
   }
