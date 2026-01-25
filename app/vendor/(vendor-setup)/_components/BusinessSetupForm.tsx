@@ -11,6 +11,8 @@ import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { submitBusinessInformation } from "@/lib/actions/vendor-setup";
+import type { BusinessInfoFormData } from "../_schemas/businessInfoSchema";
 
 export function BusinessSetupForm() {
   const router = useRouter();
@@ -68,8 +70,8 @@ export function BusinessSetupForm() {
           return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log("✅ Step 1 - Section 1 validated");
+        // Just mark complete and move to next section (Local Save)
+        console.log("✅ Step 1 - Section 1 validated locally");
         markSectionComplete(1, 1); // Step 1, Section 1
         setExpandedSection(2);
       } else if (expandedSection === 2) {
@@ -80,7 +82,45 @@ export function BusinessSetupForm() {
           return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        // Final Submission: Submit Business Info + Documents
+        const storeState = useVendorSetupStore.getState();
+        const businessInfo = storeState.businessInfo;
+
+        if (!businessInfo) {
+          toast.error("No business information found");
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log(
+          "🚀 [Step 1 Form] Initiating business information + documents submission",
+        );
+
+        toast.loading("Submitting business information...");
+
+        // Get document IDs from store
+        const documents = {
+          identification: storeState.documentIds.identification,
+          registration: storeState.documentIds.registration,
+          license: storeState.documentIds.license,
+        };
+
+        const result = await submitBusinessInformation(
+          businessInfo as BusinessInfoFormData,
+          documents,
+        );
+        toast.dismiss();
+
+        if (!result.success) {
+          setErrors({ general: result.error || "Failed to submit" });
+          toast.error(result.error || "Failed to submit business information");
+          setIsSubmitting(false);
+          return;
+        }
+
+        toast.success("Business setup Step 1 completed successfully!");
+        console.log("✅ Step 1 submitted:", result.data);
+
         console.log("🎉 Step 1 Complete - Navigating to Step 2");
         markSectionComplete(1, 2); // Step 1, Section 2
         router.push("/vendor/service-setup");
@@ -89,6 +129,7 @@ export function BusinessSetupForm() {
       console.error("❌ Failed to save:", error);
       setErrors({ general: "Failed to save. Please try again." });
       toast.error("Failed to save. Please try again.");
+      toast.dismiss();
     } finally {
       setIsSubmitting(false);
     }

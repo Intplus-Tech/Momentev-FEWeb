@@ -21,24 +21,12 @@ const PRICING_TYPES = [
   { value: "custom", label: "Custom Quotes Only" },
 ];
 
-const TRAVEL_FEES = [
-  { value: "50-flat", label: "£50 flat fee" },
-  { value: "1-mile", label: "£1/mile" },
-  { value: "custom", label: "Custom Amount" },
-];
-
-const LEAD_TIME_OPTIONS = [
-  { value: "flexible", label: "Flexible" },
-  { value: "2-weeks", label: "2 Weeks" },
-  { value: "1-week", label: "1 Week" },
-  { value: "4-weeks", label: "4 Weeks" },
-];
-
-const EVENT_SIZE_OPTIONS = [
-  { value: "unlimited", label: "Unlimited" },
-  { value: "50-guests", label: "50 guests" },
-  { value: "100-guests", label: "100 guests" },
-  { value: "200-guests", label: "200 guests" },
+const FEE_CATEGORIES = [
+  { value: "equipment", label: "Equipment" },
+  { value: "travel", label: "Travel" },
+  { value: "setup", label: "Setup/Breakdown" },
+  { value: "overtime", label: "Overtime" },
+  { value: "other", label: "Other" },
 ];
 
 export function PricingStructureForm() {
@@ -78,10 +66,7 @@ export function PricingStructureForm() {
       hourlyRate: "",
       minimumHours: "",
       packages: [],
-      travelFee: "",
-      leadTimeRequired: "",
-      maximumEventSize: "",
-      equipmentFees: [],
+      additionalFees: [],
     },
   });
 
@@ -98,12 +83,12 @@ export function PricingStructureForm() {
   });
 
   const {
-    fields: equipmentFields,
-    append: appendEquipment,
-    remove: removeEquipment,
+    fields: additionalFeeFields,
+    append: appendAdditionalFee,
+    remove: removeAdditionalFee,
   } = useFieldArray({
     control,
-    name: "equipmentFees",
+    name: "additionalFees",
   });
 
   // Load from context on mount
@@ -149,9 +134,10 @@ export function PricingStructureForm() {
     });
   };
 
-  const handleAddEquipment = () => {
-    appendEquipment({
+  const handleAddAdditionalFee = () => {
+    appendAdditionalFee({
       name: "",
+      category: "",
       price: "",
     });
   };
@@ -338,84 +324,46 @@ export function PricingStructureForm() {
         </div>
       </div>
 
-      {/* Additional Fees Section */}
+      {/* Additional Fees Section (formerly Equipment Fees) */}
       <div className="space-y-4">
         <div className="bg-primary/5 px-4 py-4 -mx-6">
-          <h3 className="">Additional Fees</h3>
-        </div>
-
-        <div className="space-y-4">
-          <Controller
-            name="travelFee"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelSelect
-                label="Travel Fees (Outside service area)"
-                options={TRAVEL_FEES}
-                value={field.value}
-                onValueChange={field.onChange}
-                error={errors.travelFee?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="leadTimeRequired"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelSelect
-                label="Lead Time Required"
-                options={LEAD_TIME_OPTIONS}
-                value={field.value}
-                onValueChange={field.onChange}
-                error={errors.leadTimeRequired?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="maximumEventSize"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelSelect
-                label="Maximum Event Size"
-                options={EVENT_SIZE_OPTIONS}
-                value={field.value}
-                onValueChange={field.onChange}
-                error={errors.maximumEventSize?.message}
-              />
-            )}
-          />
-        </div>
-      </div>
-
-      {/* Equipment Fees Section */}
-      <div className="space-y-4">
-        <div className="bg-primary/5 px-4 py-4 -mx-6">
-          <h3 className="">Equipment Fees*</h3>
+          <h3 className="">Additional Fees*</h3>
         </div>
 
         <div className="space-y-3">
-          {equipmentFields.map((field, index) => (
+          {additionalFeeFields.map((field, index) => (
             <div key={field.id} className="flex items-start gap-2">
               <Controller
-                name={`equipmentFees.${index}.name`}
+                name={`additionalFees.${index}.name`}
                 control={control}
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Equipment Name"
+                    label="Fee Name"
                     className="flex-1"
                   />
                 )}
               />
               <Controller
-                name={`equipmentFees.${index}.price`}
+                name={`additionalFees.${index}.category`}
+                control={control}
+                render={({ field }) => (
+                  <FloatingLabelSelect
+                    label="Category"
+                    options={FEE_CATEGORIES}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="w-40"
+                  />
+                )}
+              />
+              <Controller
+                name={`additionalFees.${index}.price`}
                 control={control}
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Price (optional)"
+                    label="Price*"
                     type="number"
                     className="w-32"
                   />
@@ -425,7 +373,7 @@ export function PricingStructureForm() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                onClick={() => removeEquipment(index)}
+                onClick={() => removeAdditionalFee(index)}
                 className="mt-2"
               >
                 <Trash2 className="h-4 w-4 text-destructive" />
@@ -435,7 +383,7 @@ export function PricingStructureForm() {
           <Button
             type="button"
             variant="link"
-            onClick={handleAddEquipment}
+            onClick={handleAddAdditionalFee}
             className="text-primary"
           >
             + Add Custom Fee

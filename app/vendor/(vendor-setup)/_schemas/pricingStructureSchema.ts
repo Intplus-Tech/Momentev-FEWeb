@@ -12,10 +12,11 @@ const packageSchema = z.object({
   features: z.array(packageFeatureSchema).min(1, "At least one feature is required"),
 });
 
-// Equipment Fee Schema
-const equipmentFeeSchema = z.object({
-  name: z.string().min(1, "Equipment name is required"),
-  price: z.string().optional(),
+// Additional Fee Schema (formerly Equipment Fee)
+const additionalFeeSchema = z.object({
+  name: z.string().min(1, "Fee name is required"),
+  category: z.string().min(1, "Category is required"),
+  price: z.string().min(1, "Price is required"),
 });
 
 export const pricingStructureSchema = z.object({
@@ -31,13 +32,8 @@ export const pricingStructureSchema = z.object({
   // Packages (conditional)
   packages: z.array(packageSchema).optional(),
 
-  // Additional Fees
-  travelFee: z.string().min(1, "Please select travel fee option"),
-  leadTimeRequired: z.string().min(1, "Please select lead time"),
-  maximumEventSize: z.string().min(1, "Please select maximum event size"),
-
-  // Equipment Fees
-  equipmentFees: z.array(equipmentFeeSchema).optional(),
+  // Additional Fees (formerly Equipment Fees)
+  additionalFees: z.array(additionalFeeSchema).optional(),
 }).refine((data) => {
   // If hourly, require hourly rate and minimum hours
   if (data.pricingType === "hourly") {
@@ -56,4 +52,4 @@ export const pricingStructureSchema = z.object({
 export type PricingStructureFormData = z.infer<typeof pricingStructureSchema>;
 export type PackageFeature = z.infer<typeof packageFeatureSchema>;
 export type Package = z.infer<typeof packageSchema>;
-export type EquipmentFee = z.infer<typeof equipmentFeeSchema>;
+export type AdditionalFee = z.infer<typeof additionalFeeSchema>;
