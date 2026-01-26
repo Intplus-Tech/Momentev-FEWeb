@@ -279,3 +279,354 @@ export async function setPassword(password: string) {
     return { success: false, error: message };
   }
 }
+
+/**
+ * Get supported vendor permissions
+ * GET /api/v1/vendors/permissions
+ */
+export async function getVendorPermissions() {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/permissions`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/permissions`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok && retryData) {
+            return { success: true, data: retryData.data };
+          }
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+      return { success: false, error: data?.message || 'Failed to fetch permissions' };
+    }
+
+    return { success: true, data: data?.data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+export type VendorPermissionInput = {
+  name: string;
+  read: boolean;
+  write: boolean;
+};
+
+export type AddVendorStaffInput = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  permissions: VendorPermissionInput[];
+  isActive: boolean;
+};
+
+/**
+ * Add a new vendor staff member
+ * POST /api/v1/vendors/{vendorId}/staff
+ */
+export async function addVendorStaff(input: AddVendorStaffInput) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get vendorId from profile
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data?.vendor?._id) {
+      return { success: false, error: 'Vendor profile not found' };
+    }
+    const vendorId = profileResult.data.vendor._id;
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(input),
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+          const retryMessage = (retryData as any)?.message;
+          return { success: false, error: retryMessage || `Failed to add staff (${retryResponse.status})` };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const message = data?.message;
+      return { success: false, error: message || `Failed to add staff (${response.status})` };
+    }
+
+    return { success: true, data: data?.data };
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Get vendor staff list
+ * GET /api/v1/vendors/{vendorId}/staff
+ */
+export async function getVendorStaff() {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get vendorId from profile
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data?.vendor?._id) {
+      return { success: false, error: 'Vendor profile not found' };
+    }
+    const vendorId = profileResult.data.vendor._id;
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff`, {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const message = data?.message;
+      return { success: false, error: message || `Failed to fetch staff (${response.status})` };
+    }
+
+    return { success: true, data: data?.data };
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+export type UpdateVendorStaffInput = {
+  permissions?: VendorPermissionInput[];
+  isActive?: boolean;
+};
+
+/**
+ * Update a vendor staff member
+ * PATCH /api/v1/vendors/{vendorId}/staff/{staffId}
+ */
+export async function updateVendorStaff(staffId: string, input: UpdateVendorStaffInput) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get vendorId from profile
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data?.vendor?._id) {
+      return { success: false, error: 'Vendor profile not found' };
+    }
+    const vendorId = profileResult.data.vendor._id;
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(input),
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const message = data?.message;
+      return { success: false, error: message || `Failed to update staff (${response.status})` };
+    }
+
+    return { success: true, data: data?.data };
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Delete a vendor staff member
+ * DELETE /api/v1/vendors/{vendorId}/staff/{staffId}
+ */
+export async function deleteVendorStaff(staffId: string) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    // Get vendorId from profile
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data?.vendor?._id) {
+      return { success: false, error: 'Vendor profile not found' };
+    }
+    const vendorId = profileResult.data.vendor._id;
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true };
+          }
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+
+      const message = data?.message;
+      return { success: false, error: message || `Failed to delete staff (${response.status})` };
+    }
+
+    return { success: true };
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
