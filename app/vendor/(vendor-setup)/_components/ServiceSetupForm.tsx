@@ -10,6 +10,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ServiceCategoriesForm } from "./ServiceCategoriesForm";
 import { PricingStructureForm } from "./PricingStructureForm";
+import { submitServiceSetup } from "@/lib/actions/service";
+import type { ServiceCategoriesFormData } from "../_schemas/serviceCategoriesSchema";
+import type { PricingStructureFormData } from "../_schemas/pricingStructureSchema";
 
 export function ServiceSetupForm() {
   const router = useRouter();
@@ -74,8 +77,27 @@ export function ServiceSetupForm() {
           return;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log("🎉 Step 2 Complete - Navigating to Step 3");
+        // Prepare data for submission
+        const { serviceCategories, pricingStructure } =
+          useVendorSetupStore.getState();
+
+        console.log("🚀 Submitting service setup...");
+        const result = await submitServiceSetup(
+          serviceCategories as ServiceCategoriesFormData,
+          pricingStructure as PricingStructureFormData,
+        );
+
+        if (!result.success) {
+          console.error("❌ Service setup submission failed:", result.error);
+          setErrors({
+            general: result.error || "Failed to save service setup.",
+          });
+          toast.error(result.error || "Failed to save service setup");
+          setIsSubmitting(false);
+          return;
+        }
+
+        console.log("✅ Service setup submitted successfully");
         markSectionComplete(2, 2); // Step 2, Section 2
         router.push("/vendor/payment-setup");
       }

@@ -17,16 +17,20 @@ import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
 const PRICING_TYPES = [
   { value: "hourly", label: "Hourly Rate" },
-  { value: "package", label: "Package Pricing" },
   { value: "custom", label: "Custom Quotes Only" },
 ];
 
 const FEE_CATEGORIES = [
   { value: "equipment", label: "Equipment" },
   { value: "travel", label: "Travel" },
-  { value: "setup", label: "Setup/Breakdown" },
-  { value: "overtime", label: "Overtime" },
+  { value: "personnel", label: "Personnel" },
   { value: "other", label: "Other" },
+];
+
+const TRANSPORT_FEE_OPTIONS = [
+  { value: "flat_50", label: "£50 flat fee" },
+  { value: "per_mile_1", label: "£1/mile" },
+  { value: "custom", label: "Custom Amount" },
 ];
 
 export function PricingStructureForm() {
@@ -64,8 +68,10 @@ export function PricingStructureForm() {
     defaultValues: {
       pricingType: undefined,
       hourlyRate: "",
-      minimumHours: "",
-      packages: [],
+      transportFee: {
+        type: undefined,
+        amount: "",
+      },
       additionalFees: [],
     },
   });
@@ -73,14 +79,6 @@ export function PricingStructureForm() {
   const pricingType = watch("pricingType");
 
   // Field arrays for dynamic lists
-  const {
-    fields: packageFields,
-    append: appendPackage,
-    remove: removePackage,
-  } = useFieldArray({
-    control,
-    name: "packages",
-  });
 
   const {
     fields: additionalFeeFields,
@@ -126,14 +124,6 @@ export function PricingStructureForm() {
     setPricingStructureValid(isValid);
   }, [isValid, setPricingStructureValid]);
 
-  const handleAddPackage = () => {
-    appendPackage({
-      name: "",
-      price: "",
-      features: [{ name: "" }],
-    });
-  };
-
   const handleAddAdditionalFee = () => {
     appendAdditionalFee({
       name: "",
@@ -174,153 +164,62 @@ export function PricingStructureForm() {
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Base Hourly Rate*"
+                    label="Hourly Rate*"
                     type="number"
                     error={errors.hourlyRate?.message}
                   />
                 )}
               />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Transport Fee Section (Compulsory) */}
+      <div className="space-y-4">
+        <div className="bg-primary/5 px-4 py-4 -mx-6">
+          <h3 className="">Transport Fee*</h3>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Controller
+              name="transportFee.type"
+              control={control}
+              render={({ field }) => (
+                <FloatingLabelSelect
+                  label="Select Travel fees"
+                  options={TRANSPORT_FEE_OPTIONS}
+                  value={field.value}
+                  onValueChange={(val) => {
+                    field.onChange(val);
+                    // Clear custom amount if not custom
+                    if (val !== "custom") {
+                      setValue("transportFee.amount", "");
+                    }
+                  }}
+                  error={errors.transportFee?.type?.message}
+                  className="flex-1"
+                />
+              )}
+            />
+
+            {watch("transportFee.type") === "custom" && (
               <Controller
-                name="minimumHours"
+                name="transportFee.amount"
                 control={control}
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Minimum Hours*"
+                    label="Custom Amount"
                     type="number"
-                    error={errors.minimumHours?.message}
+                    error={errors.transportFee?.amount?.message}
+                    className="flex-1"
                   />
                 )}
               />
-            </div>
-          )}
-
-          {/* Package Pricing */}
-          {pricingType === "package" && (
-            <div className="space-y-4">
-              {packageFields.map((packageField, packageIndex) => (
-                <div
-                  key={packageField.id}
-                  className="border rounded-lg p-4 space-y-4"
-                >
-                  <div className="flex items-start gap-4">
-                    <Checkbox checked className="mt-3" />
-                    <div className="flex-1 space-y-4">
-                      <div className="grid grid-cols-2 gap-4">
-                        <Controller
-                          name={`packages.${packageIndex}.name`}
-                          control={control}
-                          render={({ field }) => (
-                            <FloatingLabelInput
-                              {...field}
-                              label="Package Name*"
-                              error={
-                                errors.packages?.[packageIndex]?.name?.message
-                              }
-                            />
-                          )}
-                        />
-                        <Controller
-                          name={`packages.${packageIndex}.price`}
-                          control={control}
-                          render={({ field }) => (
-                            <FloatingLabelInput
-                              {...field}
-                              label="Price*"
-                              type="number"
-                              error={
-                                errors.packages?.[packageIndex]?.price?.message
-                              }
-                            />
-                          )}
-                        />
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-medium mb-2">
-                          Features of this package
-                        </p>
-                        <Controller
-                          name={`packages.${packageIndex}.features`}
-                          control={control}
-                          render={({ field }) => (
-                            <div className="space-y-2">
-                              {(field.value || []).map(
-                                (feature, featureIndex) => (
-                                  <div
-                                    key={featureIndex}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Input
-                                      value={feature.name}
-                                      onChange={(e) => {
-                                        const newFeatures = [
-                                          ...(field.value || []),
-                                        ];
-                                        newFeatures[featureIndex] = {
-                                          name: e.target.value,
-                                        };
-                                        field.onChange(newFeatures);
-                                      }}
-                                      placeholder="Feature name"
-                                      className="flex-1"
-                                    />
-                                    <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => {
-                                        const newFeatures = field.value?.filter(
-                                          (_, i) => i !== featureIndex,
-                                        );
-                                        field.onChange(newFeatures);
-                                      }}
-                                    >
-                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
-                                  </div>
-                                ),
-                              )}
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                  field.onChange([
-                                    ...(field.value || []),
-                                    { name: "" },
-                                  ]);
-                                }}
-                                className="text-xs"
-                              >
-                                + Add Feature
-                              </Button>
-                            </div>
-                          )}
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePackage(packageIndex)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="link"
-                onClick={handleAddPackage}
-                className="text-primary"
-              >
-                + Add Package
-              </Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 

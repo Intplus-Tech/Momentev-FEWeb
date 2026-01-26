@@ -22,24 +22,24 @@ import {
 // Now fetched from API via TanStack Query hooks
 
 const MINIMUM_BOOKING_DURATION = [
-  { value: "2-hours", label: "2 hours" },
-  { value: "1-hour", label: "1 hour" },
-  { value: "4-hours", label: "4 hours" },
-  { value: "full-day", label: "Full day" },
+  { value: "two_hours", label: "2 hours" },
+  { value: "an_hour", label: "1 hour" },
+  { value: "four_hours", label: "4 hours" },
+  { value: "full_day", label: "Full day" },
 ];
 
 const LEAD_TIME_REQUIRED = [
-  { value: "2-weeks", label: "2 Weeks" },
-  { value: "1-week", label: "1 Week" },
-  { value: "4-weeks", label: "4 Weeks" },
+  { value: "two_weeks", label: "2 Weeks" },
+  { value: "a_week", label: "1 Week" },
+  { value: "four_weeks", label: "4 Weeks" },
   { value: "flexible", label: "Flexible" },
 ];
 
 const MAXIMUM_EVENT_SIZE = [
   { value: "unlimited", label: "Unlimited" },
-  { value: "50-guests", label: "50 guests" },
-  { value: "100-guests", label: "100 guests" },
-  { value: "200-guests", label: "200 guests" },
+  { value: "fifty_guest", label: "50 guests" },
+  { value: "hundred_guest", label: "100 guests" },
+  { value: "two_hundred_guest", label: "200 guests" },
 ];
 
 export function ServiceCategoriesForm() {
