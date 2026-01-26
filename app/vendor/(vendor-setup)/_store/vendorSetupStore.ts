@@ -17,7 +17,7 @@ interface VendorSetupState {
   // Step Management
   currentStep: number;
   expandedSection: number | null;
-  completedSections: Set<string>; // Changed to string for step-scoped IDs like 'step1-section1'
+  completedSections: Set<string>;
 
   // Form Data
   businessInfo: Partial<BusinessInfoFormData> | null;

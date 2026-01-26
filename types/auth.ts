@@ -39,6 +39,24 @@ export interface Avatar {
   updatedAt?: string;
 }
 
+export interface Vendor {
+  _id: string;
+  userId: string;
+  portfolioGallery: string[];
+  rate: number;
+  paymentAccountProvider: string;
+  paymentModel: string;
+  isActive: boolean;
+  onBoardingStage: number;
+  onBoarded: boolean;
+  socialMediaLinks: string[];
+  commissionAgreement?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+  reviewCount: number;
+  id: string;
+}
+
 export interface UserProfile {
   _id: string;
   firstName: string;
@@ -58,6 +76,7 @@ export interface UserProfile {
   updatedAt: string;
   stripeCustomerId?: string | null;
   hasPassword?: boolean;
+  vendor?: Vendor;
 }
 
 export interface LoginResponse {

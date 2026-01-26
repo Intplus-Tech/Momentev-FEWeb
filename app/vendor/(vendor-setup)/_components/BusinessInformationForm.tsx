@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
@@ -16,7 +16,14 @@ import {
   maximumTravelDistanceOptions,
 } from "../_schemas/businessInfoSchema";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
-import { useState } from "react";
+import { CityAutocomplete } from "./CityAutocomplete";
+import { PhoneInput } from "@/components/ui/phone-input";
+
+interface ServiceLocation {
+  city: string;
+  state: string;
+  country: string;
+}
 
 export function BusinessInformationForm() {
   // Zustand selective subscriptions
@@ -28,8 +35,10 @@ export function BusinessInformationForm() {
     (state) => state.setBusinessInfoValid,
   );
 
-  const [serviceLocations, setServiceLocations] = useState<string[]>([]);
-  const [locationInput, setLocationInput] = useState("");
+  // Use ServiceLocation type for state
+  const [serviceLocations, setServiceLocations] = useState<ServiceLocation[]>(
+    [],
+  );
   const isUpdatingFromContext = useRef(false);
   const [formKey, setFormKey] = useState(0); // Key to force re-render
 
@@ -53,12 +62,24 @@ export function BusinessInformationForm() {
       emailAddress: "",
       phoneNumber: "",
       meansOfIdentification: "",
-      houseNumber: "",
-      buildingNumber: "",
-      streetAddress: "",
-      zipCode: "",
+      street: "",
+      city: "",
+      state: "",
+      postalCode: "",
+      country: "",
       serviceLocations: [],
       maximumTravelDistance: "",
+      workingDays: {
+        monday: true,
+        tuesday: true,
+        wednesday: true,
+        thursday: true,
+        friday: false,
+        saturday: false,
+        sunday: false,
+      },
+      workingHoursStart: "09:00",
+      workingHoursEnd: "17:00",
     },
   });
 
@@ -78,13 +99,18 @@ export function BusinessInformationForm() {
     if (businessInfo && !hasLoadedInitialData.current) {
       isUpdatingFromContext.current = true;
       console.log("Loading form data from context:", businessInfo);
+
       // Reset with keepDefaultValues: false to ensure all fields update
-      reset(businessInfo as BusinessInfoFormData, {
+      reset(businessInfo as unknown as BusinessInfoFormData, {
         keepDefaultValues: false,
       });
+
       if (businessInfo.serviceLocations) {
-        setServiceLocations(businessInfo.serviceLocations);
+        setServiceLocations(
+          businessInfo.serviceLocations as unknown as ServiceLocation[],
+        );
       }
+
       hasLoadedInitialData.current = true;
       // Force form re-render
       setFormKey((prev) => prev + 1);
@@ -93,7 +119,7 @@ export function BusinessInformationForm() {
         if (isMounted.current) {
           isUpdatingFromContext.current = false;
         }
-      }, 100); // Increased timeout to ensure form has re-rendered
+      }, 100);
     }
   }, [businessInfo, reset]);
 
@@ -102,7 +128,9 @@ export function BusinessInformationForm() {
     const subscription = watch((formData) => {
       if (!isUpdatingFromContext.current) {
         console.log("Updating context with form data:", formData);
-        updateBusinessInfo(formData as Partial<BusinessInfoFormData>);
+        updateBusinessInfo(
+          formData as unknown as Partial<BusinessInfoFormData>,
+        );
       }
     });
     return () => subscription.unsubscribe();
@@ -115,23 +143,41 @@ export function BusinessInformationForm() {
 
   // Update serviceLocations in form when state changes
   useEffect(() => {
-    setValue("serviceLocations", serviceLocations, {
+    setValue("serviceLocations", serviceLocations as any, {
       shouldValidate: true,
     });
   }, [serviceLocations, setValue]);
 
-  const handleAddLocation = () => {
-    if (
-      locationInput.trim() &&
-      !serviceLocations.includes(locationInput.trim())
-    ) {
-      setServiceLocations([...serviceLocations, locationInput.trim()]);
-      setLocationInput("");
+  const handleLocationSelect = (location: {
+    city: string;
+    state: string;
+    country: string;
+  }) => {
+    // Check for duplicates based on city and state
+    const isDuplicate = serviceLocations.some(
+      (loc) =>
+        loc.city.toLowerCase() === location.city.toLowerCase() &&
+        loc.state.toLowerCase() === location.state.toLowerCase(),
+    );
+
+    if (!isDuplicate) {
+      setServiceLocations([
+        ...serviceLocations,
+        {
+          city: location.city,
+          state: location.state,
+          country: location.country,
+        },
+      ]);
+    } else {
+      // Optional: Toast "Location already added"
     }
   };
 
-  const handleRemoveLocation = (location: string) => {
-    setServiceLocations(serviceLocations.filter((loc) => loc !== location));
+  const handleRemoveLocation = (indexToRemove: number) => {
+    setServiceLocations(
+      serviceLocations.filter((_, index) => index !== indexToRemove),
+    );
   };
 
   const handleFormSubmit = async (data: BusinessInfoFormData) => {
@@ -220,188 +266,270 @@ export function BusinessInformationForm() {
             />
           </div>
         </div>
+      </div>
 
-        {/* Contact Information Section */}
-        <div className="space-y-4">
-          <div className="bg-primary/5 px-4 py-4">
-            <h3 className="">Contact Information</h3>
+      {/* Contact Information Section */}
+      <div className="space-y-4">
+        <div className="bg-primary/5 px-4 py-4">
+          <h3 className="">Contact Information</h3>
+        </div>
+
+        <div className="px-6 space-y-4">
+          <Controller
+            name="primaryContactName"
+            control={control}
+            render={({ field }) => (
+              <FloatingLabelInput
+                {...field}
+                label="Primary Contact Name"
+                error={errors.primaryContactName?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="emailAddress"
+            control={control}
+            render={({ field }) => (
+              <FloatingLabelInput
+                {...field}
+                type="email"
+                label="Email Address"
+                error={errors.emailAddress?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="phoneNumber"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  placeholder="Enter phone number"
+                  {...field}
+                  defaultCountry="GB"
+                />
+                {errors.phoneNumber && (
+                  <p className="text-xs text-destructive">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+
+          <Controller
+            name="meansOfIdentification"
+            control={control}
+            render={({ field }) => (
+              <FloatingLabelInput
+                {...field}
+                label="Means of Identification"
+                error={errors.meansOfIdentification?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="street"
+            control={control}
+            render={({ field }) => (
+              <FloatingLabelInput
+                {...field}
+                label="Street Address"
+                error={errors.street?.message}
+              />
+            )}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Controller
+              name="city"
+              control={control}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  {...field}
+                  label="City"
+                  error={errors.city?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="state"
+              control={control}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  {...field}
+                  label="State"
+                  error={errors.state?.message}
+                />
+              )}
+            />
           </div>
 
-          <div className="px-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Controller
-              name="primaryContactName"
+              name="postalCode"
               control={control}
               render={({ field }) => (
                 <FloatingLabelInput
                   {...field}
-                  label="Primary Contact Name"
-                  error={errors.primaryContactName?.message}
+                  label="Postal Code"
+                  error={errors.postalCode?.message}
                 />
               )}
             />
 
             <Controller
-              name="emailAddress"
+              name="country"
               control={control}
               render={({ field }) => (
                 <FloatingLabelInput
                   {...field}
-                  type="email"
-                  label="Email Address"
-                  error={errors.emailAddress?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="phoneNumber"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  type="tel"
-                  label="Phone Number"
-                  placeholder=" "
-                  error={errors.phoneNumber?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="meansOfIdentification"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Means of Identification"
-                  error={errors.meansOfIdentification?.message}
-                />
-              )}
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Controller
-                name="houseNumber"
-                control={control}
-                render={({ field }) => (
-                  <FloatingLabelInput
-                    {...field}
-                    label="House Number"
-                    error={errors.houseNumber?.message}
-                  />
-                )}
-              />
-
-              <Controller
-                name="buildingNumber"
-                control={control}
-                render={({ field }) => (
-                  <FloatingLabelInput
-                    {...field}
-                    label="Building No."
-                    error={errors.buildingNumber?.message}
-                  />
-                )}
-              />
-            </div>
-
-            <Controller
-              name="streetAddress"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Street"
-                  error={errors.streetAddress?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="zipCode"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Zip Code"
-                  error={errors.zipCode?.message}
+                  label="Country"
+                  placeholder="e.g., NG, UK, US"
+                  error={errors.country?.message}
                 />
               )}
             />
           </div>
         </div>
+      </div>
 
-        {/* Service Area Section */}
-        <div className="space-y-4">
-          <div className="bg-primary/5 px-4 py-4">
-            <h3 className="">Service Area</h3>
+      {/* Service Area Section */}
+      <div className="space-y-4">
+        <div className="bg-primary/5 px-4 py-4">
+          <h3 className="">Service Area</h3>
+        </div>
+
+        <div className="px-6 pb-6 space-y-4">
+          {/* Service Locations */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">
+              Where do you provide services?
+            </label>
+            <div className="flex flex-col gap-2">
+              <CityAutocomplete
+                onLocationSelect={handleLocationSelect}
+                placeholder="Enter a city (e.g. London)"
+              />
+            </div>
+
+            {serviceLocations.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {serviceLocations.map((location, index) => (
+                  <div
+                    key={`${location.city}-${index}`}
+                    className="flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-sm"
+                  >
+                    <span>{location.city}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLocation(index)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {errors.serviceLocations && (
+              <p className="text-xs text-destructive">
+                {errors.serviceLocations.message}
+              </p>
+            )}
           </div>
 
-          <div className="px-6 pb-6 space-y-4">
-            {/* Service Locations */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">
-                Where do you provide services?
-              </label>
-              <div className="flex flex-col gap-2 sm:flex-row sm:gap-2">
-                <input
-                  type="text"
-                  value={locationInput}
-                  onChange={(e) => setLocationInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddLocation();
-                    }
-                  }}
-                  placeholder="Enter location (e.g., London, UK)"
-                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
-                />
-                <Button
-                  type="button"
-                  onClick={handleAddLocation}
-                  variant="outline"
-                  className="w-full sm:w-auto"
-                >
-                  Add
-                </Button>
-              </div>
-              {serviceLocations.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {serviceLocations.map((location) => (
-                    <div
-                      key={location}
-                      className="flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-sm"
-                    >
-                      <span>{location}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveLocation(location)}
-                        className="text-muted-foreground hover:text-foreground"
+          <Controller
+            name="maximumTravelDistance"
+            control={control}
+            render={({ field }) => (
+              <FloatingLabelSelect
+                label="Maximum Travel Distance"
+                options={maximumTravelDistanceOptions}
+                value={field.value}
+                onValueChange={field.onChange}
+                error={errors.maximumTravelDistance?.message}
+              />
+            )}
+          />
+        </div>
+      </div>
+
+      {/* Availability Section */}
+      <div className="space-y-4">
+        <div className="bg-primary/5 px-4 py-4">
+          <h3 className="">Availability</h3>
+        </div>
+
+        <div className="px-6 pb-6 space-y-6">
+          {/* Working Days */}
+          <Controller
+            name="workingDays"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">
+                  Working Days
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {Object.entries(field.value).map(([day, checked]) => (
+                    <div key={day} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={day}
+                        checked={checked}
+                        onChange={(e) =>
+                          field.onChange({
+                            ...field.value,
+                            [day]: e.target.checked,
+                          })
+                        }
+                        className="rounded border-input"
+                      />
+                      <label
+                        htmlFor={day}
+                        className="cursor-pointer capitalize text-sm"
                       >
-                        <X className="h-3 w-3" />
-                      </button>
+                        {day}
+                      </label>
                     </div>
                   ))}
                 </div>
-              )}
-              {errors.serviceLocations && (
-                <p className="text-xs text-destructive">
-                  {errors.serviceLocations.message}
-                </p>
-              )}
-            </div>
+              </div>
+            )}
+          />
 
+          {/* Working Hours */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Controller
-              name="maximumTravelDistance"
+              name="workingHoursStart"
               control={control}
               render={({ field }) => (
-                <FloatingLabelSelect
-                  label="Maximum Travel Distance"
-                  options={maximumTravelDistanceOptions}
-                  value={field.value}
-                  onValueChange={field.onChange}
-                  error={errors.maximumTravelDistance?.message}
+                <FloatingLabelInput
+                  {...field}
+                  type="time"
+                  label="Start Time"
+                  error={errors.workingHoursStart?.message}
+                />
+              )}
+            />
+
+            <Controller
+              name="workingHoursEnd"
+              control={control}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  {...field}
+                  type="time"
+                  label="End Time"
+                  error={errors.workingHoursEnd?.message}
                 />
               )}
             />

@@ -10,63 +10,16 @@ import {
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
+import {
+  useServiceCategories,
+  useServiceSpecialties,
+  useSuggestedTags,
+} from "@/lib/react-query/hooks/use-service-categories";
 
-const SERVICE_CATEGORIES = [
-  { value: "photography", label: "Photography & Videography" },
-  { value: "catering", label: "Catering & Beverages" },
-  { value: "decoration", label: "Decoration & Design" },
-  { value: "entertainment", label: "Entertainment & Music" },
-  { value: "venue", label: "Venue & Spaces" },
-];
-
-// Category-based specialties
-const SPECIALTIES_BY_CATEGORY: Record<
-  string,
-  Array<{ id: string; label: string }>
-> = {
-  photography: [
-    { id: "wedding-photography", label: "Wedding Photography" },
-    { id: "engagement-sessions", label: "Engagement Sessions" },
-    { id: "corporate-events", label: "Corporate Events Photography" },
-    { id: "family-portraits", label: "Family Portraits" },
-    { id: "event-videography", label: "Event Videography" },
-    { id: "drone-photography", label: "Drone Photography" },
-  ],
-  catering: [
-    { id: "wedding-catering", label: "Wedding catering" },
-    { id: "concession-catering", label: "Concession catering" },
-    { id: "social-event-catering", label: "Social Event catering" },
-    { id: "outdoor-catering", label: "Outdoor catering" },
-    { id: "corporate-catering", label: "Corporate catering" },
-    { id: "private-events", label: "Private Events" },
-  ],
-  decoration: [
-    { id: "wedding-decoration", label: "Wedding Decoration" },
-    { id: "event-styling", label: "Event Styling" },
-    { id: "floral-arrangements", label: "Floral Arrangements" },
-    { id: "balloon-decoration", label: "Balloon Decoration" },
-    { id: "lighting-design", label: "Lighting Design" },
-    { id: "theme-parties", label: "Theme Parties" },
-  ],
-  entertainment: [
-    { id: "live-band", label: "Live Band" },
-    { id: "dj-services", label: "DJ Services" },
-    { id: "mc-host", label: "MC/Host" },
-    { id: "dancers", label: "Dancers" },
-    { id: "magician", label: "Magician" },
-    { id: "comedian", label: "Comedian" },
-  ],
-  venue: [
-    { id: "wedding-venue", label: "Wedding Venue" },
-    { id: "conference-hall", label: "Conference Hall" },
-    { id: "outdoor-space", label: "Outdoor Space" },
-    { id: "banquet-hall", label: "Banquet Hall" },
-    { id: "garden-venue", label: "Garden Venue" },
-    { id: "rooftop-venue", label: "Rooftop Venue" },
-  ],
-};
+// Removed hardcoded SERVICE_CATEGORIES and SPECIALTIES_BY_CATEGORY
+// Now fetched from API via TanStack Query hooks
 
 const MINIMUM_BOOKING_DURATION = [
   { value: "2-hours", label: "2 hours" },
@@ -91,6 +44,13 @@ const MAXIMUM_EVENT_SIZE = [
 
 export function ServiceCategoriesForm() {
   const [keywordInput, setKeywordInput] = useState("");
+
+  // Fetch categories and specialties from API
+  const {
+    data: categoriesData,
+    isLoading: isLoadingCategories,
+    error: categoriesError,
+  } = useServiceCategories();
 
   // Zustand selective subscriptions
   const serviceCategories = useVendorSetupStore(
@@ -138,10 +98,37 @@ export function ServiceCategoriesForm() {
   const selectedSpecialties = watch("specialties") || [];
   const selectedCategory = watch("serviceCategory");
 
-  // Get specialties for selected category
-  const availableSpecialties = selectedCategory
-    ? SPECIALTIES_BY_CATEGORY[selectedCategory] || []
-    : [];
+  // Fetch specialties when category is selected
+  const { data: specialtiesData, isLoading: isLoadingSpecialties } =
+    useServiceSpecialties(selectedCategory || null);
+
+  // Fetch suggested tags when category is selected
+  const { data: suggestedTagsData } = useSuggestedTags(
+    selectedCategory || null,
+  );
+
+  // Transform API data to dropdown format
+  const categories =
+    categoriesData?.data?.data?.map((cat) => ({
+      value: cat._id,
+      label: cat.name,
+    })) || [];
+
+  const availableSpecialties =
+    specialtiesData?.data?.map((spec) => ({
+      id: spec._id,
+      label: spec.name,
+    })) || [];
+
+  // Get suggested tags
+  const suggestedTags = suggestedTagsData?.data?.tags || [];
+
+  // Handler for adding a tag from suggested tags
+  const handleAddTag = (tag: string) => {
+    if (!keywords.includes(tag)) {
+      setValue("keywords", [...keywords, tag]);
+    }
+  };
 
   // Reset specialties when category changes
   React.useEffect(() => {
@@ -226,19 +213,31 @@ export function ServiceCategoriesForm() {
         </div>
 
         <div className="space-y-4">
+          {categoriesError && (
+            <p className="text-xs text-destructive">
+              Failed to load categories. Please try again.
+            </p>
+          )}
           <Controller
             name="serviceCategory"
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
                 label="Primary Service Category"
-                options={SERVICE_CATEGORIES}
+                options={categories}
                 value={field.value}
                 onValueChange={field.onChange}
                 error={errors.serviceCategory?.message}
+                disabled={isLoadingCategories}
               />
             )}
           />
+          {isLoadingCategories && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading categories...
+            </div>
+          )}
         </div>
       </div>
 
@@ -252,6 +251,11 @@ export function ServiceCategoriesForm() {
           <p className="text-sm text-muted-foreground">
             Please select a service category first
           </p>
+        ) : isLoadingSpecialties ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading specialties...
+          </div>
         ) : availableSpecialties.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No specialties available for this category
@@ -332,12 +336,37 @@ export function ServiceCategoriesForm() {
           />
 
           <div className="space-y-3 mb-2">
+            {/* Show suggested tags if category is selected */}
+            {selectedCategory && suggestedTags.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm text-muted-foreground">
+                  Suggested Keywords (click to add)
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {suggestedTags.map((tag) => (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => handleAddTag(tag)}
+                      disabled={keywords.includes(tag)}
+                      className="px-3 py-1 text-sm border border-primary/30 rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-primary/10"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manual keyword input */}
             <Input
-              placeholder="Add keywords (press Enter)"
+              placeholder="Add custom keywords (press Enter)"
               value={keywordInput}
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={handleAddKeyword}
             />
+
+            {/* Selected keywords */}
             <div className="flex flex-wrap gap-2">
               {keywords.map((keyword) => (
                 <span

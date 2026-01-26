@@ -36,21 +36,43 @@ export const businessInfoSchema = z.object({
     },
     { message: "Please enter a valid international phone number (e.g., +1 234 567 8900)" }
   ),
-  meansOfIdentification: z.string().optional(),
-  houseNumber: z.string().optional(),
-  buildingNumber: z.string().optional(),
-  streetAddress: z.string().optional(),
-  zipCode: z.string().optional(),
+  meansOfIdentification: z.string().min(1, "Means of identification is required"),
+  street: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  postalCode: z.string().optional(),
+  country: z.string().optional(),
 
   // Service Area
+  // Service Area
   serviceLocations: z
-    .array(z.string())
+    .array(
+      z.object({
+        city: z.string(),
+        state: z.string(),
+        country: z.string(),
+      })
+    )
     .min(1, "Please add at least one service location"),
   maximumTravelDistance: z.string().min(1, "Please select maximum travel distance"),
+
+  // Availability
+  workingDays: z.object({
+    monday: z.boolean(),
+    tuesday: z.boolean(),
+    wednesday: z.boolean(),
+    thursday: z.boolean(),
+    friday: z.boolean(),
+    saturday: z.boolean(),
+    sunday: z.boolean(),
+  }),
+  workingHoursStart: z.string().min(1, "Please select start time"),
+  workingHoursEnd: z.string().min(1, "Please select end time"),
 });
 
 export type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
 
+// Years in Business - Matching API Enums exactly
 export const yearsInBusinessOptions = [
   { value: "less_than_1_year", label: "Less than 1 year" },
   { value: "1_to_5_years", label: "1-5 years" },

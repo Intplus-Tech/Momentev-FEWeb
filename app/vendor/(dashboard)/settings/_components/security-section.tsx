@@ -130,7 +130,7 @@ export const SecuritySection = () => {
       ) : (
         <SectionShell title="Change Password">
           <form className="space-y-4">
-            <FloatingLabelInput
+            {/* <FloatingLabelInput
               label="Email Address"
               type="email"
               autoComplete="email"
@@ -139,7 +139,7 @@ export const SecuritySection = () => {
               label="Old Password"
               type="password"
               autoComplete="current-password"
-            />
+            /> */}
             <FloatingLabelInput
               label="New Password"
               type="password"
@@ -158,7 +158,7 @@ export const SecuritySection = () => {
       )}
 
       <SectionShell title="Danger Zone">
-        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+        <div className="">
           <div className="space-y-3">
             <div>
               <h3 className="font-semibold text-destructive">Delete Account</h3>
