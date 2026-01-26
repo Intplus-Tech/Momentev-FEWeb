@@ -53,7 +53,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
         >
           <Avatar className="h-8 w-8 border border-black shadow-sm">
             <AvatarImage src={user.avatar?.url} alt={user.firstName} />
-            <AvatarFallback className="bg-primary/5 text-primary text-xs font-semibold">
+            <AvatarFallback className="bg-muted text-primary text-xs font-semibold">
               {user.firstName?.[0]}
               {user.lastName?.[0]}
             </AvatarFallback>

@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
-import { getUserProfile } from "@/lib/actions/user";
+
+import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
 import { UserDropdown } from "./UserDropdown";
 import {
   Sheet,
@@ -81,10 +81,7 @@ function HomeHeaderContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: user } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () => getUserProfile().then((res) => res.data),
-  });
+  const { data: user } = useUserProfile();
 
   // Sync state with URL params
   useEffect(() => {

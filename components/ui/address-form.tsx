@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createAddress, updateAddress } from "@/lib/actions/address";
+import { updateUserProfile } from "@/lib/actions/user";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
 
@@ -104,6 +105,16 @@ export function AddressForm({ address }: AddressFormProps) {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.auth.user(),
         });
+
+        // If we created a new address, link it to the user profile
+        if (!address && result.data?._id) {
+          await updateUserProfile({ addressId: result.data._id });
+          // Invalidate again to ensure profile reflects the link
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.auth.user(),
+          });
+        }
+
         // Invalidate address query
         if (result.data?._id) {
           await queryClient.invalidateQueries({

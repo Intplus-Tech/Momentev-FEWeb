@@ -2,7 +2,7 @@
 
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
-import { createAddress } from "@/lib/actions/address";
+import { createAddress, updateAddress } from "@/lib/actions/address";
 import type {
   BusinessProfilePayload,
   BusinessProfileResponse,
@@ -181,26 +181,65 @@ export async function submitBusinessInformation(
 
     console.log(`🎫 [Step 1 Submission] Vendor ID: ${vendorId}`);
 
-    // Create address if address fields are provided
-    let addressId: string | undefined;
+    // Check if vendor already has an address linked to their business profile to avoid duplicates
+    const existingBusinessProfile = profileResult.data.vendor?.businessProfile;
+    // Handle both populated object and direct ID string cases
+    let existingAddressId: string | undefined;
+
+    if (existingBusinessProfile && existingBusinessProfile.contactInfo && existingBusinessProfile.contactInfo.addressId) {
+      const addrId = existingBusinessProfile.contactInfo.addressId;
+      if (typeof addrId === 'string') {
+        existingAddressId = addrId;
+      } else if (typeof addrId === 'object' && addrId._id) {
+        existingAddressId = addrId._id;
+      }
+    }
+
+    // Checking for existing personal address to link if business address doesn't exist yet
+    if (!existingAddressId && profileResult.data.addressId) {
+      const personalAddrId = profileResult.data.addressId;
+      if (typeof personalAddrId === 'string') {
+        existingAddressId = personalAddrId;
+        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
+      } else if (typeof personalAddrId === 'object' && personalAddrId._id) {
+        existingAddressId = personalAddrId._id;
+        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
+      }
+    }
+
+    // Create or Update address if address fields are provided
+    let addressId: string | undefined = existingAddressId;
 
     if (formData.street || formData.city || formData.state || formData.postalCode) {
-      console.log('🏠 [Step 1 Submission] Creating address...');
-
-      const addressResult = await createAddress({
+      const addressPayload = {
         street: formData.street || '',
         city: formData.city || '',
         state: formData.state || '',
         postalCode: formData.postalCode || '',
-        country: formData.country || 'NG', // Use form country or default to NG
-      });
+        country: formData.country || 'NG',
+      };
 
-      if (addressResult.success && addressResult.data) {
-        addressId = addressResult.data._id;
-        console.log(`✅ [Step 1 Submission] Address created: ${addressId}`);
+      if (existingAddressId) {
+        console.log(`🏠 [Step 1 Submission] Updating existing address: ${existingAddressId}...`);
+        const updateResult = await updateAddress(existingAddressId, addressPayload);
+
+        if (updateResult.success) {
+          console.log(`✅ [Step 1 Submission] Address updated: ${existingAddressId}`);
+        } else {
+          console.warn('⚠️ [Step 1 Submission] Address update failed:', updateResult.error);
+        }
       } else {
-        console.warn('⚠️ [Step 1 Submission] Address creation failed:', addressResult.error);
-        // Continue without address - it's optional
+        console.log('🏠 [Step 1 Submission] Creating new address...');
+
+        const addressResult = await createAddress(addressPayload);
+
+        if (addressResult.success && addressResult.data) {
+          addressId = addressResult.data._id;
+          console.log(`✅ [Step 1 Submission] Address created: ${addressId}`);
+        } else {
+          console.warn('⚠️ [Step 1 Submission] Address creation failed:', addressResult.error);
+          // Continue without address - it's optional
+        }
       }
     }
 
