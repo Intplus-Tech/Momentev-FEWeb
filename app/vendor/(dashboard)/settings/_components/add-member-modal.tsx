@@ -15,11 +15,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { type VendorPermissionInput } from "@/lib/actions/user";
 import {
-  getVendorPermissions,
-  addVendorStaff,
-  type VendorPermissionInput,
-} from "@/lib/actions/user";
+  useVendorPermissions,
+  useAddVendorStaff,
+} from "@/lib/react-query/hooks/use-vendor";
 
 interface AddMemberModalProps {
   open: boolean;
@@ -32,9 +32,9 @@ export function AddMemberModal({
   onOpenChange,
   onMemberAdded,
 }: AddMemberModalProps) {
-  const [loading, setLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [permissionsList, setPermissionsList] = useState<string[]>([]);
+  const { data: permissionsList = [], isLoading: loadingPermissions } =
+    useVendorPermissions();
+  const addStaffMutation = useAddVendorStaff();
 
   // Form State
   const [firstName, setFirstName] = useState("");
@@ -46,31 +46,17 @@ export function AddMemberModal({
     Record<string, { read: boolean; write: boolean }>
   >({});
 
-  // Fetch permissions when modal opens
+  // Initialize selected permissions when permissions load or modal opens
   useEffect(() => {
-    if (open && permissionsList.length === 0) {
-      const fetchPermissions = async () => {
-        setLoading(true);
-        const res = await getVendorPermissions();
-        if (res.success && res.data) {
-          setPermissionsList(res.data);
-          // Initialize selected permissions state
-          const initialstate: Record<
-            string,
-            { read: boolean; write: boolean }
-          > = {};
-          res.data.forEach((perm: string) => {
-            initialstate[perm] = { read: false, write: false };
-          });
-          setSelectedPermissions(initialstate);
-        } else {
-          toast.error(res.error || "Failed to load permissions");
-        }
-        setLoading(false);
-      };
-      fetchPermissions();
+    if (open && permissionsList.length > 0) {
+      const initialstate: Record<string, { read: boolean; write: boolean }> =
+        {};
+      permissionsList.forEach((perm: string) => {
+        initialstate[perm] = { read: false, write: false };
+      });
+      setSelectedPermissions(initialstate);
     }
-  }, [open, permissionsList.length]);
+  }, [open, permissionsList]);
 
   const handlePermissionChange = (
     name: string,
@@ -94,50 +80,46 @@ export function AddMemberModal({
       return;
     }
 
-    setSubmitting(true);
-
     // Transform state to API format
     const permissionsPayload: VendorPermissionInput[] = Object.entries(
       selectedPermissions,
     )
-      .filter(([_, access]) => access.read || access.write) // Only include if at least one is checked? Or include all?
-      // API likely expects all or just active ones. Assuming just active or explicitly set ones.
-      // Based on screenshot, seems like we define read/write for each.
+      .filter(([_, access]) => access.read || access.write)
       .map(([name, access]) => ({
         name,
         read: access.read,
         write: access.write,
       }));
 
-    const result = await addVendorStaff({
-      firstName,
-      lastName,
-      email,
-      permissions: permissionsPayload,
-      isActive: true,
-    });
+    try {
+      await addStaffMutation.mutateAsync({
+        firstName,
+        lastName,
+        email,
+        permissions: permissionsPayload,
+        isActive: true,
+      });
 
-    if (result.success) {
       toast.success("Team member added successfully");
       onOpenChange(false);
+
       // Reset form
       setFirstName("");
       setLastName("");
       setEmail("");
+
       // Reset permissions
       const initialstate: Record<string, { read: boolean; write: boolean }> =
         {};
-      permissionsList.forEach((perm) => {
+      permissionsList.forEach((perm: string) => {
         initialstate[perm] = { read: false, write: false };
       });
       setSelectedPermissions(initialstate);
 
       onMemberAdded?.();
-    } else {
-      toast.error(result.error || "Failed to add team member");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add team member");
     }
-
-    setSubmitting(false);
   };
 
   return (
@@ -193,13 +175,13 @@ export function AddMemberModal({
                 <span className="text-center">Edit</span>
               </div>
 
-              {loading ? (
+              {loadingPermissions ? (
                 <div className="flex justify-center py-4">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {permissionsList.map((permission) => (
+                  {permissionsList.map((permission: string) => (
                     <div
                       key={permission}
                       className="grid grid-cols-3 items-center gap-2 text-sm"
@@ -252,8 +234,13 @@ export function AddMemberModal({
             >
               Back
             </Button>
-            <Button type="submit" disabled={submitting || loading}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              type="submit"
+              disabled={addStaffMutation.isPending || loadingPermissions}
+            >
+              {addStaffMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Submit
             </Button>
           </DialogFooter>

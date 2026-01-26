@@ -19,6 +19,6 @@ export function useUserProfile() {
       return result.data;
     },
     retry: 1, // Don't retry too many times for auth errors
-    staleTime: 0 * 60 * 1000, // Consider profile data fresh for 5 minutes
+    staleTime: 1 * 60 * 1000, // Consider profile data fresh for 5 minutes
   });
 }

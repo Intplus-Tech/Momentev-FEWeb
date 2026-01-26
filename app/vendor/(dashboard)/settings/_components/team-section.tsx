@@ -22,13 +22,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { type VendorPermissionInput } from "@/lib/actions/user";
 import {
-  getVendorStaff,
-  getVendorPermissions,
-  updateVendorStaff,
-  deleteVendorStaff,
-  type VendorPermissionInput,
-} from "@/lib/actions/user";
+  useVendorStaff,
+  useVendorPermissions,
+  useUpdateVendorStaff,
+  useDeleteVendorStaff,
+} from "@/lib/react-query/hooks/use-vendor";
 
 import { SectionShell } from "./section-shell";
 import { AddMemberModal } from "./add-member-modal";
@@ -51,9 +51,11 @@ type StaffMember = {
 };
 
 export const TeamSection = () => {
-  const [staffList, setStaffList] = useState<StaffMember[]>([]);
-  const [permissionsList, setPermissionsList] = useState<string[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: staffList = [], isLoading: loadingStaff } = useVendorStaff();
+  const { data: permissionsList = [] } = useVendorPermissions();
+  const updateStaffMutation = useUpdateVendorStaff();
+  const deleteStaffMutation = useDeleteVendorStaff();
+
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
 
   // State for the expanded member's edited permissions
@@ -61,33 +63,6 @@ export const TeamSection = () => {
   const [editedPermissions, setEditedPermissions] = useState<
     Record<string, { read: boolean; write: boolean }>
   >({});
-
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Fetch data
-  const fetchData = async () => {
-    setLoading(true);
-    const [staffRes, permRes] = await Promise.all([
-      getVendorStaff(),
-      getVendorPermissions(),
-    ]);
-
-    if (permRes.success && permRes.data) {
-      setPermissionsList(permRes.data);
-    }
-
-    if (staffRes.success && staffRes.data) {
-      setStaffList(staffRes.data);
-    } else {
-      setStaffList([]);
-    }
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
 
@@ -153,7 +128,6 @@ export const TeamSection = () => {
 
   const handleSaveChanges = async () => {
     if (!selected) return;
-    setIsUpdating(true);
 
     const permissionsPayload: VendorPermissionInput[] = Object.entries(
       editedPermissions,
@@ -163,17 +137,17 @@ export const TeamSection = () => {
       write: access.write,
     }));
 
-    const res = await updateVendorStaff(selected._id, {
-      permissions: permissionsPayload,
-    });
-
-    if (res.success) {
+    try {
+      await updateStaffMutation.mutateAsync({
+        id: selected._id,
+        data: {
+          permissions: permissionsPayload,
+        },
+      });
       toast.success("Permissions updated successfully");
-      fetchData(); // Refresh list to get updated state
-    } else {
-      toast.error(res.error || "Failed to update permissions");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update permissions");
     }
-    setIsUpdating(false);
   };
 
   const handleDeleteMember = (member: StaffMember) => {
@@ -183,20 +157,16 @@ export const TeamSection = () => {
   };
 
   const performDelete = async (id: string) => {
-    setIsDeleting(true);
-    const res = await deleteVendorStaff(id);
-
-    if (res.success) {
+    try {
+      await deleteStaffMutation.mutateAsync(id);
       toast.success("Team member removed");
       if (openMemberId === id) setOpenMemberId(null);
-      fetchData();
-    } else {
-      toast.error(res.error || "Failed to remove team member");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove team member");
     }
-    setIsDeleting(false);
   };
 
-  if (loading && staffList.length === 0) {
+  if (loadingStaff && staffList.length === 0) {
     return (
       <SectionShell title="Team Member Details">
         <div className="flex justify-center p-8">
@@ -371,9 +341,11 @@ export const TeamSection = () => {
                                 </Button>
                                 <Button
                                   onClick={handleSaveChanges}
-                                  disabled={!hasChanges || isUpdating}
+                                  disabled={
+                                    !hasChanges || updateStaffMutation.isPending
+                                  }
                                 >
-                                  {isUpdating && (
+                                  {updateStaffMutation.isPending && (
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                   )}
                                   Save Changes
@@ -418,7 +390,7 @@ export const TeamSection = () => {
           open={isAddMemberOpen}
           onOpenChange={setIsAddMemberOpen}
           onMemberAdded={() => {
-            fetchData();
+            // No manual fetch needed, react-query invalidates automatically
           }}
         />
       </div>

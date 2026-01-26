@@ -16,4 +16,9 @@ export const queryKeys = {
   },
   // Add more domains as needed
   // vendors: { ... }
+  vendor: {
+    all: ['vendor'] as const,
+    staff: () => [...queryKeys.vendor.all, 'staff'] as const,
+    permissions: () => [...queryKeys.vendor.all, 'permissions'] as const,
+  },
 };
