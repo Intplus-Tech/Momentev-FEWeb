@@ -98,6 +98,9 @@ export async function submitBusinessInformation(
     license?: string[];
   },
 ): Promise<ActionResponse<BusinessProfileResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
   try {
     console.log('📤 [Step 1 Submission] Starting business information submission...');
     console.log('📋 [Step 1 Submission] Form data:', JSON.stringify(formData, null, 2));

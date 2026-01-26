@@ -61,18 +61,25 @@ export function CityAutocomplete({
           {filteredCities.length === 0 && query.length > 0 && (
             // Allow selecting the custom query as a city
             <ComboboxList>
-              <div
-                className="py-6 text-center text-sm text-muted-foreground cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+              <ComboboxItem
+                className="cursor-pointer py-3 text-center justify-center font-medium"
+                onSelect={() =>
+                  handleSelect({
+                    city: query,
+                    state: query,
+                    country: "United Kingdom",
+                  })
+                }
                 onClick={() =>
                   handleSelect({
                     city: query,
-                    state: query, // Default state to city for custom entries
+                    state: query,
                     country: "United Kingdom",
                   })
                 }
               >
                 Use "{query}"
-              </div>
+              </ComboboxItem>
             </ComboboxList>
           )}
 
