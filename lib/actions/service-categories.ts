@@ -24,6 +24,9 @@ export async function fetchServiceCategories(
   page = 1,
   limit = 50,
 ): Promise<ActionResponse<PaginatedResponse<ServiceCategory>>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
   try {
     const accessToken = await getAccessToken();
 
@@ -76,6 +79,9 @@ export async function fetchServiceCategories(
 export async function fetchServiceSpecialtiesByCategory(
   categoryId: string,
 ): Promise<ActionResponse<DirectArrayResponse<ServiceSpecialty>>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
   try {
     const accessToken = await getAccessToken();
 
@@ -131,6 +137,9 @@ export async function fetchServiceSpecialtiesByCategory(
 export async function fetchSuggestedTags(
   categoryId: string,
 ): Promise<ActionResponse<SuggestedTagsResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
   try {
     const accessToken = await getAccessToken();
 

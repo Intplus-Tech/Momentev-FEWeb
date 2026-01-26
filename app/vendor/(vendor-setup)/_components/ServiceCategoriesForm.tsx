@@ -99,13 +99,19 @@ export function ServiceCategoriesForm() {
   const selectedCategory = watch("serviceCategory");
 
   // Fetch specialties when category is selected
-  const { data: specialtiesData, isLoading: isLoadingSpecialties } =
-    useServiceSpecialties(selectedCategory || null);
+  const {
+    data: specialtiesData,
+    isLoading: isLoadingSpecialties,
+    isError: isSpecialtiesError,
+    error: specialtiesError,
+  } = useServiceSpecialties(selectedCategory || null);
 
   // Fetch suggested tags when category is selected
-  const { data: suggestedTagsData } = useSuggestedTags(
-    selectedCategory || null,
-  );
+  const {
+    data: suggestedTagsData,
+    isError: isSuggestedTagsError,
+    error: suggestedTagsError,
+  } = useSuggestedTags(selectedCategory || null);
 
   // Transform API data to dropdown format
   const categories =
@@ -256,6 +262,12 @@ export function ServiceCategoriesForm() {
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading specialties...
           </div>
+        ) : isSpecialtiesError ? (
+          <p className="text-sm text-destructive">
+            {specialtiesError instanceof Error
+              ? specialtiesError.message
+              : "Failed to load specialties"}
+          </p>
         ) : availableSpecialties.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             No specialties available for this category
@@ -337,24 +349,32 @@ export function ServiceCategoriesForm() {
 
           <div className="space-y-3 mb-2">
             {/* Show suggested tags if category is selected */}
-            {selectedCategory && suggestedTags.length > 0 && (
+            {selectedCategory && (
               <div className="space-y-2">
                 <label className="text-sm text-muted-foreground">
                   Suggested Keywords (click to add)
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {suggestedTags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleAddTag(tag)}
-                      disabled={keywords.includes(tag)}
-                      className="px-3 py-1 text-sm border border-primary/30 rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-primary/10"
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                </div>
+                {isSuggestedTagsError ? (
+                  <p className="text-xs text-destructive">
+                    {suggestedTagsError instanceof Error
+                      ? suggestedTagsError.message
+                      : "Failed to load suggested tags"}
+                  </p>
+                ) : suggestedTags.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {suggestedTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleAddTag(tag)}
+                        disabled={keywords.includes(tag)}
+                        className="px-3 py-1 text-sm border border-primary/30 rounded-full hover:bg-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-primary/10"
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             )}
 

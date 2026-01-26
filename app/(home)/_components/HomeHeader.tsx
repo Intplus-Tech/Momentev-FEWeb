@@ -12,6 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { getUserProfile } from "@/lib/actions/user";
+import { UserDropdown } from "./UserDropdown";
 import {
   Sheet,
   SheetClose,
@@ -77,6 +80,11 @@ function HomeHeaderContent() {
   const [selectedLocation, setSelectedLocation] = useState("East London");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+
+  const { data: user } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: () => getUserProfile().then((res) => res.data),
+  });
 
   // Sync state with URL params
   useEffect(() => {
@@ -184,34 +192,46 @@ function HomeHeaderContent() {
 
           {/* Desktop Nav */}
           <ul className="hidden lg:flex items-center gap-4 xl:gap-6 text-white text-sm">
-            <li>
-              <button className="relative px-3 py-2 font-medium group">
-                <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
-                  Post A Request
-                </span>
-                <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
-              </button>
-            </li>
-            <li>
-              <Button
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
-                asChild
-              >
-                <Link href="/client/auth/log-in">
-                  <CircleUserIcon className="w-4 h-4" />
-                  <span className="hidden xl:inline">Sign in/Sign up</span>
-                  <span className="xl:hidden">Sign in</span>
-                </Link>
-              </Button>
-            </li>
-            <li>
-              <Button
-                asChild
-                className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
-              >
-                <Link href="/vendor/auth/sign-up">List your Business</Link>
-              </Button>
-            </li>
+            {(!user || user.role === "CUSTOMER") && (
+              <li>
+                <button className="relative px-3 py-2 font-medium group">
+                  <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
+                    Post A Request
+                  </span>
+                  <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
+                </button>
+              </li>
+            )}
+
+            {user ? (
+              <li>
+                <UserDropdown user={user} />
+              </li>
+            ) : (
+              <li>
+                <Button
+                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
+                  asChild
+                >
+                  <Link href="/client/auth/log-in">
+                    <CircleUserIcon className="w-4 h-4" />
+                    <span className="hidden xl:inline">Sign in/Sign up</span>
+                    <span className="xl:hidden">Sign in</span>
+                  </Link>
+                </Button>
+              </li>
+            )}
+
+            {!user && (
+              <li>
+                <Button
+                  asChild
+                  className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                >
+                  <Link href="/vendor/auth/sign-up">List your Business</Link>
+                </Button>
+              </li>
+            )}
           </ul>
 
           {/* Mobile Hamburger - Animated */}
@@ -258,33 +278,45 @@ function HomeHeaderContent() {
         >
           <div className="pt-20 pb-8 px-6">
             <ul className="flex flex-col items-center gap-4">
-              <li className="w-full max-w-xs">
-                <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
-                  Post A Request
-                </button>
-              </li>
-              <li className="w-full max-w-xs">
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  asChild
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <Link href="/client/auth/log-in">
-                    <CircleUserIcon className="w-4 h-4" />
-                    Sign in/Sign up
-                  </Link>
-                </Button>
-              </li>
-              <li className="w-full max-w-xs">
-                <Button
-                  className="w-full"
-                  asChild
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <Link href="/vendor/auth/sign-up">List your Business</Link>
-                </Button>
-              </li>
+              {(!user || user.role === "CUSTOMER") && (
+                <li className="w-full max-w-xs">
+                  <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
+                    Post A Request
+                  </button>
+                </li>
+              )}
+
+              {user ? (
+                <li className="w-full max-w-xs flex justify-center">
+                  <UserDropdown user={user} />
+                </li>
+              ) : (
+                <li className="w-full max-w-xs">
+                  <Button
+                    className="w-full"
+                    variant="outline"
+                    asChild
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Link href="/client/auth/log-in">
+                      <CircleUserIcon className="w-4 h-4" />
+                      Sign in/Sign up
+                    </Link>
+                  </Button>
+                </li>
+              )}
+
+              {!user && (
+                <li className="w-full max-w-xs">
+                  <Button
+                    className="w-full"
+                    asChild
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    <Link href="/vendor/auth/sign-up">List your Business</Link>
+                  </Button>
+                </li>
+              )}
             </ul>
           </div>
         </div>
@@ -360,15 +392,21 @@ function HomeHeaderContent() {
 
         {/* Desktop Auth Buttons - Hidden on mobile */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          <Button variant="ghost" className="gap-2" asChild>
-            <Link href="/client/auth/log-in">
-              <CircleUserIcon className="w-4 h-4" />
-              Sign in
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link href="/vendor/auth/sign-up">List your Business</Link>
-          </Button>
+          {user ? (
+            <UserDropdown user={user} />
+          ) : (
+            <>
+              <Button variant="ghost" className="gap-2" asChild>
+                <Link href="/client/auth/log-in">
+                  <CircleUserIcon className="w-4 h-4" />
+                  Sign in
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/vendor/auth/sign-up">List your Business</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu - Sheet */}
@@ -461,19 +499,33 @@ function HomeHeaderContent() {
                 <p className="text-sm font-medium text-muted-foreground mb-3">
                   Account
                 </p>
-                <SheetClose asChild>
-                  <Button variant="outline" className="w-full gap-2" asChild>
-                    <Link href="/client/auth/log-in">
-                      <CircleUserIcon className="w-4 h-4" />
-                      Sign in / Sign up
-                    </Link>
-                  </Button>
-                </SheetClose>
-                <SheetClose asChild>
-                  <Button className="w-full" asChild>
-                    <Link href="/vendor/auth/sign-up">List your Business</Link>
-                  </Button>
-                </SheetClose>
+                {user ? (
+                  <div className="flex justify-start">
+                    <UserDropdown user={user} />
+                  </div>
+                ) : (
+                  <>
+                    <SheetClose asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full gap-2"
+                        asChild
+                      >
+                        <Link href="/client/auth/log-in">
+                          <CircleUserIcon className="w-4 h-4" />
+                          Sign in / Sign up
+                        </Link>
+                      </Button>
+                    </SheetClose>
+                    <SheetClose asChild>
+                      <Button className="w-full" asChild>
+                        <Link href="/vendor/auth/sign-up">
+                          List your Business
+                        </Link>
+                      </Button>
+                    </SheetClose>
+                  </>
+                )}
               </nav>
             </div>
           </SheetContent>

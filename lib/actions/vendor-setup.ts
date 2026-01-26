@@ -18,6 +18,56 @@ type ActionResponse<T = void> = {
 };
 
 /**
+ * Redact sensitive fields from an object for logging
+ */
+function redactSensitiveFields(data: any): any {
+  if (!data) return data;
+  if (typeof data !== "object") return data;
+  if (Array.isArray(data)) return data.map(redactSensitiveFields);
+
+  const sensitiveFields = [
+    "emailAddress",
+    "phoneNumber",
+    "meansOfIdentification",
+    "identification",
+    "registration",
+    "license",
+    "contactInfo", // Often contains sensitive nested data
+    "businessDocuments",
+    "documents",
+    "street",
+  ];
+
+  const result: any = { ...data };
+
+  for (const key of Object.keys(result)) {
+    if (sensitiveFields.includes(key)) {
+      if (typeof result[key] === "string") {
+        result[key] = "***REDACTED***";
+      } else if (Array.isArray(result[key])) {
+        result[key] = `[${result[key].length} items redacted]`;
+      } else if (typeof result[key] === "object" && result[key] !== null) {
+        result[key] = "{ ... redacted object ... }";
+      }
+    } else if (typeof result[key] === "object" && result[key] !== null) {
+      result[key] = redactSensitiveFields(result[key]);
+    }
+  }
+
+  // Specific nested redaction for contactInfo if mostly keeping structure but hiding values
+  if (data.contactInfo) {
+    result.contactInfo = {
+      ...data.contactInfo,
+      emailAddress: data.contactInfo.emailAddress ? "***REDACTED***" : undefined,
+      phoneNumber: data.contactInfo.phoneNumber ? "***REDACTED***" : undefined,
+      meansOfIdentification: data.contactInfo.meansOfIdentification ? "***REDACTED***" : undefined,
+    }
+  }
+
+  return result;
+}
+
+/**
  * Transform form data to API payload format
  */
 function transformFormToPayload(
@@ -75,7 +125,10 @@ function transformFormToPayload(
     businessRegType: formData.businessRegistrationType, // Send as is (lowercase)
     businessDescription: formData.businessDescription,
     serviceArea: {
-      travelDistance: `${formData.maximumTravelDistance}km`,
+      travelDistance:
+        formData.maximumTravelDistance === "200+"
+          ? "200+ miles"
+          : `${formData.maximumTravelDistance} miles`,
       areaNames: formData.serviceLocations.map((location) => ({
         city: location.city.toLowerCase(),
         state: location.state.toLowerCase(),
@@ -98,9 +151,12 @@ export async function submitBusinessInformation(
     license?: string[];
   },
 ): Promise<ActionResponse<BusinessProfileResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
   try {
     console.log('📤 [Step 1 Submission] Starting business information submission...');
-    console.log('📋 [Step 1 Submission] Form data:', JSON.stringify(formData, null, 2));
+    console.log('📋 [Step 1 Submission] Form data:', JSON.stringify(redactSensitiveFields(formData), null, 2));
 
     // First, get user profile to extract vendorId
     const profileResult = await getUserProfile();
@@ -159,7 +215,7 @@ export async function submitBusinessInformation(
     }
 
     const payload = transformFormToPayload(formData, vendorId, addressId, documents);
-    console.log('🔄 [Step 1 Submission] Transformed payload:', JSON.stringify(payload, null, 2));
+    console.log('🔄 [Step 1 Submission] Transformed payload:', JSON.stringify(redactSensitiveFields(payload), null, 2));
 
     console.log(`🌐 [Step 1 Submission] Sending POST request to ${API_URL}/api/v1/business-profiles`);
 
@@ -182,7 +238,7 @@ export async function submitBusinessInformation(
       }
       if (response.status === 400) {
         const errorData = await response.json().catch(() => null);
-        console.error('❌ [Step 1 Submission] Validation error (400):', JSON.stringify(errorData, null, 2));
+        console.error('❌ [Step 1 Submission] Validation error (400):', JSON.stringify(redactSensitiveFields(errorData), null, 2));
         return {
           success: false,
           error: errorData?.message || "Validation error",
@@ -190,7 +246,7 @@ export async function submitBusinessInformation(
       }
       if (response.status === 409) {
         const errorData = await response.json().catch(() => null);
-        console.error('❌ [Step 1 Submission] Conflict error (409):', JSON.stringify(errorData, null, 2));
+        console.error('❌ [Step 1 Submission] Conflict error (409):', JSON.stringify(redactSensitiveFields(errorData), null, 2));
         return {
           success: false,
           error: errorData?.message || "Conflict error: Resource already exists",
@@ -204,7 +260,7 @@ export async function submitBusinessInformation(
     }
 
     const data: BusinessProfileResponse = await response.json();
-    console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(data, null, 2));
+    console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(redactSensitiveFields(data), null, 2));
 
     return {
       success: true,
