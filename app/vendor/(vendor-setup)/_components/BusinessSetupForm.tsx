@@ -98,11 +98,11 @@ export function BusinessSetupForm() {
 
         toast.loading("Submitting business information...");
 
-        // Get document IDs from store
+        // Get document IDs from store directly
         const documents = {
-          identification: storeState.documentIds.identification,
-          registration: storeState.documentIds.registration,
-          license: storeState.documentIds.license,
+          identification: storeState.documents.identification.map((d) => d.id),
+          registration: storeState.documents.registration.map((d) => d.id),
+          license: storeState.documents.license.map((d) => d.id),
         };
 
         const result = await submitBusinessInformation(

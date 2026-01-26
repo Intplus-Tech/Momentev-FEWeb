@@ -70,9 +70,9 @@ function transformFormToPayload(
       addressId, // Include addressId if address was created
     },
     businessName: formData.businessName,
-    yearInBusiness: formData.yearsInBusiness.toUpperCase(), // Convert to API format
+    yearInBusiness: formData.yearsInBusiness, // Send as is (lowercase)
     companyRegNo: formData.companyRegistrationNumber,
-    businessRegType: formData.businessRegistrationType.toUpperCase(),
+    businessRegType: formData.businessRegistrationType, // Send as is (lowercase)
     businessDescription: formData.businessDescription,
     serviceArea: {
       travelDistance: `${formData.maximumTravelDistance}km`,
@@ -182,10 +182,18 @@ export async function submitBusinessInformation(
       }
       if (response.status === 400) {
         const errorData = await response.json().catch(() => null);
-        console.error('❌ [Step 1 Submission] Validation error (400):', errorData);
+        console.error('❌ [Step 1 Submission] Validation error (400):', JSON.stringify(errorData, null, 2));
         return {
           success: false,
           error: errorData?.message || "Validation error",
+        };
+      }
+      if (response.status === 409) {
+        const errorData = await response.json().catch(() => null);
+        console.error('❌ [Step 1 Submission] Conflict error (409):', JSON.stringify(errorData, null, 2));
+        return {
+          success: false,
+          error: errorData?.message || "Conflict error: Resource already exists",
         };
       }
       console.error(`❌ [Step 1 Submission] API error: ${response.status} ${response.statusText}`);

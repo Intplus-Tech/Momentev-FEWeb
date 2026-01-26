@@ -36,7 +36,7 @@ export const businessInfoSchema = z.object({
     },
     { message: "Please enter a valid international phone number (e.g., +1 234 567 8900)" }
   ),
-  meansOfIdentification: z.string().optional(),
+  meansOfIdentification: z.string().min(1, "Means of identification is required"),
   street: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -72,18 +72,18 @@ export const businessInfoSchema = z.object({
 
 export type BusinessInfoFormData = z.infer<typeof businessInfoSchema>;
 
-// Years in Business - Matching likely API Enums based on example "1_3_YEARS"
+// Years in Business - Matching API Enums exactly
 export const yearsInBusinessOptions = [
   { value: "less_than_1_year", label: "Less than 1 year" },
-  { value: "1_3_years", label: "1-3 years" },
-  { value: "3_5_years", label: "3-5 years" },
-  { value: "5_10_years", label: "5-10 years" },
-  { value: "more_than_10_years", label: "More than 10 years" },
+  { value: "1_to_5_years", label: "1-5 years" },
+  { value: "6_to_12_years", label: "6-12 years" },
+  { value: "13_to_20_years", label: "13-20 years" },
+  { value: "more_than_20_years", label: "More than 20 years" },
 ];
 
 export const businessRegistrationTypeOptions = [
   { value: "company", label: "Company" },
-  { value: "sole_proprietorship", label: "Sole Proprietorship" }, // Changed from sole_trader
+  { value: "sole_trader", label: "Sole Trader" },
   { value: "partnership", label: "Partnership" },
   { value: "limited_liability_partnership", label: "Limited Liability Partnership (LLP)" },
 ];

@@ -17,6 +17,7 @@ import {
 } from "../_schemas/businessInfoSchema";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { CityAutocomplete } from "./CityAutocomplete";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 interface ServiceLocation {
   city: string;
@@ -303,13 +304,21 @@ export function BusinessInformationForm() {
             name="phoneNumber"
             control={control}
             render={({ field }) => (
-              <FloatingLabelInput
-                {...field}
-                type="tel"
-                label="Phone Number"
-                placeholder=" "
-                error={errors.phoneNumber?.message}
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Phone Number
+                </label>
+                <PhoneInput
+                  placeholder="Enter phone number"
+                  {...field}
+                  defaultCountry="GB"
+                />
+                {errors.phoneNumber && (
+                  <p className="text-xs text-destructive">
+                    {errors.phoneNumber.message}
+                  </p>
+                )}
+              </div>
             )}
           />
 
