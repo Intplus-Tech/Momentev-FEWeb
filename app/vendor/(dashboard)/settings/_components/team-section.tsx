@@ -13,6 +13,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import {
   Table,
@@ -57,6 +67,9 @@ export const TeamSection = () => {
   const deleteStaffMutation = useDeleteVendorStaff();
 
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
+  const [memberToDelete, setMemberToDelete] = useState<StaffMember | null>(
+    null,
+  );
 
   // State for the expanded member's edited permissions
   // string (perm name) -> { read, write }
@@ -151,9 +164,7 @@ export const TeamSection = () => {
   };
 
   const handleDeleteMember = (member: StaffMember) => {
-    if (!confirm(`Are you sure you want to remove ${member.userId.firstName}?`))
-      return;
-    performDelete(member._id);
+    setMemberToDelete(member);
   };
 
   const performDelete = async (id: string) => {
@@ -161,6 +172,7 @@ export const TeamSection = () => {
       await deleteStaffMutation.mutateAsync(id);
       toast.success("Team member removed");
       if (openMemberId === id) setOpenMemberId(null);
+      setMemberToDelete(null);
     } catch (err: any) {
       toast.error(err.message || "Failed to remove team member");
     }
@@ -169,7 +181,7 @@ export const TeamSection = () => {
   if (loadingStaff && staffList.length === 0) {
     return (
       <SectionShell title="Team Member Details">
-        <div className="flex justify-center p-8">
+        <div className="flex items-center justify-center p-8 min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </SectionShell>
@@ -177,9 +189,9 @@ export const TeamSection = () => {
   }
 
   return (
-    <SectionShell title="Team Member Details">
+    <SectionShell title="Team Member Details" className="p-0 sm:p-0">
       <div className="space-y-6">
-        <div className="overflow-hidden rounded-xl border">
+        <div className="overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -359,12 +371,12 @@ export const TeamSection = () => {
                   </Fragment>
                 ))
               ) : (
-                <TableRow>
+                <TableRow className="">
                   <TableCell
                     colSpan={4}
                     className="text-center py-8 text-muted-foreground"
                   >
-                    <div className="flex flex-col items-center gap-2">
+                    <div className="flex flex-col justify-center items-center gap-2 xl:min-h-[30vh]">
                       <span className="text-lg font-medium">
                         No team members yet
                       </span>
@@ -379,12 +391,9 @@ export const TeamSection = () => {
           </Table>
         </div>
 
-        <button
-          className="text-sm font-medium text-primary hover:underline"
-          onClick={() => setIsAddMemberOpen(true)}
-        >
+        <Button variant={"link"} onClick={() => setIsAddMemberOpen(true)}>
           + Add Another Member
-        </button>
+        </Button>
 
         <AddMemberModal
           open={isAddMemberOpen}
@@ -393,6 +402,44 @@ export const TeamSection = () => {
             // No manual fetch needed, react-query invalidates automatically
           }}
         />
+
+        <AlertDialog
+          open={!!memberToDelete}
+          onOpenChange={(open) => !open && setMemberToDelete(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will remove{" "}
+                <span className="font-medium text-foreground">
+                  {memberToDelete?.userId.firstName}{" "}
+                  {memberToDelete?.userId.lastName}
+                </span>{" "}
+                from the team. They will no longer have access to this vendor
+                account.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={deleteStaffMutation.isPending}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deleteStaffMutation.isPending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (memberToDelete) performDelete(memberToDelete._id);
+                }}
+              >
+                {deleteStaffMutation.isPending && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                Remove Member
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </SectionShell>
   );

@@ -1,7 +1,7 @@
 /**
  * Query Keys Factory
  * 
- * Use this file to define query keys for your application.
+ * Use this file to define query keys.
  * This ensures consistency and makes it easier to invalidate queries.
  */
 

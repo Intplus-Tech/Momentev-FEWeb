@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { useUserAddress } from "@/lib/react-query/hooks/use-user-address";
-import { AddressForm } from "@/components/ui/address-form";
+import { AddressForm } from "@/app/vendor/(dashboard)/settings/_components/address-form";
 import { SectionShell } from "./section-shell";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -46,7 +46,7 @@ export const AddressSection = () => {
   return (
     <SectionShell title="Address">
       {isLoading ? (
-        <div className="flex justify-center p-8">
+        <div className="flex items-center justify-center p-8 min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : isBusinessFallback && address ? (

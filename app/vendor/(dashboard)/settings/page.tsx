@@ -58,11 +58,8 @@ function VendorSettingsContent() {
   };
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
-      </div>
-
+    <section className="space-y-4 h-full min-h-[85vh] flex flex-col">
+      <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
