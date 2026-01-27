@@ -6,7 +6,7 @@ import { Bookmark, MessageSquare, Shield, User2 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-import { clientReviews, savedVendors } from "./data";
+import { savedVendors } from "./data";
 import { ProfileSection } from "./_components/profile-section";
 import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
@@ -109,7 +109,7 @@ function SettingsContent() {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
-          <ReviewsSection reviews={clientReviews} />
+          <ReviewsSection />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">

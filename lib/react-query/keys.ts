@@ -21,4 +21,8 @@ export const queryKeys = {
     staff: () => [...queryKeys.vendor.all, 'staff'] as const,
     permissions: () => [...queryKeys.vendor.all, 'permissions'] as const,
   },
+  reviews: {
+    all: ['reviews'] as const,
+    byCustomer: (customerId: string) => [...queryKeys.reviews.all, 'customer', customerId] as const,
+  },
 };
