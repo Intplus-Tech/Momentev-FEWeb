@@ -100,7 +100,7 @@ export const SecuritySection = () => {
     <>
       {isGoogleUser ? (
         <SectionShell title="Set Password">
-          <div className="mb-4 p-4 flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+          <div className="mb-4 p-4 flex gap-2 rounded-lg bg-blue-50 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
             <Info className="h-5 w-5 shrink-0" />
             <p>
               Set a password to enable login with both Google and

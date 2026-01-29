@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Vendor } from "../_data/vendors";
+import { Vendor } from "../_data/types";
+import { VendorServices } from "./VendorServices";
 
 interface VendorListCardProps {
   vendor: Vendor;
@@ -16,7 +17,7 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
         <div className="relative w-full md:w-72 lg:w-80 shrink-0">
           <div className="aspect-[4/3] md:aspect-auto md:h-full relative bg-transparent not-even:">
             <Image
-              src={vendor.image}
+              src={vendor.coverImage || "/images/placeholder.jpg"} // Fallback image
               alt={vendor.name}
               fill
               className="object-cover rounded-[20px]"
@@ -26,7 +27,7 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
             <div className="absolute bottom-3 left-3 z-20 flex items-center gap-1 bg-black/70 backdrop-blur-sm rounded-full px-2 py-1">
               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
               <span className="text-xs font-medium text-white">
-                {vendor.rating} ({vendor.reviews})
+                {vendor.rate} ({vendor.totalReviews})
               </span>
             </div>
           </div>
@@ -41,45 +42,33 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
               <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
               <p className="text-sm">{vendor.address}</p>
             </div>
-            {vendor.distance && (
-              <p className="text-sm text-muted-foreground">{vendor.distance}</p>
+            {vendor.distanceKm !== undefined && (
+              <p className="text-sm text-muted-foreground">
+                {vendor.distanceKm.toFixed(1)} km away
+              </p>
             )}
             <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm">
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{vendor.rating} Stars</span>
+                <span className="font-medium">{vendor.rate} Stars</span>
               </div>
+
               <span className="text-muted-foreground">•</span>
-              <span
-                className={`font-medium ${
-                  vendor.isOpen ? "text-green-600" : "text-red-500"
-                }`}
-              >
-                {vendor.isOpen ? "Open" : "Closed"}
+              <span className="text-muted-foreground mr-auto">
+                {vendor.totalReviews} Reviews
               </span>
-              {vendor.closingTime && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">
-                    Closes {vendor.closingTime}
-                  </span>
-                </>
-              )}
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">
-                {vendor.reviews} Reviews
-              </span>
-              {vendor.bookings && (
-                <>
-                  <span className="text-muted-foreground">•</span>
-                  <span className="text-muted-foreground">
-                    {vendor.bookings} Bookings
-                  </span>
-                </>
-              )}
             </div>
+
+            {/* Availability / Workdays */}
+            {vendor.workdays && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded w-fit">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 shrink-0"></span>
+                {vendor.workdays}
+              </div>
+            )}
+
             <Link
-              href={`/search/${vendor.slug}`}
+              href={`/search/${vendor.slug || vendor._id}`}
               className="text-primary text-sm font-medium hover:underline inline-block"
             >
               View Vendor Details
@@ -87,22 +76,10 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
           </div>
 
           {/* Services */}
-          {vendor.services && vendor.services.length > 0 && (
-            <div className="hidden lg:block min-w-[200px]">
-              <p className="font-medium text-sm mb-2">Services</p>
-              <ul className="space-y-1">
-                {vendor.services.map((service, idx) => (
-                  <li
-                    key={idx}
-                    className="text-xs text-muted-foreground flex items-center gap-1.5"
-                  >
-                    <span className="w-1 h-1 bg-muted-foreground rounded-full" />
-                    {service}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <VendorServices
+            vendorId={vendor._id}
+            fallbackServices={vendor.services}
+          />
 
           {/* Book Button */}
           <div className="flex md:flex-col md:items-end md:justify-center">

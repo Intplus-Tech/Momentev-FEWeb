@@ -1,27 +1,8 @@
 "use client";
 
-import {
-  Camera,
-  PartyPopper,
-  Sparkles,
-  Music,
-  Building2,
-  Cake,
-  Users,
-  Palette,
-} from "lucide-react";
-import { categories } from "../_data/vendors";
-
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  PartyPopper,
-  Camera,
-  Sparkles,
-  Users,
-  Cake,
-  Palette,
-  Music,
-  Building2,
-};
+import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { Skeleton } from "@/components/ui/skeleton";
+import Image from "next/image";
 
 interface CategoryFilterBarProps {
   selectedCategory: string;
@@ -32,25 +13,48 @@ export function CategoryFilterBar({
   selectedCategory,
   onCategoryChange,
 }: CategoryFilterBarProps) {
+  const { data: categoriesData, isLoading } = useServiceCategories();
+
+  // Access the nested data array from the paginated response
+  const categories = categoriesData?.data?.data || [];
+
+  if (isLoading) {
+    return (
+      <div className="border-b bg-background/80 backdrop-blur-sm sticky top-14 z-40">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-24 rounded-full shrink-0" />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="border-b bg-background/80 backdrop-blur-sm sticky top-14 z-40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
-          {categories.map((category) => {
-            const Icon = iconMap[category.icon];
-            const isActive = selectedCategory === category.id;
+          {categories.map((category: any) => {
+            const isActive = selectedCategory === category._id;
             return (
               <button
-                key={category.id}
-                onClick={() => onCategoryChange(category.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all ${
+                key={category._id}
+                onClick={() => onCategoryChange(category._id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm whitespace-nowrap transition-all border ${
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
                 }`}
               >
-                {Icon && <Icon className="w-4 h-4" />}
-                <span>{category.label}</span>
+                {/* 
+                  Assuming category has an icon/image field. 
+                  If it's an SVG URL or regular image URL, proper handling is needed.
+                  Using a placeholder approach if no icon is available immediately or simple generic logic.
+                */}
+                {/* Icon ignored as it is not a URL */}
+                <span>{category.name}</span>
               </button>
             );
           })}

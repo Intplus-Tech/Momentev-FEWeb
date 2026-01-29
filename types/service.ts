@@ -12,6 +12,17 @@ export interface ServiceSpecialty {
   name: string;
   serviceCategoryId: string;
   description: string;
+  commissionId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorSpecialty {
+  _id: string;
+  vendorId: string;
+  serviceSpecialty: string; // ID of the ServiceSpecialty
+  priceCharge: string;
+  price: string;
   createdAt: string;
   updatedAt: string;
 }
