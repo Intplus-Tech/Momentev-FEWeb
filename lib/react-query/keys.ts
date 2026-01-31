@@ -25,4 +25,9 @@ export const queryKeys = {
     all: ['reviews'] as const,
     byCustomer: (customerId: string) => [...queryKeys.reviews.all, 'customer', customerId] as const,
   },
+  chat: {
+    all: ['chat'] as const,
+    conversations: () => [...queryKeys.chat.all, 'conversations'] as const,
+    messages: (conversationId: string) => [...queryKeys.chat.all, 'messages', conversationId] as const,
+  },
 };

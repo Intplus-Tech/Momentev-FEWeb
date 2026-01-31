@@ -18,7 +18,7 @@ import { ConversationHeader } from "../_components/conversation-header";
 import { MessageComposer } from "../_components/message-composer";
 import { MessageHistory } from "../_components/message-history";
 
-const VendorThreadPage = () => {
+const ClientThreadPage = () => {
   const router = useRouter();
   const params = useParams<{ threadId: string }>();
 
@@ -48,20 +48,17 @@ const VendorThreadPage = () => {
         text: trimmed,
         clientMessageId: `temp-${Date.now()}`,
       },
-      senderSide: "vendor",
+      senderSide: "user",
     });
     setMessageText("");
   };
 
   if (!threadId) return null;
 
-  // Vendor sees "userId" as the name (Customer)
-  const displayName = conversation?.userId || "Customer";
-
   return (
     <div className="flex h-full flex-col rounded-2xl border bg-card shadow-sm">
       <ConversationHeader
-        vendorName={displayName}
+        vendorName={conversation?.vendorId || "Vendor"}
         lastActiveLabel={
           conversation?.lastMessageAt
             ? format(new Date(conversation.lastMessageAt), "PP p")
@@ -73,7 +70,7 @@ const VendorThreadPage = () => {
             variant="ghost"
             size="icon-sm"
             className="rounded-full lg:hidden"
-            onClick={() => router.push("/vendor/messages")}
+            onClick={() => router.push("/client/messages")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -94,8 +91,8 @@ const VendorThreadPage = () => {
         <MessageHistory
           messages={messages}
           className="h-full px-4 py-4"
-          userSide="vendor"
-          counterpartyLastReadAt={conversation?.userLastReadAt}
+          userSide="user"
+          counterpartyLastReadAt={conversation?.vendorLastReadAt}
         />
         <MessageComposer
           value={messageText}
@@ -107,4 +104,4 @@ const VendorThreadPage = () => {
   );
 };
 
-export default VendorThreadPage;
+export default ClientThreadPage;
