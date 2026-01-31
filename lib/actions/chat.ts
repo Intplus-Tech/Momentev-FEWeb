@@ -68,7 +68,6 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
  */
 export async function getConversations() {
   const result = await fetchWithAuth('/api/v1/chats');
-  console.log("[Server] getConversations response:", JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -78,7 +77,6 @@ export async function getConversations() {
  */
 export async function getOrCreateConversation(vendorId: string) {
   const result = await fetchWithAuth(`/api/v1/chats/vendor/${vendorId}`, { method: 'POST' });
-  console.log("[Server] getOrCreateConversation response:", JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -91,7 +89,6 @@ export async function getMessages(conversationId: string, limit: number = 30, be
   if (before) query.append('before', before);
 
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages?${query.toString()}`);
-  console.log("[Server] getMessages response:", JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -104,7 +101,6 @@ export async function sendMessage(conversationId: string, payload: CreateMessage
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  console.log("[Server] sendMessage response:", JSON.stringify(result, null, 2));
   return result;
 }
 
@@ -114,6 +110,5 @@ export async function sendMessage(conversationId: string, payload: CreateMessage
  */
 export async function markAsRead(conversationId: string) {
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/read`, { method: 'POST' });
-  console.log("[Server] markAsRead response:", JSON.stringify(result, null, 2));
   return result;
 }

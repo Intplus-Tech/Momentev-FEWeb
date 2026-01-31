@@ -46,7 +46,7 @@ export function useChatMessages(conversationId: string, limit: number = 50) {
       // Messages might need sorting or processing here depending on API order
       const messages = result.data || [];
       // Sort messages by createdAt ascending (Oldest -> Newest) so newest is at the bottom
-      return messages.sort((a, b) => {
+      return messages.sort((a: ChatMessage, b: ChatMessage) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateA - dateB;
@@ -65,7 +65,6 @@ export function useSendMessage() {
   return useMutation({
     mutationFn: async ({ conversationId, payload }: { conversationId: string, payload: CreateMessageRequest, senderSide?: ChatUserSide }) => {
       const result = await sendMessage(conversationId, payload);
-      console.log("[Client] sendMessage result:", result);
       if (!result.success) {
         throw new Error(result.error || "Failed to send message");
       }
@@ -94,7 +93,7 @@ export function useSendMessage() {
       queryClient.setQueryData<ChatMessage[]>(queryKeys.chat.messages(conversationId), (old) => {
         const existing = old ? [...old] : [];
         existing.push(optimisticMessage);
-        return existing.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        return existing.sort((a: ChatMessage, b: ChatMessage) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
       });
 
       // Return a context object with the snapshotted value
@@ -145,11 +144,9 @@ export function useChatRealtime(conversationId: string | undefined) {
     if (!socket || !isConnected || !conversationId) return;
 
     // Join the conversation room
-    console.log("[Socket] Joining conversation:", conversationId);
     socket.emit("chat:join", { conversationId });
 
     const handleMessage = (payload: { conversationId: string; data: ChatMessage }) => {
-      console.log("[Socket] Received chat:message:", payload);
       if (payload.conversationId !== conversationId) return;
       const newMessage = payload.data;
 
@@ -162,7 +159,7 @@ export function useChatRealtime(conversationId: string | undefined) {
 
           existing.push(newMessage);
           return existing.sort(
-            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+            (a: ChatMessage, b: ChatMessage) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
         }
       );
@@ -172,7 +169,6 @@ export function useChatRealtime(conversationId: string | undefined) {
     };
 
     const handleRead = (payload: { conversationId: string }) => {
-      console.log("[Socket] Received chat:read:", payload);
       // When a read receipt comes in, refresh conversations (stores read status)
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
     };
@@ -181,7 +177,6 @@ export function useChatRealtime(conversationId: string | undefined) {
     socket.on("chat:read", handleRead);
 
     return () => {
-      console.log("[Socket] Leaving conversation:", conversationId);
       socket.emit("chat:leave", { conversationId });
       socket.off("chat:message", handleMessage);
       socket.off("chat:read", handleRead);
