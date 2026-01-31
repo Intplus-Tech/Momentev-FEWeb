@@ -18,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createAddress, updateAddress } from "@/lib/actions/address";
+import { updateUserProfile } from "@/lib/actions/user";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
 
@@ -104,6 +105,16 @@ export function AddressForm({ address }: AddressFormProps) {
         await queryClient.invalidateQueries({
           queryKey: queryKeys.auth.user(),
         });
+
+        // If we created a new address, link it to the user profile
+        if (!address && result.data?._id) {
+          await updateUserProfile({ addressId: result.data._id });
+          // Invalidate again to ensure profile reflects the link
+          await queryClient.invalidateQueries({
+            queryKey: queryKeys.auth.user(),
+          });
+        }
+
         // Invalidate address query
         if (result.data?._id) {
           await queryClient.invalidateQueries({
@@ -156,8 +167,8 @@ export function AddressForm({ address }: AddressFormProps) {
   // Read-only view
   if (!isEditing && address) {
     return (
-      <div className="space-y-4">
-        <div className="grid gap-4 rounded-lg border bg-muted/30 p-4">
+      <div>
+        <div className="grid gap-4 rounded-lg bg-muted/30 p-4">
           <div className="grid gap-2 sm:grid-cols-2">
             <div>
               <p className="text-xs text-muted-foreground">Street</p>
@@ -201,23 +212,24 @@ export function AddressForm({ address }: AddressFormProps) {
             </div>
           )}
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setIsEditing(true)}
-          className="gap-2"
-        >
-          <Pencil className="h-4 w-4" />
-          Edit Address
-        </Button>
+        <div className="flex justify-start p-4 bg-muted/30">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsEditing(true)}
+            className="gap-2"
+          >
+            <Pencil className="h-4 w-4" />
+            Edit Address
+          </Button>
+        </div>
       </div>
     );
   }
 
-  // Edit/Create form
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-4">
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}

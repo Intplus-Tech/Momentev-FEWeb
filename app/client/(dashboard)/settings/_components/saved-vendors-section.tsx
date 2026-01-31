@@ -11,7 +11,7 @@ export const SavedVendorsSection = ({
 }) => {
   return (
     <SectionShell title={`${vendors.length} Saved Vendors`}>
-      <div className="space-y-3">
+      <div className="space-y-3 p-4">
         {vendors.map((vendor, index) => (
           <div
             key={vendor.id}

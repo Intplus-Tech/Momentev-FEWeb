@@ -12,8 +12,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQuery } from "@tanstack/react-query";
-import { getUserProfile } from "@/lib/actions/user";
+
+import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
 import { UserDropdown } from "./UserDropdown";
 import {
   Sheet,
@@ -23,6 +24,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
+  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -33,19 +35,7 @@ import {
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Camera,
-  PartyPopper,
-  Sparkles,
-  Music,
-  Building2,
-  Cake,
-  Users,
-  Palette,
-  Video,
-  Car,
-  Zap,
-} from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const locations = [
   "East London",
@@ -53,20 +43,6 @@ const locations = [
   "Central London",
   "North London",
   "South London",
-];
-
-// Category filters
-const categories = [
-  { id: "photography", label: "Event Photographers", icon: Camera },
-  // { id: "venue", label: "Venue Managers", icon: Building2 },
-  { id: "caterer", label: "Caterers", icon: Cake },
-  { id: "entertainment", label: "DJs / Musicians", icon: Music },
-  { id: "planners", label: "Event Planners", icon: Users },
-  { id: "videography", label: "Videographers", icon: Video },
-  { id: "decorator", label: "Venue Decorators", icon: Sparkles },
-  { id: "makeup", label: "Makeup Artists", icon: Palette },
-  // { id: "transport", label: "Transportation", icon: Car },
-  { id: "technical", label: "Sound & Lighting", icon: Zap },
 ];
 
 function HomeHeaderContent() {
@@ -81,10 +57,12 @@ function HomeHeaderContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: user } = useQuery({
-    queryKey: ["user-profile"],
-    queryFn: () => getUserProfile().then((res) => res.data),
-  });
+  const { data: user } = useUserProfile();
+  const { data: categoriesData, isLoading: isCategoriesLoading } =
+    useServiceCategories();
+
+  // Access the nested data array from the paginated response
+  const categories = categoriesData?.data?.data || [];
 
   // Sync state with URL params
   useEffect(() => {
@@ -146,10 +124,19 @@ function HomeHeaderContent() {
 
   // Existing handlers
   const handleSearch = () => {
-    const params = new URLSearchParams();
-    if (searchQuery.trim()) params.set("q", searchQuery);
+    const params = new URLSearchParams(searchParams.toString());
+    if (searchQuery.trim()) {
+      params.set("q", searchQuery);
+    } else {
+      params.delete("q");
+    }
+
     if (selectedLocation) params.set("location", selectedLocation);
+    // Note: selectedCategory is usually handled by clicking the category chips,
+    // but if we want to persist it during a text search we can:
     if (selectedCategory) params.set("category", selectedCategory);
+
+    params.set("page", "1"); // Reset page on new search
 
     router.push(`/search?${params.toString()}`);
   };
@@ -163,8 +150,6 @@ function HomeHeaderContent() {
   const handleCategoryClick = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // Toggle: if clicked again, remove it? Or just select it.
-    // Usually filters toggle. Let's assume toggle for better UX if the user wants to clear.
     if (selectedCategory === categoryId) {
       params.delete("category");
       setSelectedCategory("");
@@ -172,8 +157,8 @@ function HomeHeaderContent() {
       params.set("category", categoryId);
       setSelectedCategory(categoryId);
     }
+    params.set("page", "1");
 
-    // Preserve other params is handled by initializing with searchParams
     router.push(`/search?${params.toString()}`);
   };
 
@@ -534,28 +519,34 @@ function HomeHeaderContent() {
 
       {/* Category Filter Bar - Only on Search Page */}
       {isSearchRoute && (
-        <div className="backdrop-blur-sm">
+        <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex flex-wrap items-center justify-center gap-2 py-3">
-                {categories.map((category) => {
-                  const Icon = category.icon;
-                  const isActive = selectedCategory === category.id;
-                  return (
-                    <button
-                      key={category.id}
-                      onClick={() => handleCategoryClick(category.id)}
-                      className={`flex items-center gap-2 px-2 py-1 xl:py-2 2xl:py-3 xl:px-4 rounded-full text-[10px] xl:text-xs 2xl:text-sm whitespace-nowrap transition-all ${
-                        isActive
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      <Icon className="w-3 h-3 xl:w-4 xl:h-4 2xl:w-5 2xl:h-5  " />
-                      <span>{category.label}</span>
-                    </button>
-                  );
-                })}
+              <div className="flex flex-wrap items-center justify-start gap-2 py-3">
+                {isCategoriesLoading
+                  ? Array.from({ length: 8 }).map((_, i) => (
+                      <Skeleton
+                        key={i}
+                        className="h-8 w-24 rounded-full flex-shrink-0"
+                      />
+                    ))
+                  : categories.map((category: any) => {
+                      const isActive = selectedCategory === category._id;
+                      return (
+                        <button
+                          key={category._id}
+                          onClick={() => handleCategoryClick(category._id)}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
+                            isActive
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                          }`}
+                        >
+                          {/* Icon ignored for now as it's not a URL */}
+                          <span>{category.name}</span>
+                        </button>
+                      );
+                    })}
               </div>
             </ScrollArea>
           </div>

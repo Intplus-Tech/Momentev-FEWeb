@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { useUserAddress } from "@/lib/react-query/hooks/use-user-address";
-import { AddressForm } from "@/components/ui/address-form";
+import { AddressForm } from "@/app/vendor/(dashboard)/settings/_components/address-form";
 import { SectionShell } from "./section-shell";
 
 export const AddressSection = () => {
@@ -15,7 +15,7 @@ export const AddressSection = () => {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <AddressForm address={address} />
+        <AddressForm address={address?.address} />
       )}
     </SectionShell>
   );

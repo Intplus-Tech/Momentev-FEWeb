@@ -7,7 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export const ReviewsSection = ({ reviews }: { reviews: Review[] }) => {
   return (
     <SectionShell title="Latest Reviews">
-      <div className="space-y-4">
+      <div className="space-y-4 p-4">
         {reviews.map((review) => (
           <div
             key={review.id}

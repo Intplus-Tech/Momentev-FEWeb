@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { LifeBuoy, MessageSquare, Shield, User2, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { reviews, supportPrefill, teamMembers } from "./data";
+import { reviews, supportPrefill } from "./data";
 import { ProfileSection } from "./_components/profile-section";
 import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
@@ -58,11 +58,8 @@ function VendorSettingsContent() {
   };
 
   return (
-    <section className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
-      </div>
-
+    <section className="space-y-4 h-full min-h-[85vh] flex flex-col">
+      <h1 className="text-3xl font-semibold text-foreground">Settings</h1>
       <Tabs
         value={activeTab}
         onValueChange={handleTabChange}
@@ -117,7 +114,7 @@ function VendorSettingsContent() {
         </TabsContent>
 
         <TabsContent value="team" className="space-y-4">
-          <TeamSection members={teamMembers} />
+          <TeamSection />
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">

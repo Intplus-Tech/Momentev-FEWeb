@@ -158,13 +158,13 @@ export const ProfileSection = () => {
   return (
     <SectionShell title="Personal Information">
       {isLoading ? (
-        <div className="flex justify-center p-8">
+        <div className="flex items-center justify-center p-8 min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <Form {...form}>
           <form
-            className="flex flex-col gap-6"
+            className="flex flex-col gap-6 p-4 sm:p-6"
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <div className="flex justify-center">

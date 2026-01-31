@@ -23,7 +23,7 @@ export const ThreadSidebar = ({
   onThreadClick,
 }: ThreadSidebarProps) => {
   return (
-    <div className="rounded-2xl border bg-card shadow-sm">
+    <div className="rounded-2xl border bg-card shadow-sm h-full">
       <div className="space-y-3 border-b px-4 pb-4 pt-5">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Inbox</span>
@@ -40,7 +40,7 @@ export const ThreadSidebar = ({
         </div>
       </div>
 
-      <ScrollArea className="h-155">
+      <ScrollArea className="h-full">
         <div className="divide-y">
           {threads.map((thread) => {
             const isActive = thread.id === activeThreadId;
@@ -51,9 +51,9 @@ export const ThreadSidebar = ({
                 type="button"
                 onClick={() => onThreadClick(thread.id)}
                 className={cn(
-                  "flex w-full items-start gap-3 px-4 py-3 transition",
+                  "flex w-full border-b items-start gap-3 px-4 py-3 transition",
                   "hover:bg-muted/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60",
-                  isActive ? "bg-muted/80" : "bg-transparent"
+                  isActive ? "bg-muted/80" : "bg-transparent",
                 )}
               >
                 <Avatar size="lg">

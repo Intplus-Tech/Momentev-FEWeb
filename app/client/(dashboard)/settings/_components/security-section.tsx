@@ -100,7 +100,7 @@ export const SecuritySection = () => {
     <>
       {isGoogleUser ? (
         <SectionShell title="Set Password">
-          <div className="mb-4 flex gap-2 rounded-lg bg-blue-50 p-3 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
+          <div className="mb-4 p-4 flex gap-2 rounded-lg bg-blue-50 text-sm text-blue-900 dark:bg-blue-950 dark:text-blue-100">
             <Info className="h-5 w-5 shrink-0" />
             <p>
               Set a password to enable login with both Google and
@@ -129,7 +129,7 @@ export const SecuritySection = () => {
         </SectionShell>
       ) : (
         <SectionShell title="Change Password">
-          <form className="space-y-4">
+          <form className="space-y-4 p-4">
             {/* <FloatingLabelInput
               label="Email Address"
               type="email"
@@ -159,7 +159,7 @@ export const SecuritySection = () => {
 
       <SectionShell title="Danger Zone">
         <div>
-          <div className="space-y-3">
+          <div className="space-y-3 p-4">
             <div>
               <h3 className="font-semibold text-destructive">Delete Account</h3>
               <p className="text-sm text-muted-foreground mt-1">

@@ -55,6 +55,7 @@ export interface Vendor {
   updatedAt: string;
   reviewCount: number;
   id: string;
+  businessProfile?: any; // Detailed business profile
 }
 
 export interface UserProfile {

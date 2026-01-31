@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Star } from "lucide-react";
-import { Vendor } from "../_data/vendors";
+import { Vendor } from "../_data/types";
 
 interface PromotedVendorCardProps {
   vendor: Vendor;
@@ -9,12 +9,12 @@ interface PromotedVendorCardProps {
 
 export function PromotedVendorCard({ vendor }: PromotedVendorCardProps) {
   return (
-    <Link href={`/search/${vendor.slug}`} className="group">
+    <Link href={`/search/${vendor.slug || vendor._id}`} className="group">
       <div className="">
         {/* Image */}
         <div className="relative aspect-[4/3] bg-transparent">
           <Image
-            src={vendor.image}
+            src={vendor.coverImage || "/images/placeholder.jpg"}
             alt={vendor.name}
             fill
             className="object-cover rounded-4xl"
@@ -24,7 +24,7 @@ export function PromotedVendorCard({ vendor }: PromotedVendorCardProps) {
           <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1">
             <Star className="w-3 h-3 fill-foreground" />
             <span className="text-xs font-light">
-              {vendor.rating} ({vendor.reviews.toLocaleString()})
+              {vendor.rate} ({vendor.totalReviews.toLocaleString()})
             </span>
           </div>
         </div>

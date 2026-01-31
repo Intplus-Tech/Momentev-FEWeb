@@ -152,12 +152,15 @@ export const ProfileSection = () => {
   return (
     <SectionShell title="Personal Information">
       {isLoading ? (
-        <div className="flex justify-center p-8">
+        <div className="flex items-center justify-center p-8 min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
         <Form {...form}>
-          <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+          <form
+            className="space-y-6 p-4"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
             <div className="flex justify-center">
               <FormField
                 control={form.control}
