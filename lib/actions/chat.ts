@@ -7,7 +7,7 @@ import type {
   CreateMessageRequest,
   ApiListResponse,
   ApiSingleResponse
-} from '@/lib/types/chat';
+} from '@/types/chat';
 
 const API_BASE = process.env.BACKEND_URL;
 

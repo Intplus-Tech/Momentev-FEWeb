@@ -5,7 +5,7 @@ import { Check, CheckCheck } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
-import type { ChatMessage } from "@/lib/types/chat";
+import type { ChatMessage } from "@/types/chat";
 import type { ConversationMessage } from "../data";
 
 export type MessageHistoryProps = {

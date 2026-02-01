@@ -10,7 +10,7 @@ import {
   markAsRead
 } from "@/lib/actions/chat";
 import { queryKeys } from "@/lib/react-query/keys";
-import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/lib/types/chat";
+import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/types/chat";
 
 /**
  * Hook to fetch all conversations

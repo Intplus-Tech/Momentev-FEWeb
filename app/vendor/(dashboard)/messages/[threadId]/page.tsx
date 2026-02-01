@@ -13,7 +13,7 @@ import {
   useSendMessage,
   useChatRealtime,
 } from "@/lib/react-query/hooks/use-chat";
-import type { ChatConversation } from "@/lib/types/chat";
+import type { ChatConversation } from "@/types/chat";
 
 import { ConversationHeader } from "../_components/conversation-header";
 import { MessageComposer } from "../_components/message-composer";
