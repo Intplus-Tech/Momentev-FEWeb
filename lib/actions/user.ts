@@ -630,3 +630,115 @@ export async function deleteVendorStaff(staffId: string) {
   }
 }
 
+
+/**
+ * Change password for authenticated users
+ * PATCH /api/v1/auth/change-password
+ */
+/**
+ * Change password for authenticated users
+ * PATCH /api/v1/auth/change-password
+ */
+export async function changePassword(input: { currentPassword: string; newPassword: string }) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/change-password`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Token might be expired OR current password incorrect (backend returns 401 for incorrect password too usually, or 400. API doc says 401)
+        // If it's a token issue we might retry, but if it's "Current password incorrect" we shouldn't retry. 
+        // We'll try refresh first just in case it is the token.
+        const refreshResult = await tryRefreshToken();
+
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/change-password`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(input),
+            cache: 'no-store',
+          });
+
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+
+          const retryMessage = (retryData as any)?.message;
+          return { success: false, error: retryMessage || `Failed to change password (${retryResponse.status})` };
+        }
+
+        return { success: false, error: data?.message || 'Unauthorized: Invalid token or incorrect password.' };
+      }
+
+      if (response.status === 409) {
+        return { success: false, error: 'Account has no password set. Please use "Set Password" instead.' };
+      }
+
+      const errorData = data as any;
+      let message = errorData?.message || `Failed to change password (${response.status})`;
+
+      // Extract specific validation errors if available (common in 400 Bad Request)
+      if (errorData?.errors) {
+        let validationMessages: string[] = [];
+
+        // Handle array format (express-validator style or similar)
+        if (Array.isArray(errorData.errors)) {
+          validationMessages = errorData.errors.map((e: any) => e.msg || e.message);
+        }
+        // Handle nested object format (zod/common backend validation)
+        else if (errorData.errors?.body?.fieldErrors) {
+          const fieldErrors = errorData.errors.body.fieldErrors;
+          Object.keys(fieldErrors).forEach(field => {
+            const msgs = fieldErrors[field];
+            if (Array.isArray(msgs)) {
+              validationMessages.push(...msgs);
+            } else if (typeof msgs === 'string') {
+              validationMessages.push(msgs);
+            }
+          });
+        }
+
+        if (validationMessages.length > 0) {
+          // If the main message is just "Validation failed", replace it with the specific errors for better UX
+          if (message === 'Validation failed') {
+            message = validationMessages.join(', ');
+          } else {
+            message += `: ${validationMessages.join(', ')}`;
+          }
+        }
+      }
+
+      return { success: false, error: message };
+    }
+
+    return { success: true, data: data?.data };
+
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}

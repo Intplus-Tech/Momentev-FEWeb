@@ -70,6 +70,9 @@ export async function getConversations() {
   console.log('[Chat Action] getConversations: Fetching all conversations...');
   const result = await fetchWithAuth('/api/v1/chats');
   console.log('[Chat Action] getConversations:', result.success ? `Found ${result.data?.length || 0} conversations` : result.error);
+  if (result.success && result.data?.length > 0) {
+    console.log('[Chat Action] getConversations - First conversation sample:', JSON.stringify(result.data[0], null, 2));
+  }
   return result;
 }
 
