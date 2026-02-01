@@ -112,3 +112,40 @@ export async function markAsRead(conversationId: string) {
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/read`, { method: 'POST' });
   return result;
 }
+
+/**
+ * Get public vendor profile by ID
+ * GET /api/v1/vendors/{vendorId}
+ * Note: This is a public endpoint, no JWT required
+ */
+export async function getVendorPublicProfile(vendorId: string) {
+
+  console.log("✅ [GetVendorPublicProfile] Vendor ID:", vendorId);
+  try {
+    if (!API_BASE) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const url = `${API_BASE}/api/v1/vendors/${vendorId}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+    console.log("✅ [GetVendorPublicProfile] Data:", data);
+
+    if (!response.ok) {
+      return { success: false, error: data?.message || `Request failed (${response.status})` };
+    }
+
+    return { success: true, data: data.data, message: data.message };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+

@@ -55,3 +55,46 @@ export interface BusinessProfileResponse {
     updatedAt: string;
   };
 }
+
+/**
+ * Public vendor profile type (from GET /api/v1/vendors/{vendorId})
+ * Used for displaying vendor details in chat and other public views
+ */
+export interface VendorPublicProfile {
+  _id: string;
+  userId: string;
+  address?: {
+    city?: string;
+    state?: string;
+    country?: string;
+  };
+  businessProfile: {
+    businessName: string;
+    businessDescription?: string;
+    workdays?: {
+      dayOfWeek: string;
+      open: string;
+      close: string;
+    }[];
+  };
+  profilePhoto?: {
+    url: string;
+  };
+  coverPhoto?: {
+    url: string;
+  } | null;
+  portfolioGallery?: {
+    url: string;
+  }[];
+  rate?: number;
+  reviewCount?: number;
+  socialMediaLinks?: {
+    name: string;
+    link: string;
+  }[];
+  isActive: boolean;
+  onBoarded: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+

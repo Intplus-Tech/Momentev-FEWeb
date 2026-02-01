@@ -12,6 +12,7 @@ import {
   useChatMessages,
   useSendMessage,
   useChatRealtime,
+  useVendorProfile,
 } from "@/lib/react-query/hooks/use-chat";
 import type { ChatConversation } from "@/types/chat";
 
@@ -40,6 +41,11 @@ const ClientThreadPage = () => {
     (c: ChatConversation) => c._id === threadId,
   );
 
+  // Fetch vendor profile for display
+  const { data: vendorProfile } = useVendorProfile(conversation?.vendorId);
+  const vendorDisplayName =
+    vendorProfile?.businessProfile?.businessName || "Vendor";
+
   const handleSend = () => {
     const trimmed = messageText.trim();
     if (!trimmed || !threadId) return;
@@ -61,7 +67,10 @@ const ClientThreadPage = () => {
   return (
     <div className="flex h-full flex-col rounded-2xl border bg-card shadow-sm">
       <ConversationHeader
-        vendorName={conversation?.vendorId || "Vendor"}
+        vendorName={vendorDisplayName}
+        rating={vendorProfile?.rate}
+        reviewCount={vendorProfile?.reviewCount}
+        avatar={vendorProfile?.profilePhoto?.url}
         lastActiveLabel={
           conversation?.lastMessageAt
             ? format(new Date(conversation.lastMessageAt), "PP p")

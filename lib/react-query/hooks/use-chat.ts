@@ -7,10 +7,12 @@ import {
   getConversations,
   getMessages,
   sendMessage,
-  markAsRead
+  markAsRead,
+  getVendorPublicProfile
 } from "@/lib/actions/chat";
 import { queryKeys } from "@/lib/react-query/keys";
 import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/types/chat";
+import type { VendorPublicProfile } from "@/types/vendor";
 
 /**
  * Hook to fetch all conversations
@@ -182,4 +184,70 @@ export function useChatRealtime(conversationId: string | undefined) {
       socket.off("chat:read", handleRead);
     };
   }, [socket, isConnected, conversationId, queryClient]);
+}
+
+/**
+ * Hook to fetch vendor public profile for chat display
+ */
+export function useVendorProfile(vendorId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vendor.profile(vendorId || ''),
+    queryFn: async () => {
+      if (!vendorId) return null;
+      const result = await getVendorPublicProfile(vendorId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch vendor profile");
+      }
+      return result.data as VendorPublicProfile;
+
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - vendor details don't change often
+  });
+}
+
+/**
+ * Hook to fetch multiple vendor profiles for sidebar display
+ * Returns a Map of vendorId -> VendorPublicProfile
+ */
+export function useVendorProfiles(vendorIds: string[]) {
+  const queryClient = useQueryClient();
+
+  // Filter out empty/duplicate IDs
+  const uniqueIds = [...new Set(vendorIds.filter(Boolean))];
+
+  // Fetch all vendor profiles in parallel
+  useEffect(() => {
+    uniqueIds.forEach((vendorId) => {
+      // Prefetch if not already in cache
+      queryClient.prefetchQuery({
+        queryKey: queryKeys.vendor.profile(vendorId),
+        queryFn: async () => {
+          const result = await getVendorPublicProfile(vendorId);
+          if (!result.success) {
+            throw new Error(result.error || "Failed to fetch vendor profile");
+          }
+          return result.data as VendorPublicProfile;
+        },
+        staleTime: 5 * 60 * 1000,
+      });
+    });
+  }, [uniqueIds.join(','), queryClient]);
+
+  // Return a function to get vendor name by ID from cache
+  const getVendorName = (vendorId: string): string => {
+    const data = queryClient.getQueryData<VendorPublicProfile>(
+      queryKeys.vendor.profile(vendorId)
+    );
+    return data?.businessProfile?.businessName || vendorId;
+  };
+
+  const getVendorAvatar = (vendorId: string): string | undefined => {
+    const data = queryClient.getQueryData<VendorPublicProfile>(
+      queryKeys.vendor.profile(vendorId)
+    );
+    return data?.profilePhoto?.url;
+  };
+
+  return { getVendorName, getVendorAvatar };
 }
