@@ -2,7 +2,7 @@
 
 import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
 import { Skeleton } from "@/components/ui/skeleton";
-import Image from "next/image";
+import { ServiceCategory } from "@/types/service";
 
 interface CategoryFilterBarProps {
   selectedCategory: string;
@@ -36,7 +36,7 @@ export function CategoryFilterBar({
     <div className="border-b bg-background/80 backdrop-blur-sm sticky top-14 z-40">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide">
-          {categories.map((category: any) => {
+          {categories.map((category: ServiceCategory) => {
             const isActive = selectedCategory === category._id;
             return (
               <button

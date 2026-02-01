@@ -55,3 +55,63 @@ export interface NearbyFilters extends SearchFilters {
   long: number;
   maxDistanceKm?: number;
 }
+
+// --- Vendor Details API Types ---
+
+export interface Workday {
+  dayOfWeek: string;
+  open: string;
+  close: string;
+}
+
+export interface ServiceArea {
+  areaNames: {
+    city: string;
+    state: string;
+    country: string;
+  }[];
+  travelDistance?: string;
+}
+
+export interface BusinessProfile {
+  _id: string;
+  businessName?: string;
+  yearInBusiness?: string;
+  businessRegType?: string;
+  businessDescription?: string;
+  workdays?: Workday[];
+  serviceArea?: ServiceArea;
+}
+
+export interface SocialMediaLink {
+  name: string;
+  link: string;
+}
+
+export interface VendorDetails {
+  _id: string;
+  userId: string;
+  portfolioGallery: string[];
+  rate: number;
+  paymentAccountProvider?: string;
+  paymentModel?: string;
+  isActive: boolean;
+  onBoardingStage: number;
+  onBoarded: boolean;
+  socialMediaLinks: SocialMediaLink[];
+  commissionAgreement: {
+    accepted: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+  businessProfile?: BusinessProfile;
+  onboardedAt?: string;
+  reviewCount: number;
+  profilePhoto: string | null;
+  coverPhoto: string | null;
+}
+
+export interface VendorDetailsResponse {
+  message: string;
+  data: VendorDetails;
+}

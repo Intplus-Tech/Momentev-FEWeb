@@ -2,7 +2,7 @@
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { getVendorsAction, getNearbyVendorsAction } from "./actions";
+import { getVendorsAction, getNearbyVendorsAction, getVendorDetailsAction } from "./actions";
 import { SearchFilters } from "./types";
 import { toast } from "sonner";
 
@@ -21,15 +21,17 @@ export const useVendorSearch = (filters: SearchFilters) => {
 export const useNearbyVendors = (
   lat: number | null,
   long: number | null,
-  filters: Omit<SearchFilters, "sort"> & { maxDistanceKm?: number }
+  filters: Omit<SearchFilters, "sort">,
+  maxDistanceKm: number = 50
 ) => {
   return useQuery({
-    queryKey: ["vendors", "nearby", { lat, long, ...filters }],
+    queryKey: ["vendors", "nearby", { lat, long, maxDistanceKm, ...filters }],
     queryFn: () => {
       if (!lat || !long) throw new Error("Location required");
       return getNearbyVendorsAction({
         lat,
         long,
+        maxDistanceKm,
         ...filters,
       });
     },
@@ -102,4 +104,18 @@ export const useCurrentLocation = () => {
   };
 
   return { ...location, requestLocation };
+};
+
+// Hook for fetching vendor details by ID
+export const useVendorDetails = (vendorId: string | null) => {
+  return useQuery({
+    queryKey: ["vendor", "details", vendorId],
+    queryFn: () => {
+      if (!vendorId) throw new Error("Vendor ID required");
+      return getVendorDetailsAction(vendorId);
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 };

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home } from "lucide-react";
+import { Home, MapPin } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,13 +15,9 @@ import { Button } from "@/components/ui/button";
 
 import { PromotedVendorCard, VendorListCard, Pagination } from "./_components";
 import { promotedVendors } from "./_data/vendors";
-import {
-  useVendorSearch,
-  useNearbyVendors,
-  useCurrentLocation,
-} from "./_data/hooks";
-import { useVendorSpecialties } from "@/lib/react-query/hooks/use-vendor-specialties";
+import { useVendorSearch, useNearbyVendors } from "./_data/hooks";
 import { Vendor } from "./_data/types";
+import { AlertCircle } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -31,30 +27,24 @@ function SearchContent() {
 
   // Read URL parameters
   const queryParam = searchParams.get("q") || "";
-  const locationParam = searchParams.get("location") || "East London";
   const categoryParam = searchParams.get("category") || "";
   const specialtyParam = searchParams.get("specialty") || "";
   const sortParam = searchParams.get("sort") || "recommendation";
   const pageParam = Number(searchParams.get("page")) || 1;
 
-  // State for geolocation
-  const {
-    lat,
-    long,
-    error: geoError,
-    loading: geoLoading,
-    requestLocation,
-  } = useCurrentLocation();
+  // Geolocation params from URL (set by HomeHeader)
+  const latParam = searchParams.get("lat");
+  const longParam = searchParams.get("long");
+  const radiusParam = searchParams.get("radius");
 
-  // Determine which API to use
-  const isNearby = sortParam === "distance"; // "Nearest"
+  const urlLat = latParam ? parseFloat(latParam) : null;
+  const urlLong = longParam ? parseFloat(longParam) : null;
+  const maxDistanceKm = radiusParam ? parseInt(radiusParam, 10) : 50;
 
-  // Trigger geolocation if "Nearest" is selected
-  useEffect(() => {
-    if (isNearby && !lat && !geoLoading && !geoError) {
-      requestLocation();
-    }
-  }, [isNearby, lat, geoLoading, geoError, requestLocation]);
+  // Determine if we should use nearby search
+  const hasUrlLocation = urlLat !== null && urlLong !== null;
+  const isNearbySort = sortParam === "distance";
+  const shouldUseNearby = hasUrlLocation || isNearbySort;
 
   // Hook 1: Standard Search
   const searchResult = useVendorSearch({
@@ -66,24 +56,25 @@ function SearchContent() {
     limit: ITEMS_PER_PAGE,
   });
 
-  // Hook 2: Nearby Search
-  const nearbyResult = useNearbyVendors(lat, long, {
-    q: queryParam,
-    service: categoryParam,
-    specialty: specialtyParam,
-    page: pageParam,
-    limit: ITEMS_PER_PAGE,
-  });
-
-  // Hook 3: Debug support for Vendor Specialties
-  const { data: specialtiesData } = useVendorSpecialties({
-    page: 1,
-    limit: 20,
-  });
-  console.log("Vendor Specialties Debug:", specialtiesData);
+  // Hook 2: Nearby Search (uses URL coordinates)
+  const nearbyResult = useNearbyVendors(
+    urlLat,
+    urlLong,
+    {
+      q: queryParam,
+      service: categoryParam,
+      specialty: specialtyParam,
+      page: pageParam,
+      limit: ITEMS_PER_PAGE,
+    },
+    maxDistanceKm,
+  );
 
   // Decide which data to show
-  const { data, isLoading, isError } = isNearby ? nearbyResult : searchResult;
+  const canUseNearby = shouldUseNearby && hasUrlLocation;
+  const { data, isLoading, isError } = canUseNearby
+    ? nearbyResult
+    : searchResult;
 
   const vendors = data?.data?.data || [];
   const totalItems = data?.data?.total || 0;
@@ -134,34 +125,36 @@ function SearchContent() {
           <div className="flex items-center justify-between sm:justify-end gap-4">
             <h1 className="text-xl sm:text-xl font-semibold">
               <span className="text-foreground">{displayTitle}</span>
-              {locationParam && (
-                <span className="text-muted-foreground">
-                  , &nbsp;{locationParam}
+              {hasUrlLocation && (
+                <span className="text-muted-foreground flex items-center gap-1 text-sm ml-2">
+                  <MapPin className="w-4 h-4" />
+                  within {maxDistanceKm} km
                 </span>
               )}
             </h1>
             <p className="text-sm text-muted-foreground whitespace-nowrap">
               <span className="font-medium">
-                {geoLoading
-                  ? "Locating..."
-                  : `${totalItems + promotedVendors.length} found`}
+                {isLoading ? "Loading..." : `${totalItems} found`}
               </span>
             </p>
           </div>
         </div>
 
-        {/* Geo Error Message */}
-        {isNearby && geoError && (
-          <div className="bg-red-50 text-red-600 p-4 rounded-md mb-6 text-sm">
-            Could not get your location: {geoError}. Showing standard results
-            instead.
-            <Button
-              variant="link"
-              onClick={requestLocation}
-              className="text-red-700 underline h-auto p-0 ml-2"
-            >
-              Retry
-            </Button>
+        {/* Info message when nearby sort selected but no location */}
+        {isNearbySort && !hasUrlLocation && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 p-4 rounded-md mb-6 text-sm flex items-center gap-2">
+            <MapPin className="w-5 h-5 shrink-0" />
+            <span>
+              Set your location using the header to see nearby results.
+            </span>
+          </div>
+        )}
+
+        {/* API Error Message */}
+        {isError && (
+          <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 text-sm flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>Failed to load vendors. Please try refreshing the page.</span>
           </div>
         )}
 
@@ -193,9 +186,7 @@ function SearchContent() {
               // Empty State
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  {isNearby && geoLoading
-                    ? "Getting your location..."
-                    : `No vendors found for "${queryParam}"`}
+                  {`No vendors found for "${queryParam}"`}
                 </p>
               </div>
             )

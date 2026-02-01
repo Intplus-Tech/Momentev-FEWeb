@@ -7,144 +7,40 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Bath,
-  Camera,
-  Gift,
-  Martini,
   Search,
   MapPin,
   ChevronDown,
   X,
+  Navigation,
+  Loader2,
+  Sparkles,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { ServiceCategory } from "@/types/service";
 
-// Dummy vendor data
-const vendors = [
-  {
-    id: 1,
-    name: "Glamour Makeup Studio",
-    category: "Makeup Artists",
-    location: "East London",
-    rating: 4.9,
-  },
-  {
-    id: 2,
-    name: "Sarah's Bridal Makeup",
-    category: "Makeup Artists",
-    location: "West London",
-    rating: 4.8,
-  },
-  {
-    id: 3,
-    name: "Divine Catering Co.",
-    category: "Caterers",
-    location: "East London",
-    rating: 4.7,
-  },
-  {
-    id: 4,
-    name: "Gourmet Events Catering",
-    category: "Caterers",
-    location: "Central London",
-    rating: 4.9,
-  },
-  {
-    id: 5,
-    name: "Tasty Bites Catering",
-    category: "Caterers",
-    location: "North London",
-    rating: 4.6,
-  },
-  {
-    id: 6,
-    name: "Lens Masters Photography",
-    category: "Photographers",
-    location: "East London",
-    rating: 5.0,
-  },
-  {
-    id: 7,
-    name: "Capture Moments Studio",
-    category: "Photographers",
-    location: "South London",
-    rating: 4.8,
-  },
-  {
-    id: 8,
-    name: "DJ Beats Pro",
-    category: "DJs",
-    location: "Central London",
-    rating: 4.9,
-  },
-  {
-    id: 9,
-    name: "Party Mix DJ Services",
-    category: "DJs",
-    location: "East London",
-    rating: 4.7,
-  },
-  {
-    id: 10,
-    name: "Elegant Decor Studio",
-    category: "Decorators",
-    location: "West London",
-    rating: 4.8,
-  },
-  {
-    id: 11,
-    name: "Dream Event Decorators",
-    category: "Decorators",
-    location: "East London",
-    rating: 4.9,
-  },
-  {
-    id: 12,
-    name: "Balloon & More",
-    category: "Decorators",
-    location: "North London",
-    rating: 4.5,
-  },
+// Radius options in km
+const radiusOptions = [
+  { value: 5, label: "5 km" },
+  { value: 10, label: "10 km" },
+  { value: 25, label: "25 km" },
+  { value: 50, label: "50 km" },
+  { value: 100, label: "100 km" },
 ];
 
-const locations = [
-  "East London",
-  "West London",
-  "Central London",
-  "North London",
-  "South London",
-];
-
-const services = [
+// Fallback services for typewriter effect
+const fallbackServices = [
   "Makeup Artists",
   "Caterers",
   "Photographers",
   "DJs",
   "Decorators",
-];
-
-// Searchable categories - kept for reference but not used in dropdown anymore
-const searchableCategories = [
-  { id: "makeup", name: "Makeup Artists" },
-  { id: "photography", name: "Photography" },
-  { id: "catering", name: "Caterers" },
-  { id: "dj", name: "DJs & Entertainment" },
-  { id: "decoration", name: "Decorators" },
-  { id: "wedding", name: "Wedding Planning" },
-  { id: "event", name: "Event Planners" },
-  { id: "venue", name: "Venue & Spaces" },
-  { id: "cake", name: "Cakes & Desserts" },
-  { id: "flowers", name: "Florists" },
-];
-
-const categories = [
-  { name: "Birthday Party", icon: Gift, searchTerm: "birthday" },
-  { name: "Photography", icon: Camera, searchTerm: "Photographers" },
-  { name: "Corporate", icon: Martini, searchTerm: "corporate" },
-  { name: "Baby Shower", icon: Bath, searchTerm: "baby shower" },
 ];
 
 interface HeroMiddleProps {
@@ -158,7 +54,27 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("East London");
+
+  // Location state
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLong, setUserLong] = useState<number | null>(null);
+  const [selectedRadius, setSelectedRadius] = useState(50);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationLabel, setLocationLabel] = useState("Set location");
+
+  const router = useRouter();
+
+  // Fetch categories from backend
+  const { data: categoriesData, isLoading: isCategoriesLoading } =
+    useServiceCategories();
+  // Access the nested data array from the paginated response
+  const categories: ServiceCategory[] = categoriesData?.data?.data || [];
+
+  // Use category names for typewriter effect
+  const services =
+    categories.length > 0
+      ? categories.slice(0, 5).map((c) => c.name)
+      : fallbackServices;
 
   // Notify parent when service index changes
   useEffect(() => {
@@ -167,7 +83,7 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
 
   // Typewriter effect
   useEffect(() => {
-    const currentService = services[currentServiceIndex];
+    const currentService = services[currentServiceIndex] || "Vendors";
     const typingSpeed = isDeleting ? 50 : 100;
     const pauseDuration = 2000;
 
@@ -191,23 +107,85 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
     }, typingSpeed);
 
     return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentServiceIndex]);
+  }, [displayText, isDeleting, currentServiceIndex, services]);
 
-  const router = useRouter();
+  // Request user's geolocation
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported", {
+        description: "Your browser doesn't support geolocation.",
+      });
+      return;
+    }
+
+    setIsLocating(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLat(position.coords.latitude);
+        setUserLong(position.coords.longitude);
+        setLocationLabel("My location");
+        setIsLocating(false);
+        toast.success("Location set", {
+          description: "We'll show vendors near you.",
+        });
+      },
+      (error) => {
+        setIsLocating(false);
+        let message = "Could not get your location";
+        if (error.code === error.PERMISSION_DENIED) {
+          message =
+            "Location access denied. Please enable it in browser settings.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Location unavailable";
+        } else if (error.code === error.TIMEOUT) {
+          message = "Location request timed out";
+        }
+        toast.error("Location error", { description: message });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  };
+
+  // Clear location
+  const handleClearLocation = () => {
+    setUserLat(null);
+    setUserLong(null);
+    setLocationLabel("Set location");
+  };
 
   const handleSearch = () => {
     const params = new URLSearchParams();
+
     if (searchQuery.trim()) {
       params.set("q", searchQuery);
     }
-    params.set("location", selectedLocation);
+
+    // Add geolocation params if available
+    if (userLat && userLong) {
+      params.set("lat", userLat.toString());
+      params.set("long", userLong.toString());
+      params.set("radius", selectedRadius.toString());
+      params.set("sort", "distance");
+    }
+
+    params.set("page", "1");
     router.push(`/search?${params.toString()}`);
   };
 
-  const handleCategoryClick = (searchTerm: string) => {
+  const handleCategoryClick = (categoryId: string) => {
     const params = new URLSearchParams();
-    params.set("q", searchTerm);
-    params.set("location", selectedLocation);
+    params.set("category", categoryId);
+
+    // Include location if set
+    if (userLat && userLong) {
+      params.set("lat", userLat.toString());
+      params.set("long", userLong.toString());
+      params.set("radius", selectedRadius.toString());
+      params.set("sort", "distance");
+    }
+
+    params.set("page", "1");
     router.push(`/search?${params.toString()}`);
   };
 
@@ -232,7 +210,7 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
         {/* Search bar */}
         <div className="w-full max-w-3xl mx-auto">
           <div className="flex flex-col sm:flex-row bg-white shadow-lg overflow-visible">
-            {/* Search input with dropdown */}
+            {/* Search input */}
             <div className="relative flex-1">
               <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
                 <Search className="shrink-0 w-5 h-5 text-gray-400" />
@@ -274,27 +252,55 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
                     variant="ghost"
                     className="h-auto py-1.5 px-2 gap-2 hover:bg-gray-50 font-normal"
                   >
-                    <MapPin className="w-5 h-5 text-gray-500" />
+                    {isLocating ? (
+                      <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
+                    ) : (
+                      <MapPin className="w-5 h-5 text-gray-500" />
+                    )}
                     <span className="text-sm md:text-base whitespace-nowrap">
-                      {selectedLocation}
+                      {isLocating ? "Locating..." : locationLabel}
                     </span>
                     <ChevronDown className="w-4 h-4 text-gray-400" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-[160px]">
-                  {locations.map((location) => (
-                    <DropdownMenuItem
-                      key={location}
-                      onClick={() => setSelectedLocation(location)}
-                      className={
-                        selectedLocation === location
-                          ? "bg-primary/10 text-primary font-medium"
-                          : ""
-                      }
-                    >
-                      {location}
-                    </DropdownMenuItem>
-                  ))}
+                <DropdownMenuContent align="start" className="min-w-[200px]">
+                  <DropdownMenuItem
+                    onClick={handleGetLocation}
+                    disabled={isLocating}
+                    className="gap-2"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    Use my location
+                  </DropdownMenuItem>
+
+                  {userLat && userLong && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                        Search radius
+                      </div>
+                      {radiusOptions.map((option) => (
+                        <DropdownMenuItem
+                          key={option.value}
+                          onClick={() => setSelectedRadius(option.value)}
+                          className={
+                            selectedRadius === option.value
+                              ? "bg-primary/10 text-primary font-medium"
+                              : ""
+                          }
+                        >
+                          {option.label}
+                        </DropdownMenuItem>
+                      ))}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={handleClearLocation}
+                        className="text-muted-foreground"
+                      >
+                        Clear location
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -315,16 +321,23 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
 
         {/* Categories */}
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-4">
-          {categories.map((category) => (
-            <Button
-              key={category.name}
-              onClick={() => handleCategoryClick(category.searchTerm)}
-              className="bg-black/10 hover:bg-black/50 backdrop-blur-sm py-2 px-4 sm:px-5 rounded-full text-xs sm:text-sm text-white flex items-center gap-2 transition-colors"
-            >
-              <category.icon className="w-4 h-4" />
-              {category.name}
-            </Button>
-          ))}
+          {isCategoriesLoading
+            ? // Loading skeletons
+              Array.from({ length: 4 }).map((_, i) => (
+                <Skeleton
+                  key={i}
+                  className="h-10 w-28 rounded-full bg-white/20"
+                />
+              ))
+            : categories.slice(0, 4).map((category) => (
+                <Button
+                  key={category._id}
+                  onClick={() => handleCategoryClick(category._id)}
+                  className="bg-black/10 hover:bg-black/50 backdrop-blur-sm py-2 px-4 sm:px-5 rounded-full text-xs sm:text-sm text-white transition-colors"
+                >
+                  {category.name.split(" ")[0]}
+                </Button>
+              ))}
         </div>
       </div>
     </section>

@@ -1,8 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { VendorResponse, SearchFilters, NearbyFilters, Vendor } from "./types";
-import { getAccessToken } from "@/lib/session";
+import { VendorResponse, SearchFilters, NearbyFilters, Vendor, VendorDetailsResponse } from "./types";
 
 const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -33,15 +32,19 @@ const RawVendorSchema = z.object({
   reviewCount: z.number().optional().default(0),
   profilePhoto: z.string().nullable().optional(),
   coverPhoto: z.string().nullable().optional(),
-  userId: z.object({
-    _id: z.string(),
-    firstName: z.string().optional(),
-    lastName: z.string().optional(),
-    avatar: z.object({
-      url: z.string().optional()
-    }).optional().nullable(),
-    addressId: AddressSchema,
-  }).optional(),
+  // userId can be either a string (ID) or a populated object
+  userId: z.union([
+    z.string(),
+    z.object({
+      _id: z.string(),
+      firstName: z.string().optional(),
+      lastName: z.string().optional(),
+      avatar: z.object({
+        url: z.string().optional()
+      }).optional().nullable(),
+      addressId: AddressSchema,
+    })
+  ]).optional(),
   businessProfile: z.object({
     businessName: z.string().optional(),
     businessDescription: z.string().optional(),
@@ -76,8 +79,15 @@ type RawVendor = z.infer<typeof RawVendorSchema>;
 
 // --- MAPPING HELPERS ---
 
+// Helper to safely get userId as object (if populated) or null
+function getUserIdObject(userId: RawVendor['userId']): Exclude<RawVendor['userId'], string> | null {
+  if (!userId || typeof userId === 'string') return null;
+  return userId;
+}
+
 function formatAddress(vendor: RawVendor): string {
-  const addr = vendor.businessProfile?.contactInfo?.addressId || vendor.userId?.addressId;
+  const userIdObj = getUserIdObject(vendor.userId);
+  const addr = vendor.businessProfile?.contactInfo?.addressId || userIdObj?.addressId;
   if (!addr) return "Location unavailable";
   const parts = [addr.city, addr.state, addr.country].filter(Boolean);
   return parts.length > 0 ? parts.join(", ") : "Location unavailable";
@@ -94,10 +104,11 @@ function formatWorkdays(workdays?: { dayOfWeek: string; open: string; close: str
 }
 
 function mapRawToUIVendor(raw: RawVendor): Vendor {
+  const userIdObj = getUserIdObject(raw.userId);
   const name = raw.businessProfile?.businessName ||
-    (raw.userId?.firstName && raw.userId?.lastName ? `${raw.userId.firstName} ${raw.userId.lastName}` : "Unknown Vendor");
+    (userIdObj?.firstName && userIdObj?.lastName ? `${userIdObj.firstName} ${userIdObj.lastName}` : "Unknown Vendor");
 
-  const image = raw.coverPhoto || raw.profilePhoto || raw.userId?.avatar?.url || FALLBACK_IMAGE;
+  const image = raw.coverPhoto || raw.profilePhoto || userIdObj?.avatar?.url || FALLBACK_IMAGE;
 
   // Build Service List
   const services = [];
@@ -130,7 +141,6 @@ function mapRawToUIVendor(raw: RawVendor): Vendor {
     address: formatAddress(raw),
     distanceKm: raw.distanceKm,
     workdays: formatWorkdays(raw.businessProfile?.workdays),
-    bookings: Math.floor(Math.random() * 500) + 10, // MOCK: Random booking count
     services: services
   };
 }
@@ -138,7 +148,6 @@ function mapRawToUIVendor(raw: RawVendor): Vendor {
 
 export async function getVendorsAction(filters: SearchFilters): Promise<VendorResponse> {
   try {
-    const accessToken = await getAccessToken();
     const params = new URLSearchParams();
 
     if (filters.service && filters.service !== "all") params.append("service", filters.service);
@@ -150,10 +159,11 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
 
     const url = `${BACKEND_URL}/api/v1/vendors/search?${params.toString()}`;
 
-    const headers: HeadersInit = { "Content-Type": "application/json" };
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-
-    const res = await fetch(url, { method: "GET", headers, cache: "no-store" });
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
 
     if (!res.ok) {
       console.error(`API Error ${res.status}: ${res.statusText}`);
@@ -161,6 +171,8 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
     }
 
     const rawData = await res.json();
+    console.log("🔍 Search Raw API Response:", JSON.stringify(rawData, null, 2));
+
     const parsed = RawApiResponseSchema.safeParse(rawData);
 
     if (!parsed.success) {
@@ -169,6 +181,9 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
     }
 
     const mappedVendors = parsed.data.data.data.map(mapRawToUIVendor);
+    console.log("✅ Mapped Vendors:", mappedVendors);
+    console.log(`📊 Total: ${parsed.data.data.total}, Page: ${parsed.data.data.page}, Limit: ${parsed.data.data.limit}`);
+
     let totalItems = parsed.data.data.total;
 
     // Client-Side Filter
@@ -197,7 +212,6 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
 
 export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<VendorResponse> {
   try {
-    const accessToken = await getAccessToken();
     const params = new URLSearchParams();
 
     params.append("lat", filters.lat.toString());
@@ -211,10 +225,11 @@ export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<Ve
 
     const url = `${BACKEND_URL}/api/v1/vendors/nearby?${params.toString()}`;
 
-    const headers: HeadersInit = { "Content-Type": "application/json" };
-    if (accessToken) headers["Authorization"] = `Bearer ${accessToken}`;
-
-    const res = await fetch(url, { method: "GET", headers, cache: "no-store" });
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
 
     if (!res.ok) {
       return { success: false, message: `Failed: ${res.status}`, data: { data: [], total: 0, page: 1, limit: 10 } };
@@ -254,3 +269,87 @@ export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<Ve
     return { success: false, message: "Error", data: { data: [], total: 0, page: 1, limit: 10 } };
   }
 }
+
+// --- Vendor Details Action ---
+
+const VendorDetailsSchema = z.object({
+  _id: z.string(),
+  userId: z.string(),
+  portfolioGallery: z.array(z.string()).optional().default([]),
+  rate: z.number().optional().default(0),
+  paymentAccountProvider: z.string().optional(),
+  paymentModel: z.string().optional(),
+  isActive: z.boolean().optional().default(true),
+  onBoardingStage: z.number().optional().default(0),
+  onBoarded: z.boolean().optional().default(false),
+  socialMediaLinks: z.array(z.object({
+    name: z.string(),
+    link: z.string()
+  })).optional().default([]),
+  commissionAgreement: z.object({
+    accepted: z.boolean().optional().default(false)
+  }).optional().default({ accepted: false }),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  businessProfile: z.object({
+    _id: z.string(),
+    businessName: z.string().optional(),
+    yearInBusiness: z.string().optional(),
+    businessRegType: z.string().optional(),
+    businessDescription: z.string().optional(),
+    workdays: z.array(z.object({
+      dayOfWeek: z.string(),
+      open: z.string(),
+      close: z.string()
+    })).optional(),
+    serviceArea: z.object({
+      areaNames: z.array(z.object({
+        city: z.string(),
+        state: z.string(),
+        country: z.string()
+      })).optional(),
+      travelDistance: z.string().optional()
+    }).optional()
+  }).optional(),
+  onboardedAt: z.string().optional(),
+  reviewCount: z.number().optional().default(0),
+  profilePhoto: z.string().nullable().optional(),
+  coverPhoto: z.string().nullable().optional()
+});
+
+const VendorDetailsResponseSchema = z.object({
+  message: z.string(),
+  data: VendorDetailsSchema
+});
+
+export async function getVendorDetailsAction(vendorId: string): Promise<VendorDetailsResponse | null> {
+  try {
+    const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      console.error(`Vendor Details API Error ${res.status}: ${res.statusText}`);
+      return null;
+    }
+
+    const rawData = await res.json();
+    const parsed = VendorDetailsResponseSchema.safeParse(rawData);
+
+    if (!parsed.success) {
+      console.error("Vendor Details Zod Parsing Failed:", parsed.error);
+      return null;
+    }
+
+    return parsed.data as VendorDetailsResponse;
+
+  } catch (error) {
+    console.error("getVendorDetailsAction error:", error);
+    return null;
+  }
+}
+
