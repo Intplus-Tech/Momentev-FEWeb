@@ -21,10 +21,13 @@ export function useConversations() {
   return useQuery({
     queryKey: queryKeys.chat.conversations(),
     queryFn: async () => {
+      console.log('[useConversations] Fetching conversations...');
       const result = await getConversations();
       if (!result.success) {
+        console.error('[useConversations] Error:', result.error);
         throw new Error(result.error || "Failed to fetch conversations");
       }
+      console.log('[useConversations] Loaded', result.data?.length || 0, 'conversations');
       return result.data || [];
     },
     // Refresh conversations every minute or on focus to check for new messages
@@ -41,12 +44,14 @@ export function useChatMessages(conversationId: string, limit: number = 50) {
     queryKey: queryKeys.chat.messages(conversationId),
     queryFn: async () => {
       if (!conversationId) return [];
+      console.log('[useChatMessages] Fetching messages for:', conversationId);
       const result = await getMessages(conversationId, limit);
       if (!result.success) {
+        console.error('[useChatMessages] Error:', result.error);
         throw new Error(result.error || "Failed to fetch messages");
       }
-      // Messages might need sorting or processing here depending on API order
       const messages = result.data || [];
+      console.log('[useChatMessages] Loaded', messages.length, 'messages');
       // Sort messages by createdAt ascending (Oldest -> Newest) so newest is at the bottom
       return messages.sort((a: ChatMessage, b: ChatMessage) => {
         const dateA = new Date(a.createdAt).getTime();
@@ -80,6 +85,8 @@ export function useSendMessage() {
       const previousMessages = queryClient.getQueryData<ChatMessage[]>(queryKeys.chat.messages(conversationId));
 
       // Optimistically update to the new value
+      // Note: We don't include attachments in optimistic message because we only have IDs.
+      // The uploadingMessage preview handles attachment display during upload.
       const optimisticMessage: ChatMessage = {
         _id: `temp-${Date.now()}`,
         conversationId,
@@ -146,9 +153,11 @@ export function useChatRealtime(conversationId: string | undefined) {
     if (!socket || !isConnected || !conversationId) return;
 
     // Join the conversation room
+    console.log('[useChatRealtime] Joining room:', conversationId);
     socket.emit("chat:join", { conversationId });
 
     const handleMessage = (payload: { conversationId: string; data: ChatMessage }) => {
+      console.log('[useChatRealtime] Received message:', payload);
       if (payload.conversationId !== conversationId) return;
       const newMessage = payload.data;
 
@@ -171,6 +180,7 @@ export function useChatRealtime(conversationId: string | undefined) {
     };
 
     const handleRead = (payload: { conversationId: string }) => {
+      console.log('[useChatRealtime] Received read receipt:', payload);
       // When a read receipt comes in, refresh conversations (stores read status)
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
     };
@@ -179,6 +189,7 @@ export function useChatRealtime(conversationId: string | undefined) {
     socket.on("chat:read", handleRead);
 
     return () => {
+      console.log('[useChatRealtime] Leaving room:', conversationId);
       socket.emit("chat:leave", { conversationId });
       socket.off("chat:message", handleMessage);
       socket.off("chat:read", handleRead);

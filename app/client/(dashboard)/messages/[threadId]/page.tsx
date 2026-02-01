@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Paperclip, Video } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 
@@ -15,10 +16,17 @@ import {
   useVendorProfile,
 } from "@/lib/react-query/hooks/use-chat";
 import type { ChatConversation } from "@/types/chat";
+import { uploadFile } from "@/lib/actions/upload";
 
 import { ConversationHeader } from "../_components/conversation-header";
-import { MessageComposer } from "../_components/message-composer";
-import { MessageHistory } from "../_components/message-history";
+import {
+  MessageComposer,
+  type PendingAttachment,
+} from "../_components/message-composer";
+import {
+  MessageHistory,
+  type UploadingMessage,
+} from "../_components/message-history";
 
 const ClientThreadPage = () => {
   const router = useRouter();
@@ -30,6 +38,11 @@ const ClientThreadPage = () => {
   }, [params?.threadId]);
 
   const [messageText, setMessageText] = useState("");
+  const [pendingAttachment, setPendingAttachment] =
+    useState<PendingAttachment | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadingMessage, setUploadingMessage] =
+    useState<UploadingMessage | null>(null);
 
   const { data: conversations = [] } = useConversations();
   const { data: messages = [] } = useChatMessages(threadId);
@@ -46,9 +59,116 @@ const ClientThreadPage = () => {
   const vendorDisplayName =
     vendorProfile?.businessProfile?.businessName || "Vendor";
 
-  const handleSend = () => {
+  const handleFileSelect = (file: File) => {
+    console.log("[Chat] File selected:", {
+      name: file.name,
+      size: file.size,
+      type: file.type,
+    });
+
+    const previewUrl = file.type.startsWith("image/")
+      ? URL.createObjectURL(file)
+      : undefined;
+    setPendingAttachment({ file, previewUrl });
+  };
+
+  const handleRemoveAttachment = () => {
+    console.log("[Chat] Attachment removed");
+    if (pendingAttachment?.previewUrl) {
+      URL.revokeObjectURL(pendingAttachment.previewUrl);
+    }
+    setPendingAttachment(null);
+  };
+
+  const handleSend = async () => {
     const trimmed = messageText.trim();
-    if (!trimmed || !threadId) return;
+    if (!threadId) return;
+
+    // If there's a pending attachment, upload it first
+    if (pendingAttachment) {
+      console.log("[Chat] Starting file upload...", {
+        fileName: pendingAttachment.file.name,
+        fileSize: pendingAttachment.file.size,
+      });
+
+      const isImage = pendingAttachment.file.type.startsWith("image/");
+
+      // Show uploading preview in message history
+      setUploadingMessage({
+        id: `uploading-${Date.now()}`,
+        previewUrl: pendingAttachment.previewUrl,
+        fileName: pendingAttachment.file.name,
+        fileSize: pendingAttachment.file.size,
+        isImage,
+        status: "uploading",
+        text: trimmed || undefined,
+      });
+
+      setIsUploading(true);
+
+      try {
+        const formData = new FormData();
+        formData.append("file", pendingAttachment.file);
+
+        console.log("[Chat] Uploading file to server...");
+        const result = await uploadFile(formData);
+
+        if (!result.success) {
+          console.error("[Chat] Upload failed:", result.error);
+          setUploadingMessage((prev) =>
+            prev ? { ...prev, status: "error" } : null,
+          );
+          toast.error(result.error || "Failed to upload file");
+          setIsUploading(false);
+          return;
+        }
+
+        console.log("[Chat] Upload successful:", result.data);
+
+        // Send message with attachment
+        console.log("[Chat] Sending message with attachment...", {
+          conversationId: threadId,
+          type: isImage ? "image" : "file",
+          hasText: !!trimmed,
+        });
+
+        sendMessage({
+          conversationId: threadId,
+          payload: {
+            type: isImage ? "image" : "file",
+            text: trimmed || undefined,
+            clientMessageId: `temp-${Date.now()}`,
+            attachments: result.data ? [result.data.url] : undefined,
+          },
+          senderSide: "user",
+        });
+
+        console.log("[Chat] Message sent successfully");
+
+        // Clear uploading state
+        setUploadingMessage(null);
+        handleRemoveAttachment();
+        setMessageText("");
+        toast.success("File sent successfully");
+      } catch (error) {
+        console.error("[Chat] Error during upload/send:", error);
+        setUploadingMessage((prev) =>
+          prev ? { ...prev, status: "error" } : null,
+        );
+        toast.error("Failed to send attachment");
+      } finally {
+        setIsUploading(false);
+      }
+      return;
+    }
+
+    // Text-only message
+    if (!trimmed) return;
+
+    console.log("[Chat] Sending text message...", {
+      conversationId: threadId,
+      textLength: trimmed.length,
+    });
 
     sendMessage({
       conversationId: threadId,
@@ -87,16 +207,6 @@ const ClientThreadPage = () => {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         }
-        actions={
-          <>
-            <Button variant="outline" size="icon-sm" className="rounded-full">
-              <Video className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon-sm" className="rounded-full">
-              <Paperclip className="h-4 w-4" />
-            </Button>
-          </>
-        }
       />
 
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -105,11 +215,16 @@ const ClientThreadPage = () => {
           className="h-full px-4 py-4"
           userSide="user"
           counterpartyLastReadAt={conversation?.vendorLastReadAt}
+          uploadingMessage={uploadingMessage}
         />
         <MessageComposer
           value={messageText}
           onChange={setMessageText}
           onSend={handleSend}
+          pendingAttachment={pendingAttachment}
+          onFileSelect={handleFileSelect}
+          onRemoveAttachment={handleRemoveAttachment}
+          isUploading={isUploading}
         />
       </div>
     </div>

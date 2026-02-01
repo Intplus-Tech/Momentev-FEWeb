@@ -34,6 +34,15 @@ export interface CreateMessageRequest {
   type: 'text' | 'image' | 'file';
   text?: string;
   clientMessageId: string;
+  attachments?: string[];  // Array of upload IDs
+}
+
+export interface ChatAttachment {
+  _id: string;
+  url: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
 }
 
 export interface ApiListResponse<T> {

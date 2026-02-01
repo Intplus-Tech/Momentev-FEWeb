@@ -67,7 +67,9 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
  * GET /api/v1/chats
  */
 export async function getConversations() {
+  console.log('[Chat Action] getConversations: Fetching all conversations...');
   const result = await fetchWithAuth('/api/v1/chats');
+  console.log('[Chat Action] getConversations:', result.success ? `Found ${result.data?.length || 0} conversations` : result.error);
   return result;
 }
 
@@ -76,7 +78,9 @@ export async function getConversations() {
  * POST /api/v1/chats/vendor/{vendorId}
  */
 export async function getOrCreateConversation(vendorId: string) {
+  console.log('[Chat Action] getOrCreateConversation: vendorId=', vendorId);
   const result = await fetchWithAuth(`/api/v1/chats/vendor/${vendorId}`, { method: 'POST' });
+  console.log('[Chat Action] getOrCreateConversation:', result.success ? `Conversation ${result.data?._id}` : result.error);
   return result;
 }
 
@@ -85,10 +89,12 @@ export async function getOrCreateConversation(vendorId: string) {
  * GET /api/v1/chats/{conversationId}/messages
  */
 export async function getMessages(conversationId: string, limit: number = 30, before?: string) {
+  console.log('[Chat Action] getMessages:', { conversationId, limit, before });
   const query = new URLSearchParams({ limit: limit.toString() });
   if (before) query.append('before', before);
 
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages?${query.toString()}`);
+  console.log('[Chat Action] getMessages:', result.success ? `Found ${result.data?.length || 0} messages` : result.error);
   return result;
 }
 
@@ -97,10 +103,19 @@ export async function getMessages(conversationId: string, limit: number = 30, be
  * POST /api/v1/chats/{conversationId}/messages
  */
 export async function sendMessage(conversationId: string, payload: CreateMessageRequest) {
+  console.log('[Chat Action] sendMessage:', {
+    conversationId,
+    type: payload.type,
+    hasText: !!payload.text,
+    attachments: payload.attachments,
+    clientMessageId: payload.clientMessageId
+  });
+  console.log('[Chat Action] sendMessage payload:', JSON.stringify(payload));
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
+  console.log('[Chat Action] sendMessage result:', result.success ? `Message ${result.data?._id} sent` : result.error, result);
   return result;
 }
 
@@ -109,7 +124,9 @@ export async function sendMessage(conversationId: string, payload: CreateMessage
  * POST /api/v1/chats/{conversationId}/read
  */
 export async function markAsRead(conversationId: string) {
+  console.log('[Chat Action] markAsRead: conversationId=', conversationId);
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/read`, { method: 'POST' });
+  console.log('[Chat Action] markAsRead:', result.success ? 'Success' : result.error);
   return result;
 }
 
