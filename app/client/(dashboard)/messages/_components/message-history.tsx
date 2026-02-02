@@ -47,14 +47,6 @@ export const MessageHistory = ({
   const endRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    console.log("[MessageHistory] Rendering messages:", {
-      count: messages.length,
-      userSide,
-      hasUploadingMessage: !!uploadingMessage,
-    });
-  }, [messages, userSide, uploadingMessage]);
-
-  useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, isTyping, uploadingMessage]);
 
@@ -66,8 +58,22 @@ export const MessageHistory = ({
     if (!attachments || attachments.length === 0) return null;
 
     return attachments.map((attachment, idx) => {
+      // Check mimeType or URL extension for image detection
+      const imageExtensions = [
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".bmp",
+      ];
+      const url = attachment.url || "";
+      const hasImageExtension = imageExtensions.some((ext) =>
+        url.toLowerCase().includes(ext),
+      );
       const isImage =
-        type === "image" || attachment.mimeType?.startsWith("image/");
+        attachment.mimeType?.startsWith("image/") || hasImageExtension;
 
       if (isImage) {
         return (

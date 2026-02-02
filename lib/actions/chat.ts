@@ -33,6 +33,13 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
     const data = await response.json().catch(() => null);
 
     if (!response.ok) {
+      // Log full error response for debugging
+      console.error('[fetchWithAuth] Error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: JSON.stringify(data, null, 2),
+      });
+
       if (response.status === 401) {
         const refreshResult = await tryRefreshToken();
         if (refreshResult.success && refreshResult.token) {
@@ -47,11 +54,12 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
           if (retryResponse.ok) {
             return { success: true, data: retryData.data, message: retryData.message };
           }
-          return { success: false, error: retryData?.message || `Request failed (${retryResponse.status})` };
+          console.error('[fetchWithAuth] Retry error:', retryData);
+          return { success: false, error: retryData?.message || `Request failed (${retryResponse.status})`, details: retryData };
         }
         return { success: false, error: 'Session expired. Please login again.' };
       }
-      return { success: false, error: data?.message || `Request failed (${response.status})` };
+      return { success: false, error: data?.message || `Request failed (${response.status})`, details: data };
     }
 
     return { success: true, data: data.data, message: data.message };
@@ -67,12 +75,7 @@ async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
  * GET /api/v1/chats
  */
 export async function getConversations() {
-  console.log('[Chat Action] getConversations: Fetching all conversations...');
   const result = await fetchWithAuth('/api/v1/chats');
-  console.log('[Chat Action] getConversations:', result.success ? `Found ${result.data?.length || 0} conversations` : result.error);
-  if (result.success && result.data?.length > 0) {
-    console.log('[Chat Action] getConversations - First conversation sample:', JSON.stringify(result.data[0], null, 2));
-  }
   return result;
 }
 
@@ -81,23 +84,74 @@ export async function getConversations() {
  * POST /api/v1/chats/vendor/{vendorId}
  */
 export async function getOrCreateConversation(vendorId: string) {
-  console.log('[Chat Action] getOrCreateConversation: vendorId=', vendorId);
   const result = await fetchWithAuth(`/api/v1/chats/vendor/${vendorId}`, { method: 'POST' });
-  console.log('[Chat Action] getOrCreateConversation:', result.success ? `Conversation ${result.data?._id}` : result.error);
   return result;
 }
 
 /**
  * Get messages for a conversation
  * GET /api/v1/chats/{conversationId}/messages
+ * Also resolves attachment fileIds to full file details
  */
 export async function getMessages(conversationId: string, limit: number = 30, before?: string) {
-  console.log('[Chat Action] getMessages:', { conversationId, limit, before });
   const query = new URLSearchParams({ limit: limit.toString() });
   if (before) query.append('before', before);
 
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages?${query.toString()}`);
-  console.log('[Chat Action] getMessages:', result.success ? `Found ${result.data?.length || 0} messages` : result.error);
+
+  // Resolve attachment fileIds to full file details
+  if (result.success && result.data) {
+    const messages = result.data as any[];
+
+    // Collect all unique fileIds that need resolving
+    const fileIdsToResolve = new Set<string>();
+    messages.forEach(msg => {
+      if (msg.attachments?.length > 0) {
+        msg.attachments.forEach((att: any) => {
+          if (att.fileId && !att.url) {
+            fileIdsToResolve.add(att.fileId);
+          }
+        });
+      }
+    });
+
+    // Fetch all file details in parallel
+    if (fileIdsToResolve.size > 0) {
+      const { getFileById } = await import('./upload');
+      const fileDetailsMap = new Map<string, any>();
+
+      const filePromises = Array.from(fileIdsToResolve).map(async (fileId) => {
+        const fileResult = await getFileById(fileId);
+        if (fileResult.success && fileResult.data) {
+          fileDetailsMap.set(fileId, fileResult.data);
+        }
+      });
+
+      await Promise.all(filePromises);
+
+      // Update message attachments with resolved file details
+      messages.forEach(msg => {
+        if (msg.attachments?.length > 0) {
+          msg.attachments = msg.attachments.map((att: any) => {
+            if (att.fileId && !att.url) {
+              const fileDetails = fileDetailsMap.get(att.fileId);
+              if (fileDetails) {
+                return {
+                  ...att,
+                  url: fileDetails.url,
+                  originalName: fileDetails.originalName,
+                  mimeType: fileDetails.mimeType,
+                  size: fileDetails.size,
+                };
+              }
+            }
+            return att;
+          });
+        }
+      });
+    }
+  }
+
   return result;
 }
 
@@ -106,19 +160,13 @@ export async function getMessages(conversationId: string, limit: number = 30, be
  * POST /api/v1/chats/{conversationId}/messages
  */
 export async function sendMessage(conversationId: string, payload: CreateMessageRequest) {
-  console.log('[Chat Action] sendMessage:', {
-    conversationId,
-    type: payload.type,
-    hasText: !!payload.text,
-    attachments: payload.attachments,
-    clientMessageId: payload.clientMessageId
-  });
-  console.log('[Chat Action] sendMessage payload:', JSON.stringify(payload));
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages`, {
     method: 'POST',
     body: JSON.stringify(payload),
   });
-  console.log('[Chat Action] sendMessage result:', result.success ? `Message ${result.data?._id} sent` : result.error, result);
+  if (!result.success) {
+    console.error('[Chat] Send message failed:', result.error, result.details);
+  }
   return result;
 }
 

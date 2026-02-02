@@ -135,10 +135,12 @@ const ClientThreadPage = () => {
         sendMessage({
           conversationId: threadId,
           payload: {
-            type: isImage ? "image" : "file",
+            type: "file", // Backend uses 'file' for all attachments (images + files)
             text: trimmed || undefined,
             clientMessageId: `temp-${Date.now()}`,
-            attachments: result.data ? [result.data.url] : undefined,
+            attachments: result.data
+              ? [{ fileId: result.data._id }]
+              : undefined,
           },
           senderSide: "user",
         });

@@ -33,7 +33,7 @@ export interface ChatMessage {
   vendorId: string;
   senderUserId: string;
   senderSide: ChatUserSide;
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'file' | 'system';  // Backend message types
   text?: string;
   attachments?: any[];
   clientMessageId?: string;
@@ -42,10 +42,10 @@ export interface ChatMessage {
 }
 
 export interface CreateMessageRequest {
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'file' | 'system';  // Backend only accepts these types
   text?: string;
   clientMessageId: string;
-  attachments?: string[];  // Array of upload IDs
+  attachments?: { fileId: string }[];
 }
 
 export interface ChatAttachment {
