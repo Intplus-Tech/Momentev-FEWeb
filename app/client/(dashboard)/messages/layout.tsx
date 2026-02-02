@@ -29,24 +29,36 @@ export default function MessagesLayout({
 
   // Get all vendor IDs from conversations and fetch their profiles
   const vendorIds = conversations.map((c: ChatConversation) => c.vendorId);
-  const { getVendorName, getVendorAvatar } = useVendorProfiles(vendorIds);
+  const { profiles: vendorProfiles, isLoading: isLoadingProfiles } =
+    useVendorProfiles(vendorIds);
 
   const mappedThreads: MessageThread[] = useMemo(() => {
     return conversations
-      .map((c: ChatConversation) => ({
-        id: c._id,
-        vendorName: getVendorName(c.vendorId),
-        snippet: c.lastMessagePreview || "No messages",
-        day: c.lastMessageAt ? format(new Date(c.lastMessageAt), "MMM d") : "",
-        time: c.lastMessageAt ? format(new Date(c.lastMessageAt), "p") : "",
-        avatar: getVendorAvatar(c.vendorId),
-        unreadCount: 0,
-        isActive: c._id === activeThreadId,
-      }))
+      .map((c: ChatConversation) => {
+        const profile = vendorProfiles[c.vendorId];
+        const isLoading = !profile && isLoadingProfiles;
+        const vendorName =
+          profile?.businessProfile?.businessName ||
+          (isLoading ? undefined : "Vendor");
+        const vendorAvatar = profile?.profilePhoto?.url;
+
+        return {
+          id: c._id,
+          vendorName,
+          snippet: c.lastMessagePreview || "No messages",
+          day: c.lastMessageAt
+            ? format(new Date(c.lastMessageAt), "MMM d")
+            : "",
+          time: c.lastMessageAt ? format(new Date(c.lastMessageAt), "p") : "",
+          avatar: vendorAvatar,
+          unreadCount: 0,
+          isActive: c._id === activeThreadId,
+        };
+      })
       .filter((t: MessageThread) =>
-        t.vendorName.toLowerCase().includes(query.toLowerCase()),
+        (t.vendorName || "").toLowerCase().includes(query.toLowerCase()),
       );
-  }, [conversations, activeThreadId, query, getVendorName, getVendorAvatar]);
+  }, [conversations, activeThreadId, query, vendorProfiles]);
 
   const handleThreadClick = (threadId: string) => {
     router.push(`/client/messages/${threadId}`);

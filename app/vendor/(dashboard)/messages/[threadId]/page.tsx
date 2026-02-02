@@ -167,12 +167,18 @@ const VendorThreadPage = () => {
 
   if (!threadId) return null;
 
-  const displayName = conversation?.userId || "Customer";
+  // Get display name from populated user data
+  const displayName = conversation?.user
+    ? `${conversation.user.firstName} ${conversation.user.lastName}`.trim()
+    : "Customer";
+
+  const userAvatar = conversation?.user?.avatar;
 
   return (
     <div className="flex h-full flex-col rounded-2xl border bg-card shadow-sm">
       <ConversationHeader
         vendorName={displayName}
+        avatar={userAvatar}
         lastActiveLabel={
           conversation?.lastMessageAt
             ? format(new Date(conversation.lastMessageAt), "PP p")

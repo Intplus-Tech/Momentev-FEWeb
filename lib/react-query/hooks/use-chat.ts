@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
 import { useSocket } from "@/components/providers/socket-provider";
 import {
   getConversations,
@@ -219,46 +219,38 @@ export function useVendorProfile(vendorId: string | undefined) {
 
 /**
  * Hook to fetch multiple vendor profiles for sidebar display
- * Returns a Map of vendorId -> VendorPublicProfile
+ * Uses useQueries to properly trigger re-renders when data loads
  */
-export function useVendorProfiles(vendorIds: string[]) {
-  const queryClient = useQueryClient();
-
+export function useVendorProfiles(vendorIds: string[]): {
+  profiles: Record<string, VendorPublicProfile | undefined>;
+  isLoading: boolean;
+} {
   // Filter out empty/duplicate IDs
   const uniqueIds = [...new Set(vendorIds.filter(Boolean))];
 
-  // Fetch all vendor profiles in parallel
-  useEffect(() => {
-    uniqueIds.forEach((vendorId) => {
-      // Prefetch if not already in cache
-      queryClient.prefetchQuery({
-        queryKey: queryKeys.vendor.profile(vendorId),
-        queryFn: async () => {
-          const result = await getVendorPublicProfile(vendorId);
-          if (!result.success) {
-            throw new Error(result.error || "Failed to fetch vendor profile");
-          }
-          return result.data as VendorPublicProfile;
-        },
-        staleTime: 5 * 60 * 1000,
-      });
-    });
-  }, [uniqueIds.join(','), queryClient]);
+  // Use useQueries to fetch all vendor profiles in parallel and trigger re-renders
+  const queries = useQueries({
+    queries: uniqueIds.map((vendorId) => ({
+      queryKey: queryKeys.vendor.profile(vendorId),
+      queryFn: async () => {
+        const result = await getVendorPublicProfile(vendorId);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to fetch vendor profile");
+        }
+        return result.data as VendorPublicProfile;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    })),
+  });
 
-  // Return a function to get vendor name by ID from cache
-  const getVendorName = (vendorId: string): string => {
-    const data = queryClient.getQueryData<VendorPublicProfile>(
-      queryKeys.vendor.profile(vendorId)
-    );
-    return data?.businessProfile?.businessName || vendorId;
-  };
+  // Check if any query is still loading
+  const isLoading = queries.some((q) => q.isLoading);
 
-  const getVendorAvatar = (vendorId: string): string | undefined => {
-    const data = queryClient.getQueryData<VendorPublicProfile>(
-      queryKeys.vendor.profile(vendorId)
-    );
-    return data?.profilePhoto?.url;
-  };
+  // Build a map of vendorId -> VendorPublicProfile
+  const profiles: Record<string, VendorPublicProfile | undefined> = {};
+  uniqueIds.forEach((vendorId, index) => {
+    profiles[vendorId] = queries[index]?.data;
+  });
 
-  return { getVendorName, getVendorAvatar };
+  return { profiles, isLoading };
 }

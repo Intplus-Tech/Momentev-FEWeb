@@ -3,6 +3,7 @@ import { Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 import type { MessageThread } from "../data";
@@ -58,8 +59,11 @@ export const ThreadSidebar = ({
               >
                 <Avatar size="lg">
                   {thread.avatar ? (
-                    <AvatarImage src={thread.avatar} alt={thread.vendorName} />
-                  ) : (
+                    <AvatarImage
+                      src={thread.avatar}
+                      alt={thread.vendorName || "Loading"}
+                    />
+                  ) : thread.vendorName ? (
                     <AvatarFallback>
                       {thread.vendorName
                         .split(" ")
@@ -67,13 +71,19 @@ export const ThreadSidebar = ({
                         .slice(0, 2)
                         .join("")}
                     </AvatarFallback>
+                  ) : (
+                    <Skeleton className="h-full w-full rounded-full" />
                   )}
                 </Avatar>
                 <div className="flex flex-1 flex-col gap-1 text-left">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">
-                      {thread.vendorName}
-                    </p>
+                    {thread.vendorName ? (
+                      <p className="text-sm font-medium text-foreground">
+                        {thread.vendorName}
+                      </p>
+                    ) : (
+                      <Skeleton className="h-4 w-24" />
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {thread.time}
                     </span>

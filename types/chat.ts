@@ -14,6 +14,17 @@ export interface ChatConversation {
   userLastReadAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Populated user details (for vendor view)
+  user?: {
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  // Populated vendor details (for client view)
+  vendor?: {
+    businessName: string;
+    avatar?: string;
+  };
 }
 
 export interface ChatMessage {

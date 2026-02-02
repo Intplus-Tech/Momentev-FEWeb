@@ -14,16 +14,25 @@ import { cn } from "@/lib/utils";
 const mapConversationToThread = (
   conv: ChatConversation,
   activeId: string | null,
-): MessageThread => ({
-  id: conv._id,
-  vendorName: conv.userId || "Customer", // Vendor sees userId/Customer
-  snippet: conv.lastMessagePreview || "No messages",
-  day: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "MMM d") : "",
-  time: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "p") : "",
-  avatar: undefined,
-  unreadCount: 0,
-  isActive: conv._id === activeId,
-});
+): MessageThread => {
+  // Get display name from populated user data
+  const displayName = conv.user
+    ? `${conv.user.firstName} ${conv.user.lastName}`.trim()
+    : "Customer";
+
+  return {
+    id: conv._id,
+    vendorName: displayName,
+    snippet: conv.lastMessagePreview || "No messages",
+    day: conv.lastMessageAt
+      ? format(new Date(conv.lastMessageAt), "MMM d")
+      : "",
+    time: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "p") : "",
+    avatar: conv.user?.avatar,
+    unreadCount: 0,
+    isActive: conv._id === activeId,
+  };
+};
 
 export default function MessagesLayout({
   children,
