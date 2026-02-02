@@ -25,8 +25,7 @@ export interface Vendor {
   gallery?: string[];
   workdays?: string; // Summary of availability
 
-  // UI Specific (Mapped or Mocked)
-  bookings?: number;
+  // UI Specific (Mapped)
   services?: string[];
 }
 

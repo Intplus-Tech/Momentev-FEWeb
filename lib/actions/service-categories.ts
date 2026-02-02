@@ -28,10 +28,7 @@ export async function fetchServiceCategories(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    console.log("📂 [fetchServiceCategories] Starting fetch (public endpoint)...");
-
     const url = `${API_URL}/api/v1/service-categories?page=${page}&limit=${limit}`;
-    console.log("📂 [fetchServiceCategories] Request URL:", url);
 
     const response = await fetch(url, {
       headers: {
@@ -40,10 +37,7 @@ export async function fetchServiceCategories(
       cache: "no-store",
     });
 
-    console.log("📂 [fetchServiceCategories] Response status:", response.status);
-
     if (!response.ok) {
-      console.log("📂 [fetchServiceCategories] ❌ Response not OK:", response.statusText);
       return {
         success: false,
         error: `Failed to fetch categories: ${response.statusText}`,
@@ -51,14 +45,13 @@ export async function fetchServiceCategories(
     }
 
     const data: PaginatedResponse<ServiceCategory> = await response.json();
-    console.log("📂 [fetchServiceCategories] ✅ Categories received:", data.data.data.length);
 
     return {
       success: true,
       data,
     };
   } catch (error) {
-    console.error("📂 [fetchServiceCategories] ❌ Error:", error);
+    console.error("Error fetching service categories:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

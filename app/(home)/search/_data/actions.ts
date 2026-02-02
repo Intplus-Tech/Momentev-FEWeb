@@ -114,12 +114,6 @@ function mapRawToUIVendor(raw: RawVendor): Vendor {
   const services = [];
   if (raw.serviceCategory?.name) services.push(raw.serviceCategory.name);
   if (raw.serviceSpecialty?.name) services.push(raw.serviceSpecialty.name);
-  // Add mocks if list is too short for demo (Figma shows ~6 items)
-  // In real app, we'd fetch actual services list.
-  if (services.length < 4) {
-    // Mocking some extra services for visual parity with Figma if real data is scarce
-    // services.push("General Consultation", "Custom Request"); 
-  }
 
   return {
     _id: raw._id,
@@ -171,8 +165,6 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
     }
 
     const rawData = await res.json();
-    console.log("🔍 Search Raw API Response:", JSON.stringify(rawData, null, 2));
-
     const parsed = RawApiResponseSchema.safeParse(rawData);
 
     if (!parsed.success) {
@@ -181,8 +173,6 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
     }
 
     const mappedVendors = parsed.data.data.data.map(mapRawToUIVendor);
-    console.log("✅ Mapped Vendors:", mappedVendors);
-    console.log(`📊 Total: ${parsed.data.data.total}, Page: ${parsed.data.data.page}, Limit: ${parsed.data.data.limit}`);
 
     let totalItems = parsed.data.data.total;
 
