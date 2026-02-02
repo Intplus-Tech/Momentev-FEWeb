@@ -28,30 +28,22 @@ export async function fetchServiceCategories(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const accessToken = await getAccessToken();
+    console.log("📂 [fetchServiceCategories] Starting fetch (public endpoint)...");
 
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
+    const url = `${API_URL}/api/v1/service-categories?page=${page}&limit=${limit}`;
+    console.log("📂 [fetchServiceCategories] Request URL:", url);
 
-    const response = await fetch(
-      `${API_URL}/api/v1/service-categories?page=${page}&limit=${limit}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store", // Let TanStack Query handle caching
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      cache: "no-store",
+    });
+
+    console.log("📂 [fetchServiceCategories] Response status:", response.status);
 
     if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: "Unauthorized" };
-      }
+      console.log("📂 [fetchServiceCategories] ❌ Response not OK:", response.statusText);
       return {
         success: false,
         error: `Failed to fetch categories: ${response.statusText}`,
@@ -59,13 +51,14 @@ export async function fetchServiceCategories(
     }
 
     const data: PaginatedResponse<ServiceCategory> = await response.json();
+    console.log("📂 [fetchServiceCategories] ✅ Categories received:", data.data.data.length);
 
     return {
       success: true,
       data,
     };
   } catch (error) {
-    console.error("Error fetching service categories:", error);
+    console.error("📂 [fetchServiceCategories] ❌ Error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

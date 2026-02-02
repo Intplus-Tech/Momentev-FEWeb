@@ -612,33 +612,91 @@ function HomeHeaderContent() {
       {isSearchRoute && (
         <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex flex-wrap items-center justify-start gap-2 py-3">
-                {isCategoriesLoading
-                  ? Array.from({ length: 8 }).map((_, i) => (
-                      <Skeleton
-                        key={i}
-                        className="h-8 w-24 rounded-full flex-shrink-0"
-                      />
-                    ))
-                  : categories.map((category: ServiceCategory) => {
-                      const isActive = selectedCategory === category._id;
-                      return (
-                        <button
-                          key={category._id}
-                          onClick={() => handleCategoryClick(category._id)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                          }`}
-                        >
-                          <span>{category.name}</span>
-                        </button>
+            <div className="w-full max-w-[1200px] mx-auto">
+              <div className="flex items-center justify-center gap-2 py-3">
+                {isCategoriesLoading ? (
+                  Array.from({ length: 9 }).map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-8 w-24 rounded-full flex-shrink-0"
+                    />
+                  ))
+                ) : (
+                  <>
+                    {/* Compute visible categories - ensure selected is always visible */}
+                    {(() => {
+                      const MAX_VISIBLE = 7;
+                      const selectedIndex = categories.findIndex(
+                        (c: ServiceCategory) => c._id === selectedCategory,
                       );
-                    })}
+
+                      let visibleCategories: ServiceCategory[];
+
+                      if (selectedIndex === -1 || selectedIndex < MAX_VISIBLE) {
+                        // Selected is in first 7 or none selected - show first 7
+                        visibleCategories = categories.slice(0, MAX_VISIBLE);
+                      } else {
+                        // Selected is in overflow - swap it into position 7
+                        visibleCategories = [
+                          ...categories.slice(0, MAX_VISIBLE - 1),
+                          categories[selectedIndex],
+                        ];
+                      }
+
+                      return visibleCategories.map(
+                        (category: ServiceCategory) => {
+                          const isActive = selectedCategory === category._id;
+                          return (
+                            <button
+                              key={category._id}
+                              onClick={() => handleCategoryClick(category._id)}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
+                                isActive
+                                  ? "bg-[#80808030] text-[#808080] border-[#80808030]"
+                                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                              }`}
+                            >
+                              <span>{category.name}</span>
+                            </button>
+                          );
+                        },
+                      );
+                    })()}
+
+                    {/* "All" dropdown with all categories */}
+                    {categories.length > 0 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border">
+                            <span>All</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-fit">
+                          <ScrollArea className="h-[300px] ">
+                            {categories.map((category: ServiceCategory) => (
+                              <DropdownMenuItem
+                                key={category._id}
+                                onClick={() =>
+                                  handleCategoryClick(category._id)
+                                }
+                                className={
+                                  selectedCategory === category._id
+                                    ? "bg-primary/10 text-primary font-medium whitespace-nowrap"
+                                    : ""
+                                }
+                              >
+                                {category.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </ScrollArea>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </>
+                )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       )}
