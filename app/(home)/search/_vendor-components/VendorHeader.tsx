@@ -1,6 +1,10 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
 
 interface VendorHeaderProps {
   name: string;
@@ -15,6 +19,52 @@ export function VendorHeader({
   rating,
   reviewCount,
 }: VendorHeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: user, isLoading, isError } = useUserProfile();
+
+  const role = user?.role?.toUpperCase();
+  const isVendor = role === "VENDOR";
+  const isClient = role === "CUSTOMER";
+  const isLoggedOut = !user && (isError || !isLoading);
+  const showActions = !isVendor;
+
+  const redirectToLogin = () => {
+    const redirect = pathname || "/client";
+    router.push(`/client/auth/log-in?redirect=${encodeURIComponent(redirect)}`);
+  };
+
+  const handleBook = () => {
+    if (isLoggedOut) {
+      redirectToLogin();
+      return;
+    }
+
+    if (isClient) {
+      // TODO: implement booking flow for clients
+      console.log("Book Vendor clicked (client flow pending)");
+      return;
+    }
+
+    // Non-client (e.g., admin) fall back to login for now
+    redirectToLogin();
+  };
+
+  const handleMessage = () => {
+    if (isLoggedOut) {
+      redirectToLogin();
+      return;
+    }
+
+    if (isClient) {
+      // TODO: implement messaging flow for clients
+      console.log("Message Vendor clicked (client flow pending)");
+      return;
+    }
+
+    redirectToLogin();
+  };
+
   return (
     <div className="space-y-4">
       {/* Vendor Info Row */}
@@ -56,15 +106,25 @@ export function VendorHeader({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button className="flex-1 h-11">Book Vendor</Button>
-        <Button
-          variant="outline"
-          className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          Message Vendor
-        </Button>
-      </div>
+      {showActions && (
+        <div className="flex gap-3">
+          <Button
+            className="flex-1 h-11"
+            onClick={handleBook}
+            disabled={isLoading}
+          >
+            Book Vendor
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={handleMessage}
+            disabled={isLoading}
+          >
+            Message Vendor
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

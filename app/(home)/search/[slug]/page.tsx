@@ -80,6 +80,66 @@ export default function VendorPage() {
     notFound();
   }
 
+  // Build services list from services and specialties
+  const servicesList: {
+    category: string;
+    items: {
+      name: string;
+      description?: string;
+      price: string;
+      tags?: string[];
+      meta?: string;
+    }[];
+  }[] = [];
+
+  const titleCase = (value?: string | null) =>
+    value
+      ? value
+          .replace(/_/g, " ")
+          .split(" ")
+          .filter(Boolean)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : undefined;
+
+  if (servicesData?.data?.data?.length) {
+    servicesList.push({
+      category: "Service Category",
+      items: servicesData.data.data.map((service) => ({
+        name: service.serviceCategory.name,
+        description: undefined,
+        tags: service.tags || [],
+        meta:
+          [
+            service.leadTimeRequired
+              ? `Lead time: ${titleCase(service.leadTimeRequired)}`
+              : null,
+            service.maximumEventSize
+              ? `Max event size: ${service.maximumEventSize}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(" • ") || undefined,
+        price:
+          titleCase(service.minimumBookingDuration) ||
+          titleCase(service.leadTimeRequired) ||
+          "Contact for quote",
+      })),
+    });
+  }
+
+  if (specialtiesData?.data?.data?.length) {
+    servicesList.push({
+      category: "Specialties",
+      items:
+        specialtiesData.data.data.map((s) => ({
+          name: s.serviceSpecialty.name,
+          description: s.serviceSpecialty.description,
+          price: `${s.price} (${s.priceCharge?.replace(/_/g, " ") || ""})`,
+        })) || [],
+    });
+  }
+
   // Transform API data to component format, or use mock
   const vendor = vendorData
     ? {
@@ -128,20 +188,8 @@ export default function VendorPage() {
           vendorData.socialMediaLinks?.map((s) => [s.name, s.link]) || [],
         ),
         workdays: formatWorkdaysSummary(vendorData.businessProfile?.workdays),
-        // Map specialties to services section
-        servicesList: specialtiesData?.data?.data?.length
-          ? [
-              {
-                category: "Specialties",
-                items:
-                  specialtiesData.data.data.map((s) => ({
-                    name: s.serviceSpecialty.name,
-                    description: s.serviceSpecialty.description,
-                    price: `${s.price} (${s.priceCharge?.replace(/_/g, " ") || ""})`,
-                  })) || [],
-              },
-            ]
-          : [],
+        // Map services and specialties to services section
+        servicesList,
         // Map reviews from API
         reviews:
           reviewsData?.data?.data?.map((r) => ({
