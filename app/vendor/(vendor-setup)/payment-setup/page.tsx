@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { PaymentConfigurationForm } from "../_components/PaymentConfigurationForm";
+import { StepGuard } from "../_components/StepGuard";
 
 export default function PaymentSetupPage() {
   const setCurrentStep = useVendorSetupStore((state) => state.setCurrentStep);
@@ -11,5 +12,9 @@ export default function PaymentSetupPage() {
     setCurrentStep(3);
   }, [setCurrentStep]);
 
-  return <PaymentConfigurationForm />;
+  return (
+    <StepGuard requiredStep={3}>
+      <PaymentConfigurationForm />
+    </StepGuard>
+  );
 }

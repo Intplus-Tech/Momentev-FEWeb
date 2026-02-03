@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { ProfileCompletionForm } from "../_components/ProfileCompletionForm";
+import { StepGuard } from "../_components/StepGuard";
 
 export default function ProfileSetupPage() {
   const setCurrentStep = useVendorSetupStore((state) => state.setCurrentStep);
@@ -11,5 +12,9 @@ export default function ProfileSetupPage() {
     setCurrentStep(4);
   }, [setCurrentStep]);
 
-  return <ProfileCompletionForm />;
+  return (
+    <StepGuard requiredStep={4}>
+      <ProfileCompletionForm />
+    </StepGuard>
+  );
 }
