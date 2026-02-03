@@ -25,6 +25,7 @@ import {
 import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { getGoogleAuthUrl, login } from "@/lib/actions/auth";
+import { getUserProfile } from "@/lib/actions/user";
 import { toast } from "sonner";
 import { loginSchema } from "@/validation/auth";
 
@@ -73,6 +74,29 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
 
       toast.success("Login successful.");
       form.reset();
+
+      // Check onboarding status and redirect accordingly
+      const profileResult = await getUserProfile();
+      if (profileResult.success && profileResult.data?.vendor) {
+        const { vendor } = profileResult.data;
+
+        if (!vendor.onBoarded) {
+          // Redirect to appropriate setup step based on onBoardingStage
+          const stageRoutes: Record<number, string> = {
+            0: "/vendor/business-setup",
+            1: "/vendor/business-setup",
+            2: "/vendor/service-setup",
+            3: "/vendor/payment-setup",
+            4: "/vendor/profile-setup",
+          };
+          const redirectRoute =
+            stageRoutes[vendor.onBoardingStage] || "/vendor/business-setup";
+          router.push(redirectRoute);
+          return;
+        }
+      }
+
+      // Vendor is onboarded, go to dashboard
       router.push("/vendor/dashboard");
     } catch (error) {
       const message =

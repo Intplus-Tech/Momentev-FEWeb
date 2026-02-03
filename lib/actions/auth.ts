@@ -89,7 +89,7 @@ export async function login(input: LoginInput) {
     if (token && refreshToken) {
       await setAuthCookies(token, refreshToken, input.remember ?? false);
     }
-
+    console.log("login response:", data)
     return { success: true, data };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
