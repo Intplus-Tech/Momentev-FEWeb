@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import Link from "next/link";
 import { StepGuard } from "../_components/StepGuard";
 
 export default function SetupReviewPage() {
@@ -24,53 +23,39 @@ export default function SetupReviewPage() {
               </h2>
 
               <div className="space-y-3">
-                <Link
-                  href="/vendor/business-setup"
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
                   <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                     <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-primary hover:underline">
+                  <span className="text-foreground">
                     Business Information Complete
                   </span>
-                </Link>
+                </div>
 
-                <Link
-                  href="/vendor/service-setup"
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
                   <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                     <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-primary hover:underline">
-                    Services Configured
-                  </span>
-                </Link>
+                  <span className="text-foreground">Services Configured</span>
+                </div>
 
-                <Link
-                  href="/vendor/payment-setup"
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
                   <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                     <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-primary hover:underline">
+                  <span className="text-foreground">
                     Payment Method Connected
                   </span>
-                </Link>
+                </div>
 
-                <Link
-                  href="/vendor/profile-setup"
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors"
-                >
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-accent/50">
                   <div className="h-6 w-6 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0">
                     <Check className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
-                  <span className="text-primary hover:underline">
+                  <span className="text-foreground">
                     Profile Media Uploaded
                   </span>
-                </Link>
+                </div>
               </div>
             </div>
 

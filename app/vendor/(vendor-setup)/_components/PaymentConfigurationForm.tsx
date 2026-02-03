@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Info, Check, ArrowLeft } from "lucide-react";
+import { Info, Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -25,6 +25,7 @@ import {
 import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
+import { SubmissionOverlay } from "./SubmissionOverlay";
 import {
   setPaymentModel,
   createStripeAccount,
@@ -176,11 +177,6 @@ export function PaymentConfigurationForm() {
     }
   };
 
-  const saveAsDraft = () => {
-    toast.success("Draft saved successfully");
-    // Implementation note: Real draft saving would go here.
-  };
-
   // Helper to check if a section is locked (requires previous section completion)
   const isSection2Locked = !completedSections.has("step3-section1");
   const isSection3Locked = !completedSections.has("step3-section2");
@@ -202,6 +198,10 @@ export function PaymentConfigurationForm() {
 
   return (
     <>
+      <SubmissionOverlay
+        isVisible={isSubmitting}
+        message="Submitting payment configuration..."
+      />
       <div className="space-y-6 flex flex-col min-h-[70vh]">
         {/* Header */}
         <div>
@@ -457,23 +457,6 @@ export function PaymentConfigurationForm() {
           <ProgressBar currentStep={3} />
 
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-            <Button
-              variant="outline"
-              onClick={() => window.history.back()}
-              className="gap-2 w-full sm:w-auto"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={saveAsDraft}
-              className="w-full sm:w-auto"
-            >
-              Save As Draft
-            </Button>
-
             <Button
               onClick={handleSaveAndContinue}
               disabled={isMainButtonDisabled()}

@@ -1,6 +1,7 @@
 "use server";
 
 import { getAccessToken } from "@/lib/session";
+import { getUserProfile } from "./user";
 
 const API_URL = process.env.BACKEND_URL;
 
@@ -17,6 +18,7 @@ interface VendorProfilePayload {
   socialMediaLinks?: { name: string; link: string }[];
   isActive?: boolean;
   onBoardingStage?: number;
+  onBoarded?: boolean;
 }
 
 interface VendorProfileResponse {
@@ -34,7 +36,9 @@ interface VendorProfileResponse {
 
 /**
  * Submit vendor profile media (Step 4)
- * PATCH /api/v1/vendors/me
+ * PATCH /api/v1/vendors/{vendorId}
+ * 
+ * Uses vendorId in path - requires authentication as vendor owner or admin
  */
 export async function submitVendorProfile(
   data: {
@@ -57,6 +61,27 @@ export async function submitVendorProfile(
       socialMediaLinks: data.socialMediaLinks ? `[${data.socialMediaLinks.length} links]` : "none",
     });
 
+    // Get user profile to extract vendorId
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data) {
+      console.error("❌ [Step 4 Submission] Failed to get user profile:", profileResult.error);
+      return {
+        success: false,
+        error: profileResult.error || "Failed to get user profile",
+      };
+    }
+
+    const vendorId = profileResult.data.vendor?._id;
+    if (!vendorId) {
+      console.error("❌ [Step 4 Submission] No vendor ID found in user profile");
+      return {
+        success: false,
+        error: "No vendor ID found. Please ensure you have a vendor account.",
+      };
+    }
+
+    console.log(`🎫 [Step 4 Submission] Vendor ID: ${vendorId}`);
+
     const accessToken = await getAccessToken();
 
     if (!accessToken) {
@@ -72,14 +97,16 @@ export async function submitVendorProfile(
       coverPhoto: data.coverPhoto,
       portfolioGallery: data.portfolioGallery,
       socialMediaLinks: data.socialMediaLinks,
-      // Set vendor as active and mark onboarding as complete (stage 4)
+      // Set vendor as active and mark onboarding as complete
       isActive: true,
       onBoardingStage: 4,
+      onBoarded: true,
     };
 
-    console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/me`);
+    console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
+    console.log("📦 [Step 4 Submission] Full payload:", JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`${API_URL}/api/v1/vendors/me`, {
+    const response = await fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",

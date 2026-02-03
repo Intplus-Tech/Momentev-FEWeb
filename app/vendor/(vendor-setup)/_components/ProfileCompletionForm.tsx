@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "./ProgressBar";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -20,6 +20,7 @@ import {
 import type { UploadedFile } from "@/lib/actions/upload";
 import { submitVendorProfile } from "@/lib/actions/vendor-profile";
 import { SOCIAL_MEDIA_PLATFORMS } from "../_schemas/profileCompletionSchema";
+import { SubmissionOverlay } from "./SubmissionOverlay";
 
 export function ProfileCompletionForm() {
   const router = useRouter();
@@ -140,12 +141,6 @@ export function ProfileCompletionForm() {
     return platform?.placeholder || "https://...";
   };
 
-  // Save as draft
-  const saveAsDraft = () => {
-    toast.success("Draft saved successfully");
-    console.log("✅ Draft auto-saved to localStorage");
-  };
-
   // Check if form can proceed
   const canProceedSection1 = () => {
     return profilePhoto && coverPhoto && portfolioImages.length >= 5;
@@ -230,280 +225,273 @@ export function ProfileCompletionForm() {
   const isSection2Locked = !completedSections.has("step4-section1");
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[70vh]">
-      <div className="">
-        {/* Step Title */}
-        <div className="space-y-1">
-          <h2 className="text-lg sm:text-xl font-semibold">
-            Profile Completion
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Final touches before you go live
-          </p>
-        </div>
-
-        {/* Sections */}
-        <div className="space-y-4 mt-6">
-          {/* Section 1: Profile Media Upload */}
-          <div className="border-2 rounded-lg">
-            <StepSection
-              number={1}
-              title="Profile Media Upload"
-              isCompleted={completedSections.has("step4-section1")}
-              isExpanded={expandedSection === 1}
-              onToggle={() => toggleSection(1)}
-            />
-            {expandedSection === 1 && (
-              <div className="px-6 pb-6 space-y-8">
-                {/* Profile Photo */}
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Profile Photo</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Professional headshot or logo • JPG, PNG, WebP up to 10MB
-                    </p>
-                  </div>
-                  <FileUploadCard
-                    onUploadComplete={handleProfilePhotoUpload}
-                    uploadedFile={profilePhoto}
-                    onRemove={() => setProfilePhoto(null)}
-                    accept={{
-                      "image/jpeg": [".jpg", ".jpeg"],
-                      "image/png": [".png"],
-                      "image/webp": [".webp"],
-                    }}
-                    maxSize={10 * 1024 * 1024}
-                    variant="avatar"
-                  />
-                </div>
-
-                {/* Cover Photo */}
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Cover Photo</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Showcase your best work • Recommended 1200x400px
-                    </p>
-                  </div>
-                  <FileUploadCard
-                    onUploadComplete={handleCoverPhotoUpload}
-                    uploadedFile={coverPhoto}
-                    onRemove={() => setCoverPhoto(null)}
-                    accept={{
-                      "image/jpeg": [".jpg", ".jpeg"],
-                      "image/png": [".png"],
-                      "image/webp": [".webp"],
-                    }}
-                    maxSize={10 * 1024 * 1024}
-                  />
-                </div>
-
-                {/* Portfolio Gallery */}
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Portfolio Gallery</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Add at least 5 photos of your best work (
-                      {portfolioImages.length}/5)
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    {Array.from({ length: 5 }).map((_, index) => {
-                      const uploadedFile = portfolioImages[index];
-
-                      if (uploadedFile) {
-                        return (
-                          <FileUploadCard
-                            key={uploadedFile.id}
-                            uploadedFile={uploadedFile}
-                            onRemove={() =>
-                              removePortfolioImage(uploadedFile.id)
-                            }
-                            accept={{
-                              "image/jpeg": [".jpg", ".jpeg"],
-                              "image/png": [".png"],
-                              "image/webp": [".webp"],
-                            }}
-                          />
-                        );
-                      } else {
-                        return (
-                          <FileUploadCard
-                            key={`slot-${index}`}
-                            onUploadComplete={handlePortfolioUpload}
-                            accept={{
-                              "image/jpeg": [".jpg", ".jpeg"],
-                              "image/png": [".png"],
-                              "image/webp": [".webp"],
-                            }}
-                            maxSize={10 * 1024 * 1024}
-                          />
-                        );
-                      }
-                    })}
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t">
-                  <Button
-                    onClick={handleSaveSection1}
-                    disabled={!canProceedSection1()}
-                    className="w-full sm:w-auto"
-                  >
-                    Save & Continue to Social Links
-                  </Button>
-                </div>
-              </div>
-            )}
+    <>
+      <SubmissionOverlay
+        isVisible={isSubmitting}
+        message="Submitting profile..."
+      />
+      <div className="space-y-6 flex flex-col min-h-[70vh]">
+        <div className="">
+          {/* Step Title */}
+          <div className="space-y-1">
+            <h2 className="text-lg sm:text-xl font-semibold">
+              Profile Completion
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Final touches before you go live
+            </p>
           </div>
 
-          {/* Section 2: Social Media Links */}
-          <div className="border-2 rounded-lg">
-            <StepSection
-              number={2}
-              title="Social Media Links"
-              isCompleted={completedSections.has("step4-section2")}
-              isExpanded={expandedSection === 2}
-              onToggle={() => !isSection2Locked && toggleSection(2)}
-              isLocked={isSection2Locked}
-            />
-            {expandedSection === 2 && (
-              <div className="px-6 pb-6 space-y-6">
-                <p className="text-sm text-muted-foreground">
-                  Add your social media profiles to help clients find you
-                  (optional)
-                </p>
-
-                {/* Existing Links */}
-                {socialMediaLinks.length > 0 && (
+          {/* Sections */}
+          <div className="space-y-4 mt-6">
+            {/* Section 1: Profile Media Upload */}
+            <div className="border-2 rounded-lg">
+              <StepSection
+                number={1}
+                title="Profile Media Upload"
+                isCompleted={completedSections.has("step4-section1")}
+                isExpanded={expandedSection === 1}
+                onToggle={() => toggleSection(1)}
+              />
+              {expandedSection === 1 && (
+                <div className="px-6 pb-6 space-y-8">
+                  {/* Profile Photo */}
                   <div className="space-y-3">
-                    {socialMediaLinks.map((link, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
-                      >
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium capitalize">
-                            {link.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {link.link}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeSocialMediaLink(index)}
-                          className="h-8 w-8 text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Add New Link */}
-                <div className="space-y-4 p-4 border rounded-lg bg-card">
-                  <p className="text-sm font-medium">Add a social media link</p>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Select
-                        value={newPlatform}
-                        onValueChange={setNewPlatform}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select platform" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
-                            <SelectItem
-                              key={platform.value}
-                              value={platform.value}
-                            >
-                              {platform.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      {newPlatform === "custom" && (
-                        <Input
-                          placeholder="Enter platform name"
-                          value={customPlatformName}
-                          onChange={(e) =>
-                            setCustomPlatformName(e.target.value)
-                          }
-                        />
-                      )}
+                    <div>
+                      <h3 className="text-sm font-medium">Profile Photo</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Professional headshot or logo • JPG, PNG, WebP up to
+                        10MB
+                      </p>
                     </div>
-
-                    <div className="space-y-2">
-                      <Input
-                        placeholder={getPlaceholder()}
-                        value={newLink}
-                        onChange={(e) => setNewLink(e.target.value)}
-                        type="url"
-                      />
-                    </div>
+                    <FileUploadCard
+                      onUploadComplete={handleProfilePhotoUpload}
+                      uploadedFile={profilePhoto}
+                      onRemove={() => setProfilePhoto(null)}
+                      accept={{
+                        "image/jpeg": [".jpg", ".jpeg"],
+                        "image/png": [".png"],
+                        "image/webp": [".webp"],
+                      }}
+                      maxSize={10 * 1024 * 1024}
+                      variant="avatar"
+                    />
                   </div>
 
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleAddSocialLink}
-                    disabled={!newPlatform || !newLink}
-                    className="gap-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Link
-                  </Button>
+                  {/* Cover Photo */}
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-medium">Cover Photo</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Showcase your best work • Recommended 1200x400px
+                      </p>
+                    </div>
+                    <FileUploadCard
+                      onUploadComplete={handleCoverPhotoUpload}
+                      uploadedFile={coverPhoto}
+                      onRemove={() => setCoverPhoto(null)}
+                      accept={{
+                        "image/jpeg": [".jpg", ".jpeg"],
+                        "image/png": [".png"],
+                        "image/webp": [".webp"],
+                      }}
+                      maxSize={10 * 1024 * 1024}
+                    />
+                  </div>
+
+                  {/* Portfolio Gallery */}
+                  <div className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-medium">Portfolio Gallery</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Add at least 5 photos of your best work (
+                        {portfolioImages.length}/5)
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      {Array.from({ length: 5 }).map((_, index) => {
+                        const uploadedFile = portfolioImages[index];
+
+                        if (uploadedFile) {
+                          return (
+                            <FileUploadCard
+                              key={uploadedFile.id}
+                              uploadedFile={uploadedFile}
+                              onRemove={() =>
+                                removePortfolioImage(uploadedFile.id)
+                              }
+                              accept={{
+                                "image/jpeg": [".jpg", ".jpeg"],
+                                "image/png": [".png"],
+                                "image/webp": [".webp"],
+                              }}
+                            />
+                          );
+                        } else {
+                          return (
+                            <FileUploadCard
+                              key={`slot-${index}`}
+                              onUploadComplete={handlePortfolioUpload}
+                              accept={{
+                                "image/jpeg": [".jpg", ".jpeg"],
+                                "image/png": [".png"],
+                                "image/webp": [".webp"],
+                              }}
+                              maxSize={10 * 1024 * 1024}
+                            />
+                          );
+                        }
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Button
+                      onClick={handleSaveSection1}
+                      disabled={!canProceedSection1()}
+                      className="w-full sm:w-auto"
+                    >
+                      Save & Continue to Social Links
+                    </Button>
+                  </div>
                 </div>
+              )}
+            </div>
 
-                {socialMediaLinks.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No social media links added yet. This section is optional.
+            {/* Section 2: Social Media Links */}
+            <div className="border-2 rounded-lg">
+              <StepSection
+                number={2}
+                title="Social Media Links"
+                isCompleted={completedSections.has("step4-section2")}
+                isExpanded={expandedSection === 2}
+                onToggle={() => !isSection2Locked && toggleSection(2)}
+                isLocked={isSection2Locked}
+              />
+              {expandedSection === 2 && (
+                <div className="px-6 pb-6 space-y-6">
+                  <p className="text-sm text-muted-foreground">
+                    Add your social media profiles to help clients find you
+                    (optional)
                   </p>
-                )}
-              </div>
-            )}
+
+                  {/* Existing Links */}
+                  {socialMediaLinks.length > 0 && (
+                    <div className="space-y-3">
+                      {socialMediaLinks.map((link, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium capitalize">
+                              {link.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {link.link}
+                            </p>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeSocialMediaLink(index)}
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add New Link */}
+                  <div className="space-y-4 p-4 border rounded-lg bg-card">
+                    <p className="text-sm font-medium">
+                      Add a social media link
+                    </p>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="space-y-2">
+                        <Select
+                          value={newPlatform}
+                          onValueChange={setNewPlatform}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select platform" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
+                              <SelectItem
+                                key={platform.value}
+                                value={platform.value}
+                              >
+                                {platform.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        {newPlatform === "custom" && (
+                          <Input
+                            placeholder="Enter platform name"
+                            value={customPlatformName}
+                            onChange={(e) =>
+                              setCustomPlatformName(e.target.value)
+                            }
+                          />
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Input
+                          placeholder={getPlaceholder()}
+                          value={newLink}
+                          onChange={(e) => setNewLink(e.target.value)}
+                          type="url"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddSocialLink}
+                      disabled={!newPlatform || !newLink}
+                      className="gap-2"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add Link
+                    </Button>
+                  </div>
+
+                  {socialMediaLinks.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No social media links added yet. This section is optional.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
+          <ProgressBar currentStep={4} />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+            <Button
+              onClick={handleSaveAndContinue}
+              disabled={isSubmitting || !canProceed()}
+              className="w-full sm:w-auto"
+            >
+              {getButtonText()}
+            </Button>
           </div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
-        <ProgressBar currentStep={4} />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-          <Button
-            variant="outline"
-            onClick={() => window.history.back()}
-            className="gap-2 w-full sm:w-auto"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={saveAsDraft}
-            className="w-full sm:w-auto"
-          >
-            Save As Draft
-          </Button>
-          <Button
-            onClick={handleSaveAndContinue}
-            disabled={isSubmitting || !canProceed()}
-            className="w-full sm:w-auto"
-          >
-            {getButtonText()}
-          </Button>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }
