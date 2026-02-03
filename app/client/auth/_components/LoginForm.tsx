@@ -62,10 +62,14 @@ export function ClientLoginForm({ verificationToken }: ClientLoginFormProps) {
         email: values.email,
         password: values.password,
         remember: values.remember,
+        expectedRole: "CUSTOMER",
       });
 
       if (!result.success) {
         toast.error(result.error || "Unable to log in.");
+        if (result.redirectTo) {
+          router.push(result.redirectTo);
+        }
         return;
       }
 

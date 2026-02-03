@@ -52,6 +52,7 @@ export type LoginInput = {
   email: string;
   password: string;
   remember?: boolean;
+  expectedRole?: 'CUSTOMER' | 'VENDOR';
 };
 
 export async function login(input: LoginInput) {
@@ -82,14 +83,44 @@ export async function login(input: LoginInput) {
       return { success: false, error: message || `Failed to login (${response.status})` };
     }
 
-    // Store tokens in HTTP-only cookies
     const token = data?.data?.token;
     const refreshToken = data?.data?.refreshToken;
 
-    if (token && refreshToken) {
-      await setAuthCookies(token, refreshToken, input.remember ?? false);
+    // Validate tokens exist
+    if (!token || !refreshToken) {
+      return { success: false, error: 'Invalid authentication response from server' };
     }
-    console.log("login response:", data)
+
+    // Decode JWT token to extract role (without verifying signature - that's the server's job)
+    let tokenRole: string | undefined;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return { success: false, error: 'Invalid token format' };
+      }
+      const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString());
+      tokenRole = payload.role;
+
+      if (!tokenRole) {
+        return { success: false, error: 'Token missing required role information' };
+      }
+    } catch (error) {
+      return { success: false, error: 'Failed to decode authentication token' };
+    }
+
+    // Validate user role if expectedRole is provided (case-insensitive comparison)
+    if (input.expectedRole && tokenRole.toUpperCase() !== input.expectedRole) {
+      const roleLabel = input.expectedRole === 'VENDOR' ? 'vendor' : 'client';
+      const correctPage = input.expectedRole === 'VENDOR' ? '/client/auth/log-in' : '/vendor/auth/log-in';
+      return {
+        success: false,
+        error: `This account is not registered as a ${roleLabel}. Please use the correct login page.`,
+        redirectTo: correctPage
+      };
+    }
+
+    // Store tokens in HTTP-only cookies (only after all validations pass)
+    await setAuthCookies(token, refreshToken, input.remember ?? false);
     return { success: true, data };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
