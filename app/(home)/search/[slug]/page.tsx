@@ -30,6 +30,15 @@ function formatWorkdaysSummary(
   return `${days} ${times}`;
 }
 
+// Helper to extract URL from string or object
+function getImageUrl(
+  photo: string | { url: string } | null | undefined,
+): string | null {
+  if (!photo) return null;
+  if (typeof photo === "string") return photo;
+  return photo.url;
+}
+
 export default function VendorPage() {
   const params = useParams();
   const vendorId = params.slug as string;
@@ -78,19 +87,32 @@ export default function VendorPage() {
         name: vendorData.businessProfile?.businessName || "Unknown Vendor",
         rating: vendorData.rate || 0,
         reviewCount: vendorData.reviewCount || 0,
-        gallery:
-          vendorData.portfolioGallery.length > 0
-            ? vendorData.portfolioGallery
-            : vendorData.coverPhoto
-              ? [vendorData.coverPhoto]
-              : [
-                  "https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800",
-                ],
+        logo: getImageUrl(vendorData.profilePhoto),
+        gallery: (() => {
+          // Extract URLs from portfolioGallery (can be strings or objects with url)
+          const galleryUrls = vendorData.portfolioGallery
+            .map(getImageUrl)
+            .filter((url): url is string => url !== null);
+
+          if (galleryUrls.length > 0) return galleryUrls;
+
+          // Fallback to coverPhoto
+          const coverUrl = getImageUrl(vendorData.coverPhoto);
+          if (coverUrl) return [coverUrl];
+
+          // Final fallback
+          return [
+            "https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800",
+          ];
+        })(),
         about:
           vendorData.businessProfile?.businessDescription ||
           "No description available.",
-        tags: vendorData.socialMediaLinks?.map((s) => s.name) || [],
-        website: "",
+        // Extract website from social media links if exists
+        website:
+          vendorData.socialMediaLinks?.find(
+            (s) => s.name.toLowerCase() === "website",
+          )?.link || "",
         email: vendorData.businessProfile?.contactInfo?.emailAddress || "",
         phone: vendorData.businessProfile?.contactInfo?.phoneNumber || "",
         contactName:
@@ -181,9 +203,9 @@ export default function VendorPage() {
             {/* Vendor Header */}
             <VendorHeader
               name={vendor.name}
+              logo={vendor.logo}
               rating={vendor.rating}
               reviewCount={vendor.reviewCount}
-              tags={vendor.tags}
             />
 
             {/* About Section */}
@@ -208,13 +230,13 @@ export default function VendorPage() {
           <div className="lg:w-80 xl:w-96 shrink-0">
             <div className="lg:sticky lg:top-28">
               <ContactSidebar
+                logo={vendor.logo}
                 website={vendor.website}
                 email={vendor.email}
                 phone={vendor.phone}
                 contactName={vendor.contactName}
                 address={vendor.address}
                 social={vendor.social}
-                tags={vendor.tags}
               />
             </div>
           </div>

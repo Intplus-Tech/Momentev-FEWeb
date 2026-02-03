@@ -33,8 +33,14 @@ const RawVendorSchema = z.object({
   _id: z.string(),
   rate: z.number().optional().default(0),
   reviewCount: z.number().optional().default(0),
-  profilePhoto: z.string().nullable().optional(),
-  coverPhoto: z.string().nullable().optional(),
+  profilePhoto: z.union([
+    z.string(),
+    z.object({ url: z.string() })
+  ]).nullable().optional(),
+  coverPhoto: z.union([
+    z.string(),
+    z.object({ url: z.string() })
+  ]).nullable().optional(),
   // userId can be either a string (ID) or a populated object
   userId: z.union([
     z.string(),
@@ -114,7 +120,14 @@ function mapRawToUIVendor(raw: RawVendor): Vendor {
   const name = raw.businessProfile?.businessName ||
     (userIdObj?.firstName && userIdObj?.lastName ? `${userIdObj.firstName} ${userIdObj.lastName}` : "Unknown Vendor");
 
-  const image = raw.coverPhoto || raw.profilePhoto || userIdObj?.avatar?.url || FALLBACK_IMAGE;
+  // Helper to extract URL from string or object
+  const getImageUrl = (photo: string | { url: string } | null | undefined): string | null => {
+    if (!photo) return null;
+    if (typeof photo === 'string') return photo;
+    return photo.url;
+  };
+
+  const image = getImageUrl(raw.coverPhoto) || getImageUrl(raw.profilePhoto) || userIdObj?.avatar?.url || FALLBACK_IMAGE;
 
   // Build Service List
   const services = [];
@@ -271,7 +284,9 @@ export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<Ve
 const VendorDetailsSchema = z.object({
   _id: z.string(),
   userId: z.string(),
-  portfolioGallery: z.array(z.string()).optional().default([]),
+  portfolioGallery: z.array(
+    z.union([z.string(), z.object({ url: z.string() })])
+  ).optional().default([]),
   rate: z.number().optional().default(0),
   paymentAccountProvider: z.string().optional(),
   paymentModel: z.string().optional(),
@@ -317,8 +332,14 @@ const VendorDetailsSchema = z.object({
   onboardedAt: z.string().optional(),
   reviewCount: z.number().optional().default(0),
   id: z.string().optional(),
-  profilePhoto: z.string().nullable().optional(),
-  coverPhoto: z.string().nullable().optional()
+  profilePhoto: z.union([
+    z.string(),
+    z.object({ url: z.string() })
+  ]).nullable().optional(),
+  coverPhoto: z.union([
+    z.string(),
+    z.object({ url: z.string() })
+  ]).nullable().optional()
 });
 
 const VendorDetailsResponseSchema = z.object({

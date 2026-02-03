@@ -1,33 +1,31 @@
 import Image from "next/image";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 interface VendorHeaderProps {
   name: string;
-  logo?: string;
+  logo?: string | null;
   rating: number;
   reviewCount: number;
-  tags: string[];
 }
 
 export function VendorHeader({
   name,
+  logo,
   rating,
   reviewCount,
-  tags,
 }: VendorHeaderProps) {
   return (
     <div className="space-y-4">
       {/* Vendor Info Row */}
       <div className="flex items-start gap-4">
         {/* Logo */}
-        <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0">
+        <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-full overflow-hidden bg-muted">
           <Image
-            src="/assets/svg/logo-icon.svg"
-            alt="Vendor logo"
+            src={logo || "/assets/svg/logo-icon.svg"}
+            alt={`${name} logo`}
             fill
-            className="object-contain"
+            className={logo ? "object-cover" : "object-contain"}
           />
         </div>
 
@@ -53,17 +51,6 @@ export function VendorHeader({
             <span className="text-sm text-muted-foreground">
               ({reviewCount.toLocaleString()} Reviews)
             </span>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-xs font-normal text-primary bg-primary/10 hover:bg-primary/20"
-              >
-                {tag}
-              </Badge>
-            ))}
           </div>
         </div>
       </div>

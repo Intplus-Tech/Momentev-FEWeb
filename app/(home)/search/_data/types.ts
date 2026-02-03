@@ -107,7 +107,7 @@ export interface SocialMediaLink {
 export interface VendorDetails {
   _id: string;
   userId: string;
-  portfolioGallery: string[];
+  portfolioGallery: (string | { url: string })[];
   rate: number;
   paymentAccountProvider?: string;
   paymentModel?: string;
@@ -125,8 +125,8 @@ export interface VendorDetails {
   onboardedAt?: string;
   reviewCount: number;
   id: string;
-  profilePhoto: string | null;
-  coverPhoto: string | null;
+  profilePhoto: string | { url: string } | null;
+  coverPhoto: string | { url: string } | null;
 }
 
 export interface VendorDetailsResponse {
