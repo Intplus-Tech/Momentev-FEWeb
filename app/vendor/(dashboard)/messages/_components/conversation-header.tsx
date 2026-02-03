@@ -10,7 +10,6 @@ export type ConversationHeaderProps = {
   reviewCount?: number;
   lastActiveLabel?: string;
   leftSlot?: React.ReactNode;
-  actions?: React.ReactNode;
   className?: string;
 };
 
@@ -21,7 +20,6 @@ export const ConversationHeader = ({
   reviewCount,
   lastActiveLabel,
   leftSlot,
-  actions,
   className,
 }: ConversationHeaderProps) => {
   const initials = vendorName
@@ -34,13 +32,14 @@ export const ConversationHeader = ({
     <div
       className={cn(
         "flex items-center gap-3 border-b px-5 py-4 shadow-sm",
-        className
+        className,
       )}
     >
       {leftSlot ? (
         <div className="flex items-center gap-2">{leftSlot}</div>
       ) : null}
 
+      {/* Left side: Avatar and Name */}
       <div className="flex items-center gap-3">
         <Avatar size="lg">
           {avatar ? (
@@ -51,27 +50,22 @@ export const ConversationHeader = ({
         </Avatar>
         <div>
           <p className="text-sm font-semibold text-foreground">{vendorName}</p>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {rating ? (
-              <span className="inline-flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-current text-amber-400" />
-                <span>{rating.toFixed(1)}</span>
-              </span>
-            ) : null}
-            {reviewCount !== undefined ? (
-              <span className="text-[11px]">{reviewCount} reviews</span>
-            ) : null}
-            {lastActiveLabel ? <span className="text-[11px]">|</span> : null}
-            {lastActiveLabel ? (
-              <span className="text-[11px]">{lastActiveLabel}</span>
-            ) : null}
-          </div>
+          {lastActiveLabel ? (
+            <p className="text-xs text-muted-foreground">{lastActiveLabel}</p>
+          ) : null}
         </div>
       </div>
 
-      {actions ? (
-        <div className="ml-auto flex items-center gap-2">{actions}</div>
-      ) : null}
+      {/* Right side: Rating and Reviews */}
+      {(rating !== undefined || reviewCount !== undefined) && (
+        <div className="ml-auto flex items-center gap-1.5 text-sm text-muted-foreground">
+          <Star className="h-4 w-4 fill-current text-amber-400" />
+          <span className="font-medium">{rating?.toFixed(1) ?? "0.0"}</span>
+          <span className="text-muted-foreground/60">
+            ({reviewCount ?? 0} Reviews)
+          </span>
+        </div>
+      )}
     </div>
   );
 };

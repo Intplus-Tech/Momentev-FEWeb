@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
 import { useSocket } from "@/components/providers/socket-provider";
 import {
   getConversations,
   getMessages,
   sendMessage,
-  markAsRead
+  markAsRead,
+  getVendorPublicProfile
 } from "@/lib/actions/chat";
 import { queryKeys } from "@/lib/react-query/keys";
-import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/lib/types/chat";
+import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/types/chat";
+import type { VendorPublicProfile } from "@/types/vendor";
 
 /**
  * Hook to fetch all conversations
@@ -43,7 +45,6 @@ export function useChatMessages(conversationId: string, limit: number = 50) {
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch messages");
       }
-      // Messages might need sorting or processing here depending on API order
       const messages = result.data || [];
       // Sort messages by createdAt ascending (Oldest -> Newest) so newest is at the bottom
       return messages.sort((a: ChatMessage, b: ChatMessage) => {
@@ -78,6 +79,8 @@ export function useSendMessage() {
       const previousMessages = queryClient.getQueryData<ChatMessage[]>(queryKeys.chat.messages(conversationId));
 
       // Optimistically update to the new value
+      // Note: We don't include attachments in optimistic message because we only have IDs.
+      // The uploadingMessage preview handles attachment display during upload.
       const optimisticMessage: ChatMessage = {
         _id: `temp-${Date.now()}`,
         conversationId,
@@ -182,4 +185,62 @@ export function useChatRealtime(conversationId: string | undefined) {
       socket.off("chat:read", handleRead);
     };
   }, [socket, isConnected, conversationId, queryClient]);
+}
+
+/**
+ * Hook to fetch vendor public profile for chat display
+ */
+export function useVendorProfile(vendorId: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.vendor.profile(vendorId || ''),
+    queryFn: async () => {
+      if (!vendorId) return null;
+      const result = await getVendorPublicProfile(vendorId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch vendor profile");
+      }
+      return result.data as VendorPublicProfile;
+
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes - vendor details don't change often
+  });
+}
+
+/**
+ * Hook to fetch multiple vendor profiles for sidebar display
+ * Uses useQueries to properly trigger re-renders when data loads
+ */
+export function useVendorProfiles(vendorIds: string[]): {
+  profiles: Record<string, VendorPublicProfile | undefined>;
+  isLoading: boolean;
+} {
+  // Filter out empty/duplicate IDs
+  const uniqueIds = [...new Set(vendorIds.filter(Boolean))];
+
+  // Use useQueries to fetch all vendor profiles in parallel and trigger re-renders
+  const queries = useQueries({
+    queries: uniqueIds.map((vendorId) => ({
+      queryKey: queryKeys.vendor.profile(vendorId),
+      queryFn: async () => {
+        const result = await getVendorPublicProfile(vendorId);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to fetch vendor profile");
+        }
+        return result.data as VendorPublicProfile;
+      },
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    })),
+  });
+
+  // Check if any query is still loading
+  const isLoading = queries.some((q) => q.isLoading);
+
+  // Build a map of vendorId -> VendorPublicProfile
+  const profiles: Record<string, VendorPublicProfile | undefined> = {};
+  uniqueIds.forEach((vendorId, index) => {
+    profiles[vendorId] = queries[index]?.data;
+  });
+
+  return { profiles, isLoading };
 }

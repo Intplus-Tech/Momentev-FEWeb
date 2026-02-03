@@ -28,30 +28,16 @@ export async function fetchServiceCategories(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const accessToken = await getAccessToken();
+    const url = `${API_URL}/api/v1/service-categories?page=${page}&limit=${limit}`;
 
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/v1/service-categories?page=${page}&limit=${limit}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        cache: "no-store", // Let TanStack Query handle caching
+    const response = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      cache: "no-store",
+    });
 
     if (!response.ok) {
-      if (response.status === 401) {
-        return { success: false, error: "Unauthorized" };
-      }
       return {
         success: false,
         error: `Failed to fetch categories: ${response.statusText}`,

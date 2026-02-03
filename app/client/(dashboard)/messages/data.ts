@@ -1,6 +1,6 @@
 export type MessageThread = {
   id: string;
-  vendorName: string;
+  vendorName?: string; // Optional to support skeleton loading state
   snippet: string;
   day: string;
   time: string;

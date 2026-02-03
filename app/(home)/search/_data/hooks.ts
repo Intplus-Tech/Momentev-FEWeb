@@ -2,7 +2,7 @@
 
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
-import { getVendorsAction, getNearbyVendorsAction } from "./actions";
+import { getVendorsAction, getNearbyVendorsAction, getVendorDetailsAction } from "./actions";
 import { SearchFilters } from "./types";
 import { toast } from "sonner";
 
@@ -21,15 +21,17 @@ export const useVendorSearch = (filters: SearchFilters) => {
 export const useNearbyVendors = (
   lat: number | null,
   long: number | null,
-  filters: Omit<SearchFilters, "sort"> & { maxDistanceKm?: number }
+  filters: Omit<SearchFilters, "sort">,
+  maxDistanceKm: number = 50
 ) => {
   return useQuery({
-    queryKey: ["vendors", "nearby", { lat, long, ...filters }],
+    queryKey: ["vendors", "nearby", { lat, long, maxDistanceKm, ...filters }],
     queryFn: () => {
       if (!lat || !long) throw new Error("Location required");
       return getNearbyVendorsAction({
         lat,
         long,
+        maxDistanceKm,
         ...filters,
       });
     },
@@ -102,4 +104,63 @@ export const useCurrentLocation = () => {
   };
 
   return { ...location, requestLocation };
+};
+
+// Hook for fetching vendor details by ID
+export const useVendorDetails = (vendorId: string | null) => {
+  return useQuery({
+    queryKey: ["vendor", "details", vendorId],
+    queryFn: () => {
+      if (!vendorId) throw new Error("Vendor ID required");
+      return getVendorDetailsAction(vendorId);
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Hook for fetching vendor services (categories, tags)
+export const useVendorServices = (vendorId: string | null) => {
+  return useQuery({
+    queryKey: ["vendor", "services", vendorId],
+    queryFn: async () => {
+      if (!vendorId) throw new Error("Vendor ID required");
+      const { getVendorServicesAction } = await import("./actions");
+      return getVendorServicesAction(vendorId);
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Hook for fetching vendor specialties (pricing, descriptions)
+export const useVendorSpecialties = (vendorId: string | null) => {
+  return useQuery({
+    queryKey: ["vendor", "specialties", vendorId],
+    queryFn: async () => {
+      if (!vendorId) throw new Error("Vendor ID required");
+      const { getVendorSpecialtiesAction } = await import("./actions");
+      return getVendorSpecialtiesAction(vendorId);
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
+};
+
+// Hook for fetching vendor reviews
+export const useVendorReviews = (vendorId: string | null, page: number = 1, limit: number = 10) => {
+  return useQuery({
+    queryKey: ["vendor", "reviews", vendorId, page, limit],
+    queryFn: async () => {
+      if (!vendorId) throw new Error("Vendor ID required");
+      const { getVendorReviewsAction } = await import("./actions");
+      return getVendorReviewsAction(vendorId, page, limit);
+    },
+    enabled: !!vendorId,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 };

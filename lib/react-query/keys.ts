@@ -20,6 +20,7 @@ export const queryKeys = {
     all: ['vendor'] as const,
     staff: () => [...queryKeys.vendor.all, 'staff'] as const,
     permissions: () => [...queryKeys.vendor.all, 'permissions'] as const,
+    profile: (vendorId: string) => [...queryKeys.vendor.all, 'profile', vendorId] as const,
   },
   reviews: {
     all: ['reviews'] as const,

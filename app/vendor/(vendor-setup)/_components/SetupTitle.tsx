@@ -9,6 +9,7 @@ const STEP_TITLES = {
   2: "Service Setup",
   3: "Payment Configuration",
   4: "Profile Completion",
+  5: "Ready To Go Live!",
 } as const;
 
 const ROUTE_TO_STEP: Record<string, number> = {
@@ -16,13 +17,14 @@ const ROUTE_TO_STEP: Record<string, number> = {
   "/vendor/service-setup": 2,
   "/vendor/payment-setup": 3,
   "/vendor/profile-setup": 4,
+  "/vendor/setup-review": 5,
 };
 
 export default function SetupTitle() {
   const pathname = usePathname();
   const currentStep = useVendorSetupStore((state) => state.currentStep);
   const setCurrentStep = useVendorSetupStore((state) => state.setCurrentStep);
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Auto-detect step from route
   useEffect(() => {

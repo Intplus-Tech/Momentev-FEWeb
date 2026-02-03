@@ -25,8 +25,7 @@ export interface Vendor {
   gallery?: string[];
   workdays?: string; // Summary of availability
 
-  // UI Specific (Mapped or Mocked)
-  bookings?: number;
+  // UI Specific (Mapped)
   services?: string[];
 }
 
@@ -54,4 +53,83 @@ export interface NearbyFilters extends SearchFilters {
   lat: number;
   long: number;
   maxDistanceKm?: number;
+}
+
+// --- Vendor Details API Types ---
+
+export interface Workday {
+  dayOfWeek: string;
+  open: string;
+  close: string;
+}
+
+export interface ServiceArea {
+  areaNames: {
+    city: string;
+    state: string;
+    country: string;
+  }[];
+  travelDistance?: string;
+}
+
+export interface AddressInfo {
+  _id: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface ContactInfo {
+  primaryContactName?: string;
+  emailAddress?: string;
+  phoneNumber?: string;
+  addressId?: AddressInfo;
+}
+
+export interface BusinessProfile {
+  _id: string;
+  businessName?: string;
+  yearInBusiness?: string;
+  businessRegType?: string;
+  businessDescription?: string;
+  workdays?: Workday[];
+  serviceArea?: ServiceArea;
+  contactInfo?: ContactInfo;
+}
+
+export interface SocialMediaLink {
+  name: string;
+  link: string;
+}
+
+export interface VendorDetails {
+  _id: string;
+  userId: string;
+  portfolioGallery: (string | { url: string })[];
+  rate: number;
+  paymentAccountProvider?: string;
+  paymentModel?: string;
+  isActive: boolean;
+  onBoardingStage: number;
+  onBoarded: boolean;
+  socialMediaLinks: SocialMediaLink[];
+  commissionAgreement: {
+    accepted: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+  businessProfile?: BusinessProfile;
+  onboardedAt?: string;
+  reviewCount: number;
+  id: string;
+  profilePhoto: string | { url: string } | null;
+  coverPhoto: string | { url: string } | null;
+}
+
+export interface VendorDetailsResponse {
+  message: string;
+  data: VendorDetails;
 }

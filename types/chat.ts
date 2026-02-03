@@ -14,6 +14,17 @@ export interface ChatConversation {
   userLastReadAt?: string;
   createdAt: string;
   updatedAt: string;
+  // Populated user details (for vendor view)
+  user?: {
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  // Populated vendor details (for client view)
+  vendor?: {
+    businessName: string;
+    avatar?: string;
+  };
 }
 
 export interface ChatMessage {
@@ -22,7 +33,7 @@ export interface ChatMessage {
   vendorId: string;
   senderUserId: string;
   senderSide: ChatUserSide;
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'file' | 'system';  // Backend message types
   text?: string;
   attachments?: any[];
   clientMessageId?: string;
@@ -31,9 +42,18 @@ export interface ChatMessage {
 }
 
 export interface CreateMessageRequest {
-  type: 'text' | 'image' | 'file';
+  type: 'text' | 'file' | 'system';  // Backend only accepts these types
   text?: string;
   clientMessageId: string;
+  attachments?: { fileId: string }[];
+}
+
+export interface ChatAttachment {
+  _id: string;
+  url: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
 }
 
 export interface ApiListResponse<T> {

@@ -37,6 +37,7 @@ export interface VendorDetails {
   slug: string; // SEO-friendly URL slug
   name: string;
   image: string;
+  logo?: string | null;
   rating: number;
   reviewCount: number;
   address: string;
@@ -45,13 +46,8 @@ export interface VendorDetails {
   website: string;
   email: string;
   phone: string;
-  tags: string[];
-  social: {
-    twitter?: string;
-    linkedin?: string;
-    facebook?: string;
-    instagram?: string;
-  };
+  contactName?: string;
+  social: Record<string, string>;
   about: string;
   gallery: string[];
   servicesList: ServiceCategory[];
@@ -100,7 +96,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.theglowloft.com",
     email: "hello@theglowloft.com",
     phone: "020 7946 1111",
-    tags: ["Makeup Artist", "Skincare", "Premium"],
     social: {
       instagram: "https://instagram.com/theglowloft",
       facebook: "https://facebook.com/theglowloft",
@@ -137,7 +132,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.beautyandwellbeing.com",
     email: "hello@beautyandwellbeing.com",
     phone: "020 7946 5678",
-    tags: ["Skincare", "Wellness", "Beauty"],
     social: {
       instagram: "https://instagram.com/beautyandwellbeing",
       facebook: "https://facebook.com/beautyandwellbeing",
@@ -172,7 +166,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.cheshirebridal.com",
     email: "bookings@cheshirebridal.com",
     phone: "020 7946 3333",
-    tags: ["Bridal", "Wedding", "Makeup Artist"],
     social: {
       instagram: "https://instagram.com/cheshirebridal",
     },
@@ -206,7 +199,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.hitched.co.uk",
     email: "info@hitched.co.uk",
     phone: "020 7946 4444",
-    tags: ["Wedding", "Events", "Full Service"],
     social: {
       twitter: "https://twitter.com/hitched",
       facebook: "https://facebook.com/hitched",
@@ -243,7 +235,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.polishedpalette.com",
     email: "craig@polishedpalette.com",
     phone: "020 7946 1234",
-    tags: ["Makeup Artist", "Hairstylist", "Professional Services"],
     social: {
       twitter: "https://twitter.com/polishedpalette",
       linkedin: "https://linkedin.com/company/polishedpalette",
@@ -329,7 +320,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.luxevisage.com",
     email: "hello@luxevisage.com",
     phone: "020 7946 6666",
-    tags: ["Bridal", "HD Makeup", "Luxury"],
     social: {
       instagram: "https://instagram.com/luxevisage",
     },
@@ -364,7 +354,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.flawlessfinishartistry.com",
     email: "book@flawlessfinishartistry.com",
     phone: "020 7946 7777",
-    tags: ["Celebrity", "Editorial", "Fashion"],
     social: {
       instagram: "https://instagram.com/flawlessfinish",
       twitter: "https://twitter.com/flawlessfinish",
@@ -399,7 +388,6 @@ export const vendorDetails: Record<string, VendorDetails> = {
     website: "www.blendandvibe.com",
     email: "info@blendandvibe.com",
     phone: "020 7946 8888",
-    tags: ["Natural", "Lessons", "Ethnic"],
     social: {
       facebook: "https://facebook.com/blendandvibe",
     },

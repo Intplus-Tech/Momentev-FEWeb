@@ -5,25 +5,14 @@ import { useSelectedLayoutSegment, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-import { useConversations } from "@/lib/react-query/hooks/use-chat";
-import type { ChatConversation } from "@/lib/types/chat";
+import {
+  useConversations,
+  useVendorProfiles,
+} from "@/lib/react-query/hooks/use-chat";
+import type { ChatConversation } from "@/types/chat";
 import type { MessageThread } from "./data";
 import { ThreadSidebar } from "./_components/thread-sidebar";
 import { cn } from "@/lib/utils";
-
-const mapConversationToThread = (
-  conv: ChatConversation,
-  activeId: string | null,
-): MessageThread => ({
-  id: conv._id,
-  vendorName: conv.vendorId || "Vendor", // Placeholder
-  snippet: conv.lastMessagePreview || "No messages",
-  day: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "MMM d") : "",
-  time: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "p") : "",
-  avatar: undefined,
-  unreadCount: 0,
-  isActive: conv._id === activeId,
-});
 
 export default function MessagesLayout({
   children,
@@ -38,13 +27,38 @@ export default function MessagesLayout({
   const { data: conversations = [] } = useConversations();
   const [query, setQuery] = useState("");
 
+  // Get all vendor IDs from conversations and fetch their profiles
+  const vendorIds = conversations.map((c: ChatConversation) => c.vendorId);
+  const { profiles: vendorProfiles, isLoading: isLoadingProfiles } =
+    useVendorProfiles(vendorIds);
+
   const mappedThreads: MessageThread[] = useMemo(() => {
     return conversations
-      .map((c: ChatConversation) => mapConversationToThread(c, activeThreadId))
+      .map((c: ChatConversation) => {
+        const profile = vendorProfiles[c.vendorId];
+        const isLoading = !profile && isLoadingProfiles;
+        const vendorName =
+          profile?.businessProfile?.businessName ||
+          (isLoading ? undefined : "Vendor");
+        const vendorAvatar = profile?.profilePhoto?.url;
+
+        return {
+          id: c._id,
+          vendorName,
+          snippet: c.lastMessagePreview || "No messages",
+          day: c.lastMessageAt
+            ? format(new Date(c.lastMessageAt), "MMM d")
+            : "",
+          time: c.lastMessageAt ? format(new Date(c.lastMessageAt), "p") : "",
+          avatar: vendorAvatar,
+          unreadCount: 0,
+          isActive: c._id === activeThreadId,
+        };
+      })
       .filter((t: MessageThread) =>
-        t.vendorName.toLowerCase().includes(query.toLowerCase()),
+        (t.vendorName || "").toLowerCase().includes(query.toLowerCase()),
       );
-  }, [conversations, activeThreadId, query]);
+  }, [conversations, activeThreadId, query, vendorProfiles]);
 
   const handleThreadClick = (threadId: string) => {
     router.push(`/client/messages/${threadId}`);

@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
 import { createAddress, updateAddress } from "@/lib/actions/address";
 import type {
@@ -300,6 +300,18 @@ export async function submitBusinessInformation(
 
     const data: BusinessProfileResponse = await response.json();
     console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(redactSensitiveFields(data), null, 2));
+
+    // Refresh the access token to get updated JWT with vendor context
+    // This is necessary because the JWT issued at login may not have vendor info
+    // if the vendor profile was created after login
+    console.log('🔄 [Step 1 Submission] Refreshing access token to update vendor context...');
+    const refreshResult = await tryRefreshToken();
+    if (refreshResult.success) {
+      console.log('✅ [Step 1 Submission] Access token refreshed with vendor context');
+    } else {
+      console.warn('⚠️ [Step 1 Submission] Token refresh failed:', refreshResult.error);
+      // Continue anyway - the user may need to re-login manually
+    }
 
     return {
       success: true,

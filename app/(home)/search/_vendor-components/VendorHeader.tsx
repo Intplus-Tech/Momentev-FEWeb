@@ -1,33 +1,81 @@
+"use client";
+
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
 
 interface VendorHeaderProps {
   name: string;
-  logo?: string;
+  logo?: string | null;
   rating: number;
   reviewCount: number;
-  tags: string[];
 }
 
 export function VendorHeader({
   name,
+  logo,
   rating,
   reviewCount,
-  tags,
 }: VendorHeaderProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: user, isLoading, isError } = useUserProfile();
+
+  const role = user?.role?.toUpperCase();
+  const isVendor = role === "VENDOR";
+  const isClient = role === "CUSTOMER";
+  const isLoggedOut = !user && (isError || !isLoading);
+  const showActions = !isVendor;
+
+  const redirectToLogin = () => {
+    const redirect = pathname || "/client";
+    router.push(`/client/auth/log-in?redirect=${encodeURIComponent(redirect)}`);
+  };
+
+  const handleBook = () => {
+    if (isLoggedOut) {
+      redirectToLogin();
+      return;
+    }
+
+    if (isClient) {
+      // TODO: implement booking flow for clients
+      console.log("Book Vendor clicked (client flow pending)");
+      return;
+    }
+
+    // Non-client (e.g., admin) fall back to login for now
+    redirectToLogin();
+  };
+
+  const handleMessage = () => {
+    if (isLoggedOut) {
+      redirectToLogin();
+      return;
+    }
+
+    if (isClient) {
+      // TODO: implement messaging flow for clients
+      console.log("Message Vendor clicked (client flow pending)");
+      return;
+    }
+
+    redirectToLogin();
+  };
+
   return (
     <div className="space-y-4">
       {/* Vendor Info Row */}
       <div className="flex items-start gap-4">
         {/* Logo */}
-        <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0">
+        <div className="relative w-16 h-16 md:w-20 md:h-20 shrink-0 rounded-full overflow-hidden bg-muted">
           <Image
-            src="/assets/svg/logo-icon.svg"
-            alt="Vendor logo"
+            src={logo || "/assets/svg/logo-icon.svg"}
+            alt={`${name} logo`}
             fill
-            className="object-contain"
+            className={logo ? "object-cover" : "object-contain"}
           />
         </div>
 
@@ -54,30 +102,29 @@ export function VendorHeader({
               ({reviewCount.toLocaleString()} Reviews)
             </span>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {tags.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-xs font-normal text-primary bg-primary/10 hover:bg-primary/20"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="flex gap-3">
-        <Button className="flex-1 h-11">Book Vendor</Button>
-        <Button
-          variant="outline"
-          className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
-        >
-          Message Vendor
-        </Button>
-      </div>
+      {showActions && (
+        <div className="flex gap-3">
+          <Button
+            className="flex-1 h-11"
+            onClick={handleBook}
+            disabled={isLoading}
+          >
+            Book Vendor
+          </Button>
+          <Button
+            variant="outline"
+            className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+            onClick={handleMessage}
+            disabled={isLoading}
+          >
+            Message Vendor
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

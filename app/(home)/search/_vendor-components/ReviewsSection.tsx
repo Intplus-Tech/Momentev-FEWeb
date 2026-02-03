@@ -37,7 +37,10 @@ interface ReviewsSectionProps {
 export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
   const [sortBy, setSortBy] = useState("newest");
 
-  const maxCount = Math.max(...stats.distribution.map((d) => d.count));
+  const hasReviews = (stats?.total || 0) > 0 && reviews.length > 0;
+  const maxCount = hasReviews
+    ? Math.max(...stats.distribution.map((d) => d.count))
+    : 0;
 
   return (
     <div className="">
@@ -91,6 +94,11 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
               </span>
             </div>
           ))}
+          {!hasReviews && (
+            <p className="text-xs text-muted-foreground">
+              No reviews yet. Be the first to share feedback.
+            </p>
+          )}
         </div>
       </div>
 
@@ -121,35 +129,49 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
 
       {/* Reviews List */}
       <div className="space-y-6 bg-white rounded-2xl p-6">
-        {reviews.map((review) => (
-          <div key={review.id} className="border-t pt-6">
-            <div className="flex items-center gap-1 mb-1">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < review.rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "fill-muted text-muted"
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="text-xs text-muted-foreground mb-3">{review.date}</p>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                {review.initials}
+        {hasReviews ? (
+          reviews.map((review, idx) => (
+            <div
+              key={review.id}
+              className={`${idx > 0 ? "border-t pt-6" : "pt-2"}`}
+            >
+              <div className="flex items-center gap-1 mb-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className={`w-4 h-4 ${
+                      i < review.rating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-muted text-muted"
+                    }`}
+                  />
+                ))}
               </div>
-              <span className="text-sm font-medium">{review.author}</span>
+              <p className="text-xs text-muted-foreground mb-3">
+                {review.date}
+              </p>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
+                  {review.initials}
+                </div>
+                <span className="text-sm font-medium">{review.author}</span>
+              </div>
+              {review.category && (
+                <p className="text-xs text-muted-foreground mb-2">
+                  {review.category}
+                </p>
+              )}
+              <p className="text-sm text-foreground leading-relaxed">
+                {review.content}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground mb-2">
-              {review.category}
-            </p>
-            <p className="text-sm text-foreground leading-relaxed">
-              {review.content}
-            </p>
+          ))
+        ) : (
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground">
+            <p>This vendor has no reviews yet.</p>
+            <p>Share your experience to help others make decisions.</p>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

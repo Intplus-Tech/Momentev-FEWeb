@@ -9,6 +9,8 @@ import {
   CircleUserIcon,
   Menu,
   ChevronDown,
+  Loader2,
+  Navigation,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,25 +26,28 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ServiceCategory } from "@/types/service";
+import { toast } from "sonner";
 
-const locations = [
-  "East London",
-  "West London",
-  "Central London",
-  "North London",
-  "South London",
+// Radius options in km
+const radiusOptions = [
+  { value: 5, label: "5 km" },
+  { value: 10, label: "10 km" },
+  { value: 25, label: "25 km" },
+  { value: 50, label: "50 km" },
+  { value: 100, label: "100 km" },
 ];
 
 function HomeHeaderContent() {
@@ -53,7 +58,13 @@ function HomeHeaderContent() {
   const isSearchRoute = pathname.startsWith("/search");
   const isHome = pathname === "/";
 
-  const [selectedLocation, setSelectedLocation] = useState("East London");
+  // Location state
+  const [userLat, setUserLat] = useState<number | null>(null);
+  const [userLong, setUserLong] = useState<number | null>(null);
+  const [selectedRadius, setSelectedRadius] = useState(50);
+  const [isLocating, setIsLocating] = useState(false);
+  const [locationLabel, setLocationLabel] = useState("Set location");
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
@@ -73,14 +84,26 @@ function HomeHeaderContent() {
       setSelectedCategory("");
     }
 
-    const location = searchParams.get("location");
-    if (location) {
-      setSelectedLocation(location);
-    }
-
     const q = searchParams.get("q");
     if (q) {
       setSearchQuery(q);
+    } else {
+      setSearchQuery("");
+    }
+
+    // Restore location from URL
+    const latParam = searchParams.get("lat");
+    const longParam = searchParams.get("long");
+    const radiusParam = searchParams.get("radius");
+
+    if (latParam && longParam) {
+      setUserLat(parseFloat(latParam));
+      setUserLong(parseFloat(longParam));
+      setLocationLabel("My location");
+    }
+
+    if (radiusParam) {
+      setSelectedRadius(parseInt(radiusParam, 10));
     }
   }, [searchParams]);
 
@@ -97,16 +120,14 @@ function HomeHeaderContent() {
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      // Transition to complex header after scrolling past roughly the hero height
-      const heroHeight = window.innerHeight - 100;
-      setIsScrolledPastHero(scrollY > heroHeight);
-
-      // Add blur to simple header after a slight scroll
+      // Switch to complex header when hero search scrolls out of view (~40% of viewport)
+      const searchOutOfView = window.innerHeight * 0.4;
+      setIsScrolledPastHero(scrollY > searchOutOfView);
       setIsScrolledSlightly(scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
-    handleScroll(); // check initial
+    handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
@@ -122,21 +143,72 @@ function HomeHeaderContent() {
     };
   }, [menuOpen]);
 
-  // Existing handlers
-  const handleSearch = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchQuery.trim()) {
-      params.set("q", searchQuery);
-    } else {
-      params.delete("q");
+  // Request user's geolocation
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation not supported", {
+        description: "Your browser doesn't support geolocation.",
+      });
+      return;
     }
 
-    if (selectedLocation) params.set("location", selectedLocation);
-    // Note: selectedCategory is usually handled by clicking the category chips,
-    // but if we want to persist it during a text search we can:
-    if (selectedCategory) params.set("category", selectedCategory);
+    setIsLocating(true);
 
-    params.set("page", "1"); // Reset page on new search
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLat(position.coords.latitude);
+        setUserLong(position.coords.longitude);
+        setLocationLabel("My location");
+        setIsLocating(false);
+        toast.success("Location set", {
+          description: "We'll show vendors near you.",
+        });
+      },
+      (error) => {
+        setIsLocating(false);
+        let message = "Could not get your location";
+        if (error.code === error.PERMISSION_DENIED) {
+          message =
+            "Location access denied. Please enable it in browser settings.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          message = "Location unavailable";
+        } else if (error.code === error.TIMEOUT) {
+          message = "Location request timed out";
+        }
+        toast.error("Location error", { description: message });
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
+  };
+
+  // Clear location
+  const handleClearLocation = () => {
+    setUserLat(null);
+    setUserLong(null);
+    setLocationLabel("Set location");
+  };
+
+  // Search handler
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+
+    if (searchQuery.trim()) {
+      params.set("q", searchQuery);
+    }
+
+    if (selectedCategory) {
+      params.set("category", selectedCategory);
+    }
+
+    // Add geolocation params if available
+    if (userLat && userLong) {
+      params.set("lat", userLat.toString());
+      params.set("long", userLong.toString());
+      params.set("radius", selectedRadius.toString());
+      params.set("sort", "distance"); // Auto-set sort to distance for nearby
+    }
+
+    params.set("page", "1");
 
     router.push(`/search?${params.toString()}`);
   };
@@ -161,6 +233,73 @@ function HomeHeaderContent() {
 
     router.push(`/search?${params.toString()}`);
   };
+
+  // Location dropdown content
+  const LocationSelector = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant={isMobile ? "outline" : "ghost"}
+          className={
+            isMobile
+              ? "w-full justify-between font-normal"
+              : "h-auto py-2 px-3 gap-1.5 rounded-none hover:bg-muted/50 font-normal text-sm"
+          }
+        >
+          <span className="flex items-center gap-2">
+            {isLocating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <MapPin className="w-4 h-4 text-muted-foreground" />
+            )}
+            <span className={isMobile ? "" : "hidden lg:inline"}>
+              {isLocating ? "Locating..." : locationLabel}
+            </span>
+          </span>
+          <ChevronDown className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="min-w-[200px]">
+        <DropdownMenuItem
+          onClick={handleGetLocation}
+          disabled={isLocating}
+          className="gap-2"
+        >
+          <Navigation className="w-4 h-4" />
+          Use my location
+        </DropdownMenuItem>
+
+        {userLat && userLong && (
+          <>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+              Search radius
+            </div>
+            {radiusOptions.map((option) => (
+              <DropdownMenuItem
+                key={option.value}
+                onClick={() => setSelectedRadius(option.value)}
+                className={
+                  selectedRadius === option.value
+                    ? "bg-primary/10 text-primary font-medium"
+                    : ""
+                }
+              >
+                {option.label}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleClearLocation}
+              className="text-muted-foreground"
+            >
+              Clear location
+            </DropdownMenuItem>
+          </>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 
   // --- SIMPLE HEADER (Transparent) ---
   if (isHome && !isScrolledPastHero) {
@@ -219,7 +358,7 @@ function HomeHeaderContent() {
             )}
           </ul>
 
-          {/* Mobile Hamburger - Animated */}
+          {/* Mobile Hamburger */}
           <button
             className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -317,7 +456,7 @@ function HomeHeaderContent() {
         {/* Logo */}
         <Logo />
 
-        {/* Desktop Search Bar - Hidden on mobile */}
+        {/* Desktop Search Bar */}
         <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
           <div className="flex items-center h-12 p-0 w-full rounded-md overflow-hidden">
             {/* Search Input */}
@@ -336,34 +475,8 @@ function HomeHeaderContent() {
             {/* Divider */}
             <div className="w-px h-6 bg-border" />
 
-            {/* Location Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-auto py-2 px-3 gap-1.5 rounded-none hover:bg-muted/50 font-normal text-sm"
-                >
-                  <MapPin className="w-4 h-4 text-muted-foreground" />
-                  <span className="hidden lg:inline">{selectedLocation}</span>
-                  <ChevronDown className="w-3 h-3 text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[160px]">
-                {locations.map((location) => (
-                  <DropdownMenuItem
-                    key={location}
-                    onClick={() => setSelectedLocation(location)}
-                    className={
-                      selectedLocation === location
-                        ? "bg-primary/10 text-primary font-medium"
-                        : ""
-                    }
-                  >
-                    {location}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Location Selector */}
+            <LocationSelector />
 
             {/* Find Button */}
             <Button
@@ -375,7 +488,7 @@ function HomeHeaderContent() {
           </div>
         </div>
 
-        {/* Desktop Auth Buttons - Hidden on mobile */}
+        {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
           {user ? (
             <UserDropdown user={user} />
@@ -441,35 +554,13 @@ function HomeHeaderContent() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Location
                 </p>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between font-normal"
-                    >
-                      <span className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4" />
-                        {selectedLocation}
-                      </span>
-                      <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-[268px] sm:w-[318px]">
-                    {locations.map((location) => (
-                      <DropdownMenuItem
-                        key={location}
-                        onClick={() => setSelectedLocation(location)}
-                        className={
-                          selectedLocation === location
-                            ? "bg-primary/10 text-primary font-medium"
-                            : ""
-                        }
-                      >
-                        {location}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <LocationSelector isMobile />
+
+                {userLat && userLong && (
+                  <div className="text-xs text-muted-foreground">
+                    Searching within {selectedRadius} km
+                  </div>
+                )}
               </div>
 
               <SheetClose asChild>
@@ -521,34 +612,93 @@ function HomeHeaderContent() {
       {isSearchRoute && (
         <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex flex-wrap items-center justify-start gap-2 py-3">
-                {isCategoriesLoading
-                  ? Array.from({ length: 8 }).map((_, i) => (
-                      <Skeleton
-                        key={i}
-                        className="h-8 w-24 rounded-full flex-shrink-0"
-                      />
-                    ))
-                  : categories.map((category: any) => {
-                      const isActive = selectedCategory === category._id;
-                      return (
-                        <button
-                          key={category._id}
-                          onClick={() => handleCategoryClick(category._id)}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
-                            isActive
-                              ? "bg-primary text-primary-foreground border-primary"
-                              : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                          }`}
-                        >
-                          {/* Icon ignored for now as it's not a URL */}
-                          <span>{category.name}</span>
-                        </button>
+            <div className="w-full max-w-[1200px] mx-auto">
+              <div
+                className="flex items-center justify-center gap-2 py-3"
+                suppressHydrationWarning
+              >
+                {isCategoriesLoading ? (
+                  Array.from({ length: 9 }).map((_, i) => (
+                    <Skeleton
+                      key={i}
+                      className="h-8 w-24 rounded-full flex-shrink-0"
+                    />
+                  ))
+                ) : (
+                  <>
+                    {/* Visible category buttons */}
+                    {(() => {
+                      const MAX_VISIBLE = 7;
+                      const selectedIndex = categories.findIndex(
+                        (c: ServiceCategory) => c._id === selectedCategory,
                       );
-                    })}
+
+                      let visibleCategories: ServiceCategory[];
+
+                      if (selectedIndex === -1 || selectedIndex < MAX_VISIBLE) {
+                        visibleCategories = categories.slice(0, MAX_VISIBLE);
+                      } else {
+                        visibleCategories = [
+                          ...categories.slice(0, MAX_VISIBLE - 1),
+                          categories[selectedIndex],
+                        ];
+                      }
+
+                      return visibleCategories.map(
+                        (category: ServiceCategory) => {
+                          const isActive = selectedCategory === category._id;
+                          return (
+                            <button
+                              key={category._id}
+                              onClick={() => handleCategoryClick(category._id)}
+                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
+                                isActive
+                                  ? "bg-[#80808030] text-[#808080] border-[#80808030]"
+                                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                              }`}
+                              suppressHydrationWarning
+                            >
+                              <span>{category.name}</span>
+                            </button>
+                          );
+                        },
+                      );
+                    })()}
+
+                    {/* "All" dropdown with all categories */}
+                    {categories.length > 0 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border">
+                            <span>All</span>
+                            <ChevronDown className="w-3 h-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-fit">
+                          <ScrollArea className="h-[300px] ">
+                            {categories.map((category: ServiceCategory) => (
+                              <DropdownMenuItem
+                                key={category._id}
+                                onClick={() =>
+                                  handleCategoryClick(category._id)
+                                }
+                                className={
+                                  selectedCategory === category._id
+                                    ? "bg-primary/10 text-primary font-medium whitespace-nowrap"
+                                    : ""
+                                }
+                              >
+                                {category.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </ScrollArea>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </>
+                )}
               </div>
-            </ScrollArea>
+            </div>
           </div>
         </div>
       )}

@@ -1,18 +1,17 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { StepIndicator } from "./StepIndicator";
 import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
 import { BusinessInformationForm } from "./BusinessInformationForm";
 import { DocumentUploadSection } from "./DocumentUploadSection";
-import { ArrowLeft } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { submitBusinessInformation } from "@/lib/actions/vendor-setup";
 import type { BusinessInfoFormData } from "../_schemas/businessInfoSchema";
+import { SubmissionOverlay } from "./SubmissionOverlay";
 
 export function BusinessSetupForm() {
   const router = useRouter();
@@ -35,9 +34,6 @@ export function BusinessSetupForm() {
   const toggleSection = useVendorSetupStore((state) => state.toggleSection);
   const setExpandedSection = useVendorSetupStore(
     (state) => state.setExpandedSection,
-  );
-  const goToPreviousSection = useVendorSetupStore(
-    (state) => state.goToPreviousSection,
   );
   const markSectionComplete = useVendorSetupStore(
     (state) => state.markSectionComplete,
@@ -135,12 +131,6 @@ export function BusinessSetupForm() {
     }
   };
 
-  // Save as draft - Zustand automatically persists to localStorage
-  const saveAsDraft = () => {
-    toast.success("Draft saved successfully");
-    console.log("✅ Draft auto-saved to localStorage");
-  };
-
   // Check if current section is valid
   const canProceed = () => {
     if (expandedSection === 1) return isBusinessInfoValid;
@@ -159,76 +149,65 @@ export function BusinessSetupForm() {
   const isSection2Locked = !completedSections.has("step1-section1");
 
   return (
-    <div className="space-y-6 flex flex-col min-h-[70vh]">
-      <div className="">
-        {/* Step Title */}
-        <div>
-          <h2 className="text-lg sm:text-xl font-semibold">Business Setup</h2>
-          <h2 className="text-sm sm:text-base font-medium text-muted-foreground">
-            Complete your business profile to start receiving bookings
-          </h2>
-        </div>
-
-        {/* Accordion: Both sections always visible */}
-        <div className="space-y-4 mt-6">
-          {/* Section 1: Business Information */}
-          <div className="border-2 rounded-lg">
-            <StepSection
-              number={1}
-              title="Business Information"
-              isCompleted={completedSections.has("step1-section1")}
-              isExpanded={expandedSection === 1}
-              onToggle={() => toggleSection(1)}
-            />
-            {expandedSection === 1 && <BusinessInformationForm />}
+    <>
+      <SubmissionOverlay
+        isVisible={isSubmitting}
+        message="Submitting business information..."
+      />
+      <div className="space-y-6 flex flex-col min-h-[70vh]">
+        <div className="">
+          {/* Step Title */}
+          <div>
+            <h2 className="text-lg sm:text-xl font-semibold">Business Setup</h2>
+            <h2 className="text-sm sm:text-base font-medium text-muted-foreground">
+              Complete your business profile to start receiving bookings
+            </h2>
           </div>
 
-          {/* Section 2: Document Upload */}
-          <div className="space-y-4 border-2 rounded-lg opacity-100">
-            <StepSection
-              number={2}
-              title="Document Upload"
-              isCompleted={completedSections.has("step1-section2")}
-              isExpanded={expandedSection === 2}
-              onToggle={() => !isSection2Locked && toggleSection(2)}
-              isLocked={isSection2Locked}
-            />
-            {expandedSection === 2 && <DocumentUploadSection />}
+          {/* Accordion: Both sections always visible */}
+          <div className="space-y-4 mt-6">
+            {/* Section 1: Business Information */}
+            <div className="border-2 rounded-lg">
+              <StepSection
+                number={1}
+                title="Business Information"
+                isCompleted={completedSections.has("step1-section1")}
+                isExpanded={expandedSection === 1}
+                onToggle={() => toggleSection(1)}
+              />
+              {expandedSection === 1 && <BusinessInformationForm />}
+            </div>
+
+            {/* Section 2: Document Upload */}
+            <div className="space-y-4 border-2 rounded-lg opacity-100">
+              <StepSection
+                number={2}
+                title="Document Upload"
+                isCompleted={completedSections.has("step1-section2")}
+                isExpanded={expandedSection === 2}
+                onToggle={() => !isSection2Locked && toggleSection(2)}
+                isLocked={isSection2Locked}
+              />
+              {expandedSection === 2 && <DocumentUploadSection />}
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
+          <ProgressBar currentStep={1} />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
+            <Button
+              onClick={handleSaveAndContinue}
+              disabled={isSubmitting || !canProceed()}
+              className="w-full sm:w-auto"
+            >
+              {getButtonText()}
+            </Button>
           </div>
         </div>
       </div>
-
-      {/* Action Buttons */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
-        <ProgressBar currentStep={1} />
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-          <Button
-            variant="outline"
-            onClick={goToPreviousSection}
-            disabled={expandedSection === null || expandedSection === 1}
-            className="gap-2 w-full sm:w-auto"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-
-          <Button
-            variant="outline"
-            onClick={saveAsDraft}
-            className="w-full sm:w-auto"
-          >
-            Save As Draft
-          </Button>
-          <Button
-            onClick={handleSaveAndContinue}
-            disabled={isSubmitting || !canProceed()}
-            className="w-full sm:w-auto"
-          >
-            {getButtonText()}
-          </Button>
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

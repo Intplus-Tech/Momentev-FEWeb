@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
 import { handleGoogleCallback } from "@/lib/actions/auth";
+import { getUserProfile } from "@/lib/actions/user";
 import { Spinner } from "@/components/ui/spinner";
 
 function GoogleCallbackContent() {
@@ -47,7 +48,27 @@ function GoogleCallbackContent() {
         // Redirect based on user role
         const userRole = result.data?.user?.role;
 
-        if (userRole === "vendor") {
+        if (userRole === "vendor" || userRole === "VENDOR") {
+          // Check onboarding status for vendors
+          const profileResult = await getUserProfile();
+          if (profileResult.success && profileResult.data?.vendor) {
+            const { vendor } = profileResult.data;
+
+            if (!vendor.onBoarded) {
+              // Redirect to appropriate setup step based on onBoardingStage
+              const stageRoutes: Record<number, string> = {
+                0: "/vendor/business-setup",
+                1: "/vendor/business-setup",
+                2: "/vendor/service-setup",
+                3: "/vendor/payment-setup",
+                4: "/vendor/profile-setup",
+              };
+              const redirectRoute =
+                stageRoutes[vendor.onBoardingStage] || "/vendor/business-setup";
+              router.replace(redirectRoute);
+              return;
+            }
+          }
           router.replace("/vendor/dashboard");
         } else {
           // Default to client dashboard for customer role or any other role
