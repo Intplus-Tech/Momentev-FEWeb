@@ -36,6 +36,9 @@ interface VendorSetupState {
   coverPhoto: UploadedFileMetadata | null;
   portfolioImages: UploadedFileMetadata[];
 
+  // Social Media Links
+  socialMediaLinks: { name: string; link: string }[];
+
   // Legacy getters for backward compatibility
   get documentIds(): {
     identification: string[];
@@ -89,6 +92,12 @@ interface VendorSetupState {
   addPortfolioImage: (metadata: UploadedFileMetadata) => void;
   removePortfolioImage: (id: string) => void;
 
+  // Actions - Social Media Links
+  addSocialMediaLink: (link: { name: string; link: string }) => void;
+  updateSocialMediaLink: (index: number, link: { name: string; link: string }) => void;
+  removeSocialMediaLink: (index: number) => void;
+  setSocialMediaLinks: (links: { name: string; link: string }[]) => void;
+
   // Legacy actions for backward compatibility
   addDocumentId: (type: string, id: string) => void;
   removeDocumentId: (type: string, id: string) => void;
@@ -121,6 +130,7 @@ export const useVendorSetupStore = create<VendorSetupState>()(
       profilePhoto: null,
       coverPhoto: null,
       portfolioImages: [],
+      socialMediaLinks: [],
       isBusinessInfoValid: false,
       isDocumentsValid: false,
       isServiceCategoriesValid: false,
@@ -231,6 +241,21 @@ export const useVendorSetupStore = create<VendorSetupState>()(
         portfolioImages: state.portfolioImages.filter((img) => img.id !== id),
       })),
 
+      // Social Media Links Actions
+      addSocialMediaLink: (link) => set((state) => ({
+        socialMediaLinks: [...state.socialMediaLinks, link],
+      })),
+
+      updateSocialMediaLink: (index, link) => set((state) => ({
+        socialMediaLinks: state.socialMediaLinks.map((l, i) => i === index ? link : l),
+      })),
+
+      removeSocialMediaLink: (index) => set((state) => ({
+        socialMediaLinks: state.socialMediaLinks.filter((_, i) => i !== index),
+      })),
+
+      setSocialMediaLinks: (links) => set({ socialMediaLinks: links }),
+
       // Legacy actions - call new actions internally
       addDocumentId: (type, id) => {
         // This is a legacy method - prefer using addDocument()
@@ -265,6 +290,7 @@ export const useVendorSetupStore = create<VendorSetupState>()(
         profilePhoto: null,
         coverPhoto: null,
         portfolioImages: [],
+        socialMediaLinks: [],
         isBusinessInfoValid: false,
         isDocumentsValid: false,
         isServiceCategoriesValid: false,
@@ -290,6 +316,7 @@ export const useVendorSetupStore = create<VendorSetupState>()(
         profilePhoto: state.profilePhoto,  // NEW: Full metadata with URL
         coverPhoto: state.coverPhoto,    // NEW: Full metadata with URL
         portfolioImages: state.portfolioImages, // NEW: Full metadata with URLs
+        socialMediaLinks: state.socialMediaLinks, // Social media links
         isBusinessInfoValid: state.isBusinessInfoValid,
         isDocumentsValid: state.isDocumentsValid,
         isServiceCategoriesValid: state.isServiceCategoriesValid,

@@ -2,15 +2,14 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { FileUploadCard } from "./FileUploadCard";
+import { StepSection } from "./StepSection";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -18,61 +17,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileUploadCard } from "./FileUploadCard";
 import type { UploadedFile } from "@/lib/actions/upload";
-
-const TIME_OPTIONS = [
-  "00:00",
-  "01:00",
-  "02:00",
-  "03:00",
-  "04:00",
-  "05:00",
-  "06:00",
-  "07:00",
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "12:00",
-  "13:00",
-  "14:00",
-  "15:00",
-  "16:00",
-  "17:00",
-  "18:00",
-  "19:00",
-  "20:00",
-  "21:00",
-  "22:00",
-  "23:00",
-];
+import { submitVendorProfile } from "@/lib/actions/vendor-profile";
+import { SOCIAL_MEDIA_PLATFORMS } from "../_schemas/profileCompletionSchema";
 
 export function ProfileCompletionForm() {
   const router = useRouter();
 
   // Zustand selective subscriptions
+  const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
   const expandedSection = useVendorSetupStore((state) => state.expandedSection);
   const completedSections = useVendorSetupStore(
     (state) => state.completedSections,
   );
-  const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
-  const profilePhotoId = useVendorSetupStore((state) => state.profilePhotoId);
-  const coverPhotoId = useVendorSetupStore((state) => state.coverPhotoId);
-  const portfolioImageIds = useVendorSetupStore(
-    (state) => state.portfolioImageIds,
-  );
 
   // Actions
-  const toggleSection = useVendorSetupStore((state) => state.toggleSection);
-  const setExpandedSection = useVendorSetupStore(
-    (state) => state.setExpandedSection,
-  );
   const markSectionComplete = useVendorSetupStore(
     (state) => state.markSectionComplete,
   );
   const setIsSubmitting = useVendorSetupStore((state) => state.setIsSubmitting);
   const setErrors = useVendorSetupStore((state) => state.setErrors);
+  const setExpandedSection = useVendorSetupStore(
+    (state) => state.setExpandedSection,
+  );
+  const toggleSection = useVendorSetupStore((state) => state.toggleSection);
 
   // File upload metadata selectors
   const profilePhoto = useVendorSetupStore((state) => state.profilePhoto);
@@ -87,24 +55,31 @@ export function ProfileCompletionForm() {
     (state) => state.removePortfolioImage,
   );
 
-  // Section 2: Availability
-  const [workingDays, setWorkingDays] = useState({
-    monday: true,
-    tuesday: true,
-    wednesday: true,
-    thursday: true,
-    friday: false,
-    saturday: false,
-    sunday: false,
-  });
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("17:00");
+  // Social media links
+  const socialMediaLinks = useVendorSetupStore(
+    (state) => state.socialMediaLinks,
+  );
+  const addSocialMediaLink = useVendorSetupStore(
+    (state) => state.addSocialMediaLink,
+  );
+  const updateSocialMediaLink = useVendorSetupStore(
+    (state) => state.updateSocialMediaLink,
+  );
+  const removeSocialMediaLink = useVendorSetupStore(
+    (state) => state.removeSocialMediaLink,
+  );
 
-  // Auto-expand Section 1 on mount (always reset to section 1 for this step)
-  useEffect(() => {
-    setExpandedSection(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Intentionally empty - we want this to run only once on mount
+  // Local state for new link form
+  const [newPlatform, setNewPlatform] = useState("");
+  const [customPlatformName, setCustomPlatformName] = useState("");
+  const [newLink, setNewLink] = useState("");
+
+  // Initialize expanded section on mount
+  React.useEffect(() => {
+    if (expandedSection === null) {
+      setExpandedSection(1);
+    }
+  }, [expandedSection, setExpandedSection]);
 
   // Upload handlers connected to Zustand
   const handleProfilePhotoUpload = (data: UploadedFile) => {
@@ -119,9 +94,50 @@ export function ProfileCompletionForm() {
     addPortfolioImage({ id: data._id, url: data.url, name: data.originalName });
   };
 
-  const handleSaveMediaUpload = () => {
-    markSectionComplete(4, 1); // Step 4, Section 1
-    setExpandedSection(2);
+  // Social media link handlers
+  const handleAddSocialLink = () => {
+    if (!newPlatform || !newLink) {
+      toast.error("Please select a platform and enter a link");
+      return;
+    }
+
+    // Validate URL
+    try {
+      new URL(newLink);
+    } catch {
+      toast.error("Please enter a valid URL");
+      return;
+    }
+
+    const platformName =
+      newPlatform === "custom" ? customPlatformName : newPlatform;
+    if (!platformName) {
+      toast.error("Please enter a custom platform name");
+      return;
+    }
+
+    // Check for duplicates
+    if (
+      socialMediaLinks.some(
+        (l) => l.name.toLowerCase() === platformName.toLowerCase(),
+      )
+    ) {
+      toast.error("This platform has already been added");
+      return;
+    }
+
+    addSocialMediaLink({ name: platformName, link: newLink });
+    setNewPlatform("");
+    setCustomPlatformName("");
+    setNewLink("");
+    // toast.success("Social media link added");
+  };
+
+  const getPlaceholder = () => {
+    const platform = SOCIAL_MEDIA_PLATFORMS.find(
+      (p) => p.value === newPlatform,
+    );
+    return platform?.placeholder || "https://...";
   };
 
   // Save as draft
@@ -130,27 +146,72 @@ export function ProfileCompletionForm() {
     console.log("✅ Draft auto-saved to localStorage");
   };
 
+  // Check if form can proceed
+  const canProceedSection1 = () => {
+    return profilePhoto && coverPhoto && portfolioImages.length >= 5;
+  };
+
+  // Section 2 is optional, so always can proceed
+  const canProceedSection2 = () => true;
+
+  const canProceed = () => {
+    if (expandedSection === 1) return canProceedSection1();
+    if (expandedSection === 2) return canProceedSection2();
+    return false;
+  };
+
+  // Handle section 1 save and continue
+  const handleSaveSection1 = () => {
+    if (!canProceedSection1()) {
+      toast.error("Please upload all required photos");
+      return;
+    }
+    markSectionComplete(4, 1);
+    setExpandedSection(2);
+  };
+
   // Handle final save and continue to review
   const handleSaveAndContinue = async () => {
-    if (expandedSection === null) return;
+    // If on section 1, just move to section 2
+    if (expandedSection === 1) {
+      handleSaveSection1();
+      return;
+    }
+
+    // Section 2 - final submission
+    if (!canProceedSection1()) {
+      toast.error("Please complete Section 1 first");
+      setExpandedSection(1);
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({});
 
     try {
-      if (expandedSection === 2) {
-        if (!canProceedSection2()) {
-          toast.error("Please complete availability settings");
-          setIsSubmitting(false);
-          return;
-        }
+      console.log("🚀 Submitting vendor profile...");
+      toast.loading("Saving profile...");
 
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log("🎉 Step 4 Complete - Setup finished!");
-        markSectionComplete(4, 2); // Step 4, Section 2
-        toast.success("Profile setup complete!");
-        router.push("/vendor/setup-review");
+      const result = await submitVendorProfile({
+        profilePhoto: profilePhoto!.id,
+        coverPhoto: coverPhoto!.id,
+        portfolioGallery: portfolioImages.map((img) => img.id),
+        socialMediaLinks:
+          socialMediaLinks.length > 0 ? socialMediaLinks : undefined,
+      });
+
+      toast.dismiss();
+
+      if (!result.success) {
+        setErrors({ general: result.error || "Failed to save profile" });
+        toast.error(result.error || "Failed to save profile");
+        return;
       }
+
+      console.log("🎉 Step 4 Complete - Profile saved!");
+      markSectionComplete(4, 2);
+      toast.success("Profile setup complete!");
+      router.push("/vendor/setup-review");
     } catch (error) {
       console.error("❌ Failed to save:", error);
       setErrors({ general: "Failed to save. Please try again." });
@@ -160,25 +221,10 @@ export function ProfileCompletionForm() {
     }
   };
 
-  const canProceedSection1 = () => {
-    return profilePhoto && coverPhoto && portfolioImages.length >= 5;
-  };
-
-  const canProceedSection2 = () => {
-    const hasAtLeastOneDay = Object.values(workingDays).some((day) => day);
-    return hasAtLeastOneDay && startTime && endTime;
-  };
-
-  const canProceed = () => {
-    if (expandedSection === 1) return canProceedSection1();
-    if (expandedSection === 2) return canProceedSection2();
-    return false;
-  };
-
   const getButtonText = () => {
     if (isSubmitting) return "Saving...";
-    if (expandedSection === 2) return "Complete Setup";
-    return "Save & Continue";
+    if (expandedSection === 1) return "Save & Continue";
+    return "Complete Setup";
   };
 
   const isSection2Locked = !completedSections.has("step4-section1");
@@ -187,13 +233,13 @@ export function ProfileCompletionForm() {
     <div className="space-y-6 flex flex-col min-h-[70vh]">
       <div className="">
         {/* Step Title */}
-        <div>
+        <div className="space-y-1">
           <h2 className="text-lg sm:text-xl font-semibold">
             Profile Completion
           </h2>
-          <h2 className="text-sm sm:text-base font-medium text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Final touches before you go live
-          </h2>
+          </p>
         </div>
 
         {/* Sections */}
@@ -208,13 +254,14 @@ export function ProfileCompletionForm() {
               onToggle={() => toggleSection(1)}
             />
             {expandedSection === 1 && (
-              <div className="px-6 pb-6 space-y-6">
+              <div className="px-6 pb-6 space-y-8">
                 {/* Profile Photo */}
-                <div>
-                  <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
-                    <h3 className="text-sm">
-                      Profile Photo ( Professional headshot or logo )
-                    </h3>
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium">Profile Photo</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Professional headshot or logo • JPG, PNG, WebP up to 10MB
+                    </p>
                   </div>
                   <FileUploadCard
                     onUploadComplete={handleProfilePhotoUpload}
@@ -231,11 +278,12 @@ export function ProfileCompletionForm() {
                 </div>
 
                 {/* Cover Photo */}
-                <div>
-                  <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
-                    <h3 className="text-sm">
-                      Cover Photo ( Showcases your work )
-                    </h3>
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium">Cover Photo</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Showcase your best work • Recommended 1200x400px
+                    </p>
                   </div>
                   <FileUploadCard
                     onUploadComplete={handleCoverPhotoUpload}
@@ -251,21 +299,20 @@ export function ProfileCompletionForm() {
                 </div>
 
                 {/* Portfolio Gallery */}
-                <div>
-                  <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
-                    <h3 className="text-sm">
-                      Portfolio Gallery ( Add at least 5 photos of your best
-                      work )
-                    </h3>
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-medium">Portfolio Gallery</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Add at least 5 photos of your best work (
+                      {portfolioImages.length}/5)
+                    </p>
                   </div>
 
                   <div className="space-y-3">
-                    {/* Always show 5 slots - filled with uploads or empty upload buttons */}
                     {Array.from({ length: 5 }).map((_, index) => {
                       const uploadedFile = portfolioImages[index];
 
                       if (uploadedFile) {
-                        // Show uploaded file
                         return (
                           <FileUploadCard
                             key={uploadedFile.id}
@@ -281,7 +328,6 @@ export function ProfileCompletionForm() {
                           />
                         );
                       } else {
-                        // Show upload slot
                         return (
                           <FileUploadCard
                             key={`slot-${index}`}
@@ -299,22 +345,24 @@ export function ProfileCompletionForm() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handleSaveMediaUpload}
-                  disabled={!canProceedSection1()}
-                  className="w-full sm:w-auto"
-                >
-                  Save & Continue
-                </Button>
+                <div className="pt-4 border-t">
+                  <Button
+                    onClick={handleSaveSection1}
+                    disabled={!canProceedSection1()}
+                    className="w-full sm:w-auto"
+                  >
+                    Save & Continue to Social Links
+                  </Button>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Section 2: Availability Settings */}
+          {/* Section 2: Social Media Links */}
           <div className="border-2 rounded-lg">
             <StepSection
               number={2}
-              title="Availability Settings"
+              title="Social Media Links"
               isCompleted={completedSections.has("step4-section2")}
               isExpanded={expandedSection === 2}
               onToggle={() => !isSection2Locked && toggleSection(2)}
@@ -322,68 +370,104 @@ export function ProfileCompletionForm() {
             />
             {expandedSection === 2 && (
               <div className="px-6 pb-6 space-y-6">
-                <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
-                  <h3 className="text-sm font-medium">Default Availability</h3>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Add your social media profiles to help clients find you
+                  (optional)
+                </p>
 
-                {/* Working Days */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Working Days</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    {Object.entries(workingDays).map(([day, checked]) => (
-                      <div key={day} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={day}
-                          checked={checked}
-                          onCheckedChange={(value) =>
-                            setWorkingDays((prev) => ({
-                              ...prev,
-                              [day]: value as boolean,
-                            }))
-                          }
-                        />
-                        <Label
-                          htmlFor={day}
-                          className="cursor-pointer capitalize"
+                {/* Existing Links */}
+                {socialMediaLinks.length > 0 && (
+                  <div className="space-y-3">
+                    {socialMediaLinks.map((link, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium capitalize">
+                            {link.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {link.link}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeSocialMediaLink(index)}
+                          className="h-8 w-8 text-destructive hover:text-destructive"
                         >
-                          {day}
-                        </Label>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
+                )}
+
+                {/* Add New Link */}
+                <div className="space-y-4 p-4 border rounded-lg bg-card">
+                  <p className="text-sm font-medium">Add a social media link</p>
+
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Select
+                        value={newPlatform}
+                        onValueChange={setNewPlatform}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
+                            <SelectItem
+                              key={platform.value}
+                              value={platform.value}
+                            >
+                              {platform.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {newPlatform === "custom" && (
+                        <Input
+                          placeholder="Enter platform name"
+                          value={customPlatformName}
+                          onChange={(e) =>
+                            setCustomPlatformName(e.target.value)
+                          }
+                        />
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Input
+                        placeholder={getPlaceholder()}
+                        value={newLink}
+                        onChange={(e) => setNewLink(e.target.value)}
+                        type="url"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleAddSocialLink}
+                    disabled={!newPlatform || !newLink}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add Link
+                  </Button>
                 </div>
 
-                {/* Working Hours */}
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium">Working Hours</Label>
-                  <div className="flex items-center gap-4">
-                    <Select value={startTime} onValueChange={setStartTime}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Start time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIME_OPTIONS.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <span className="text-sm text-muted-foreground">to</span>
-                    <Select value={endTime} onValueChange={setEndTime}>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="End time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIME_OPTIONS.map((time) => (
-                          <SelectItem key={time} value={time}>
-                            {time}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                {socialMediaLinks.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No social media links added yet. This section is optional.
+                  </p>
+                )}
               </div>
             )}
           </div>

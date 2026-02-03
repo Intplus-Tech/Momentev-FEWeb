@@ -13,14 +13,9 @@ export default function SetupReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex p-4">
       <div className="max-w-2xl w-full space-y-8">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Ready to Go Live!</h1>
-          <p className="text-muted-foreground">Step 4 of 4</p>
-        </div>
-
-        <div className="bg-card border rounded-lg p-8 space-y-6">
+        <div className="bg-card  space-y-6">
           <div>
             <h2 className="text-lg font-semibold mb-4">
               Your setup is complete! Here's what you've configured:
