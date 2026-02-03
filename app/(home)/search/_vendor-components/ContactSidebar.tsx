@@ -1,4 +1,4 @@
-import { Globe, Mail, Phone, MapPin } from "lucide-react";
+import { Globe, Mail, Phone, MapPin, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface ContactSidebarProps {
@@ -6,6 +6,7 @@ interface ContactSidebarProps {
   email: string;
   phone: string;
   address: string;
+  contactName?: string;
   social: {
     twitter?: string;
     linkedin?: string;
@@ -20,6 +21,7 @@ export function ContactSidebar({
   email,
   phone,
   address,
+  contactName,
   social,
   tags,
 }: ContactSidebarProps) {
@@ -30,6 +32,18 @@ export function ContactSidebar({
         <h3 className="font-medium text-foreground">Contact Information</h3>
 
         <div className="space-y-3">
+          {/* Contact Person */}
+          {contactName && (
+            <div className="flex items-center gap-3 text-sm">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <User className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span className="text-foreground font-medium capitalize">
+                {contactName}
+              </span>
+            </div>
+          )}
+
           {/* Website */}
           <a
             href={`https://${website}`}

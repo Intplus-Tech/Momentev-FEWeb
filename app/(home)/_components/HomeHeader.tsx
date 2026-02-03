@@ -613,7 +613,10 @@ function HomeHeaderContent() {
         <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="w-full max-w-[1200px] mx-auto">
-              <div className="flex items-center justify-center gap-2 py-3">
+              <div
+                className="flex items-center justify-center gap-2 py-3"
+                suppressHydrationWarning
+              >
                 {isCategoriesLoading ? (
                   Array.from({ length: 9 }).map((_, i) => (
                     <Skeleton
@@ -623,7 +626,7 @@ function HomeHeaderContent() {
                   ))
                 ) : (
                   <>
-                    {/* Compute visible categories - ensure selected is always visible */}
+                    {/* Visible category buttons */}
                     {(() => {
                       const MAX_VISIBLE = 7;
                       const selectedIndex = categories.findIndex(
@@ -633,10 +636,8 @@ function HomeHeaderContent() {
                       let visibleCategories: ServiceCategory[];
 
                       if (selectedIndex === -1 || selectedIndex < MAX_VISIBLE) {
-                        // Selected is in first 7 or none selected - show first 7
                         visibleCategories = categories.slice(0, MAX_VISIBLE);
                       } else {
-                        // Selected is in overflow - swap it into position 7
                         visibleCategories = [
                           ...categories.slice(0, MAX_VISIBLE - 1),
                           categories[selectedIndex],
@@ -655,6 +656,7 @@ function HomeHeaderContent() {
                                   ? "bg-[#80808030] text-[#808080] border-[#80808030]"
                                   : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
                               }`}
+                              suppressHydrationWarning
                             >
                               <span>{category.name}</span>
                             </button>

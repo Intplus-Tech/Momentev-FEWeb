@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, MapPin } from "lucide-react";
+import { Home, MapPin, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,8 +16,8 @@ import { Button } from "@/components/ui/button";
 import { PromotedVendorCard, VendorListCard, Pagination } from "./_components";
 import { promotedVendors } from "./_data/vendors";
 import { useVendorSearch, useNearbyVendors } from "./_data/hooks";
+import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
 import { Vendor } from "./_data/types";
-import { AlertCircle } from "lucide-react";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -45,6 +45,18 @@ function SearchContent() {
   const hasUrlLocation = urlLat !== null && urlLong !== null;
   const isNearbySort = sortParam === "distance";
   const shouldUseNearby = hasUrlLocation || isNearbySort;
+
+  // Fetch categories to resolve ID to Name
+  const { data: categoriesData } = useServiceCategories();
+
+  // Find category name
+  const categoryName = useMemo(() => {
+    if (!categoryParam || !categoriesData?.data?.data) return null;
+    const category = categoriesData.data.data.find(
+      (c) => c._id === categoryParam,
+    );
+    return category ? category.name : null;
+  }, [categoryParam, categoriesData]);
 
   // Hook 1: Standard Search
   const searchResult = useVendorSearch({
@@ -96,11 +108,13 @@ function SearchContent() {
   };
 
   // Display Title
-  const displayTitle = categoryParam
-    ? categoryParam.charAt(0).toUpperCase() + categoryParam.slice(1)
+  const displayTitle = categoryName
+    ? categoryName.charAt(0).toUpperCase() + categoryName.slice(1)
     : queryParam
       ? `Results for "${queryParam}"`
-      : "All Vendors";
+      : categoryParam
+        ? "Category Found" // Fallback if name not found yet
+        : "All Vendors";
 
   return (
     <div className="min-h-screen pt-40">

@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { VendorResponse, SearchFilters, NearbyFilters, Vendor, VendorDetailsResponse } from "./types";
+import { VendorServicesResponse, VendorSpecialtiesResponse, VendorReviewsResponse } from "@/types/vendor-services";
 
 const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -14,9 +15,11 @@ const FALLBACK_IMAGE = "https://images.pexels.com/photos/191429/pexels-photo-191
 // --- RAW SCHEMA (Matches API Response) ---
 
 const AddressSchema = z.object({
+  _id: z.string().optional(),
   street: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  postalCode: z.string().optional(),
   country: z.string().optional(),
 }).optional();
 
@@ -50,6 +53,9 @@ const RawVendorSchema = z.object({
     businessDescription: z.string().optional(),
     workdays: z.array(WorkdaySchema).optional(),
     contactInfo: z.object({
+      primaryContactName: z.string().optional(),
+      emailAddress: z.string().optional(),
+      phoneNumber: z.string().optional(),
       addressId: AddressSchema
     }).optional()
   }).optional(),
@@ -281,6 +287,7 @@ const VendorDetailsSchema = z.object({
   }).optional().default({ accepted: false }),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+  __v: z.number().optional().default(0),
   businessProfile: z.object({
     _id: z.string(),
     businessName: z.string().optional(),
@@ -292,6 +299,12 @@ const VendorDetailsSchema = z.object({
       open: z.string(),
       close: z.string()
     })).optional(),
+    contactInfo: z.object({
+      primaryContactName: z.string().optional(),
+      emailAddress: z.string().optional(),
+      phoneNumber: z.string().optional(),
+      addressId: AddressSchema
+    }).optional(),
     serviceArea: z.object({
       areaNames: z.array(z.object({
         city: z.string(),
@@ -303,6 +316,7 @@ const VendorDetailsSchema = z.object({
   }).optional(),
   onboardedAt: z.string().optional(),
   reviewCount: z.number().optional().default(0),
+  id: z.string().optional(),
   profilePhoto: z.string().nullable().optional(),
   coverPhoto: z.string().nullable().optional()
 });
@@ -343,3 +357,89 @@ export async function getVendorDetailsAction(vendorId: string): Promise<VendorDe
   }
 }
 
+// --- Vendor Services Action ---
+
+export async function getVendorServicesAction(vendorId: string): Promise<VendorServicesResponse | null> {
+  try {
+    const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}/services`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      console.error(`Vendor Services API Error ${res.status}: ${res.statusText}`);
+      return null;
+    }
+
+    const data: VendorServicesResponse = await res.json();
+
+    console.log("Vendor Services Data:", JSON.stringify(data, null, 2));
+
+    return data;
+
+  } catch (error) {
+    console.error("getVendorServicesAction error:", error);
+    return null;
+  }
+}
+
+// --- Vendor Specialties Action ---
+
+export async function getVendorSpecialtiesAction(vendorId: string): Promise<VendorSpecialtiesResponse | null> {
+  try {
+    const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}/specialties`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
+
+
+    if (!res.ok) {
+      console.error(`Vendor Specialties API Error ${res.status}: ${res.statusText}`);
+      return null;
+    }
+
+    const data: VendorSpecialtiesResponse = await res.json();
+    console.log("Vendor Specialties Data:", JSON.stringify(data, null, 2));
+    return data;
+
+  } catch (error) {
+    console.error("getVendorSpecialtiesAction error:", error);
+    return null;
+  }
+}
+
+// --- Vendor Reviews Action ---
+
+export async function getVendorReviewsAction(
+  vendorId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<VendorReviewsResponse | null> {
+  try {
+    const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}/reviews?page=${page}&limit=${limit}`;
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      console.error(`Vendor Reviews API Error ${res.status}: ${res.statusText}`);
+      return null;
+    }
+
+    const data: VendorReviewsResponse = await res.json();
+    return data;
+
+  } catch (error) {
+    console.error("getVendorReviewsAction error:", error);
+    return null;
+  }
+}

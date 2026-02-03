@@ -45,6 +45,7 @@ export interface VendorDetails {
   website: string;
   email: string;
   phone: string;
+  contactName?: string;
   tags: string[];
   social: {
     twitter?: string;

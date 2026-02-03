@@ -4,7 +4,12 @@ import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useVendorDetails } from "../_data/hooks";
+import {
+  useVendorDetails,
+  useVendorReviews,
+  useVendorServices,
+  useVendorSpecialties,
+} from "../_data/hooks";
 import {
   VendorGallery,
   VendorHeader,
@@ -32,6 +37,11 @@ export default function VendorPage() {
   // Try fetching from API
   const { data: apiVendor, isLoading, isError } = useVendorDetails(vendorId);
 
+  // Fetch reviews and services (hooks must be called unconditionally)
+  const { data: reviewsData } = useVendorReviews(vendorId);
+  const { data: servicesData } = useVendorServices(vendorId);
+  const { data: specialtiesData } = useVendorSpecialties(vendorId);
+
   // Fallback to mock data if API fails or while loading
   const mockVendor = getVendorBySlug(vendorId);
 
@@ -49,6 +59,12 @@ export default function VendorPage() {
 
   // Use API data if available, otherwise fall back to mock
   const vendorData = apiVendor?.data;
+
+  // Debug: Log all fetched data
+  console.log("Vendor ID:", vendorId);
+  console.log("Services Data:", JSON.stringify(servicesData, null, 2));
+  console.log("Specialties Data:", JSON.stringify(specialtiesData, null, 2));
+  console.log("======================================");
 
   // If no API data and no mock data, show 404
   if (!vendorData && !mockVendor) {
@@ -75,42 +91,67 @@ export default function VendorPage() {
           "No description available.",
         tags: vendorData.socialMediaLinks?.map((s) => s.name) || [],
         website: "",
-        email: "",
-        phone: "",
-        address: vendorData.businessProfile?.serviceArea?.areaNames
-          ? vendorData.businessProfile.serviceArea.areaNames
-              .map((a) => `${a.city}, ${a.state}`)
-              .join(" | ")
-          : "Address not available",
+        email: vendorData.businessProfile?.contactInfo?.emailAddress || "",
+        phone: vendorData.businessProfile?.contactInfo?.phoneNumber || "",
+        contactName:
+          vendorData.businessProfile?.contactInfo?.primaryContactName || "",
+        address: vendorData.businessProfile?.contactInfo?.addressId
+          ? `${vendorData.businessProfile.contactInfo.addressId.street}, ${vendorData.businessProfile.contactInfo.addressId.city}, ${vendorData.businessProfile.contactInfo.addressId.state} ${vendorData.businessProfile.contactInfo.addressId.postalCode}, ${vendorData.businessProfile.contactInfo.addressId.country}`
+          : vendorData.businessProfile?.serviceArea?.areaNames
+            ? vendorData.businessProfile.serviceArea.areaNames
+                .map((a) => `${a.city}, ${a.state}`)
+                .join(" | ")
+            : "Address not available",
         social: Object.fromEntries(
           vendorData.socialMediaLinks?.map((s) => [s.name, s.link]) || [],
         ),
         workdays: formatWorkdaysSummary(vendorData.businessProfile?.workdays),
-        servicesList: [], // Services would need a separate API call
-        reviews: [], // Reviews would need a separate API call
-        reviewStats: {
-          average: vendorData.rate || 0,
-          total: vendorData.reviewCount || 0,
-          distribution: [
-            {
-              stars: 5,
-              count: Math.round((vendorData.reviewCount || 0) * 0.7),
-            },
-            {
-              stars: 4,
-              count: Math.round((vendorData.reviewCount || 0) * 0.2),
-            },
-            {
-              stars: 3,
-              count: Math.round((vendorData.reviewCount || 0) * 0.07),
-            },
-            {
-              stars: 2,
-              count: Math.round((vendorData.reviewCount || 0) * 0.03),
-            },
-            { stars: 1, count: 0 },
-          ],
-        },
+        // Map specialties to services section
+        servicesList: specialtiesData?.data?.data?.length
+          ? [
+              {
+                category: "Specialties",
+                items:
+                  specialtiesData.data.data.map((s) => ({
+                    name: s.serviceSpecialty.name,
+                    description: s.serviceSpecialty.description,
+                    price: `${s.price} (${s.priceCharge?.replace(/_/g, " ") || ""})`,
+                  })) || [],
+              },
+            ]
+          : [],
+        // Map reviews from API
+        reviews:
+          reviewsData?.data?.data?.map((r) => ({
+            id: r._id,
+            author:
+              `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
+              "Anonymous",
+            initials:
+              `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
+              "?",
+            date: new Date(r.createdAt).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            rating: r.rating,
+            category: "",
+            content: r.comment,
+          })) || [],
+        // Calculate real star distribution from reviews
+        reviewStats: (() => {
+          const reviews = reviewsData?.data?.data || [];
+          const distribution = [5, 4, 3, 2, 1].map((stars) => ({
+            stars,
+            count: reviews.filter((r) => Math.round(r.rating) === stars).length,
+          }));
+          return {
+            average: vendorData.rate || 0,
+            total: vendorData.reviewCount || 0,
+            distribution,
+          };
+        })(),
       }
     : mockVendor!;
 
@@ -170,6 +211,7 @@ export default function VendorPage() {
                 website={vendor.website}
                 email={vendor.email}
                 phone={vendor.phone}
+                contactName={vendor.contactName}
                 address={vendor.address}
                 social={vendor.social}
                 tags={vendor.tags}

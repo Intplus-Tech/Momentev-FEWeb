@@ -72,6 +72,22 @@ export interface ServiceArea {
   travelDistance?: string;
 }
 
+export interface AddressInfo {
+  _id: string;
+  street: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface ContactInfo {
+  primaryContactName?: string;
+  emailAddress?: string;
+  phoneNumber?: string;
+  addressId?: AddressInfo;
+}
+
 export interface BusinessProfile {
   _id: string;
   businessName?: string;
@@ -80,6 +96,7 @@ export interface BusinessProfile {
   businessDescription?: string;
   workdays?: Workday[];
   serviceArea?: ServiceArea;
+  contactInfo?: ContactInfo;
 }
 
 export interface SocialMediaLink {
@@ -103,9 +120,11 @@ export interface VendorDetails {
   };
   createdAt: string;
   updatedAt: string;
+  __v: number;
   businessProfile?: BusinessProfile;
   onboardedAt?: string;
   reviewCount: number;
+  id: string;
   profilePhoto: string | null;
   coverPhoto: string | null;
 }
