@@ -26,7 +26,7 @@ export default function Header() {
         <MobileSidebar />
 
         {/* Continue Later Button */}
-        <Button
+        {/* <Button
           variant="ghost"
           onClick={continueLater}
           className="gap-2 text-muted-foreground hover:text-foreground"
@@ -34,7 +34,7 @@ export default function Header() {
           <span className="hidden sm:inline">Continue Later</span>
           <span className="sm:hidden">Exit</span>
           <LogOut className="h-4 w-4" />
-        </Button>
+        </Button> */}
       </div>
     </header>
   );
