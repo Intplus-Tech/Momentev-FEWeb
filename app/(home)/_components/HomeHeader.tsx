@@ -68,7 +68,7 @@ function HomeHeaderContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: user } = useUserProfile();
+  const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { data: categoriesData, isLoading: isCategoriesLoading } =
     useServiceCategories();
 
@@ -316,45 +316,58 @@ function HomeHeaderContent() {
 
           {/* Desktop Nav */}
           <ul className="hidden lg:flex items-center gap-4 xl:gap-6 text-white text-sm">
-            {(!user || user.role === "CUSTOMER") && (
-              <li>
-                <button className="relative px-3 py-2 font-medium group">
-                  <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
-                    Post A Request
-                  </span>
-                  <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
-                </button>
-              </li>
-            )}
-
-            {user ? (
-              <li>
-                <UserDropdown user={user} />
-              </li>
+            {isUserLoading ? (
+              <>
+                <Skeleton className="h-10 w-32 bg-white/20" />
+                <Skeleton className="h-10 w-32 bg-white/20" />
+              </>
             ) : (
-              <li>
-                <Button
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
-                  asChild
-                >
-                  <Link href="/client/auth/log-in">
-                    <CircleUserIcon className="w-4 h-4" />
-                    <span className="hidden xl:inline">Sign in/Sign up</span>
-                    <span className="xl:hidden">Sign in</span>
-                  </Link>
-                </Button>
-              </li>
-            )}
+              <>
+                {(!user || user.role === "CUSTOMER") && (
+                  <li>
+                    <button className="relative px-3 py-2 font-medium group">
+                      <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
+                        Post A Request
+                      </span>
+                      <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
+                    </button>
+                  </li>
+                )}
 
-            {!user && (
-              <li>
-                <Button
-                  asChild
-                  className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                >
-                  <Link href="/vendor/auth/sign-up">List your Business</Link>
-                </Button>
-              </li>
+                {user ? (
+                  <li>
+                    <UserDropdown user={user} />
+                  </li>
+                ) : (
+                  <li>
+                    <Button
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
+                      asChild
+                    >
+                      <Link href="/client/auth/log-in">
+                        <CircleUserIcon className="w-4 h-4" />
+                        <span className="hidden xl:inline">
+                          Sign in/Sign up
+                        </span>
+                        <span className="xl:hidden">Sign in</span>
+                      </Link>
+                    </Button>
+                  </li>
+                )}
+
+                {!user && (
+                  <li>
+                    <Button
+                      asChild
+                      className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <Link href="/vendor/auth/sign-up">
+                        List your Business
+                      </Link>
+                    </Button>
+                  </li>
+                )}
+              </>
             )}
           </ul>
 
@@ -402,44 +415,55 @@ function HomeHeaderContent() {
         >
           <div className="pt-20 pb-8 px-6">
             <ul className="flex flex-col items-center gap-4">
-              {(!user || user.role === "CUSTOMER") && (
-                <li className="w-full max-w-xs">
-                  <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
-                    Post A Request
-                  </button>
-                </li>
-              )}
-
-              {user ? (
-                <li className="w-full max-w-xs flex justify-center">
-                  <UserDropdown user={user} />
-                </li>
+              {isUserLoading ? (
+                <>
+                  <Skeleton className="h-12 w-full max-w-xs" />
+                  <Skeleton className="h-12 w-full max-w-xs" />
+                </>
               ) : (
-                <li className="w-full max-w-xs">
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    asChild
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Link href="/client/auth/log-in">
-                      <CircleUserIcon className="w-4 h-4" />
-                      Sign in/Sign up
-                    </Link>
-                  </Button>
-                </li>
-              )}
+                <>
+                  {(!user || user.role === "CUSTOMER") && (
+                    <li className="w-full max-w-xs">
+                      <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
+                        Post A Request
+                      </button>
+                    </li>
+                  )}
 
-              {!user && (
-                <li className="w-full max-w-xs">
-                  <Button
-                    className="w-full"
-                    asChild
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Link href="/vendor/auth/sign-up">List your Business</Link>
-                  </Button>
-                </li>
+                  {user ? (
+                    <li className="w-full max-w-xs flex justify-center">
+                      <UserDropdown user={user} />
+                    </li>
+                  ) : (
+                    <li className="w-full max-w-xs">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        asChild
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link href="/client/auth/log-in">
+                          <CircleUserIcon className="w-4 h-4" />
+                          Sign in/Sign up
+                        </Link>
+                      </Button>
+                    </li>
+                  )}
+
+                  {!user && (
+                    <li className="w-full max-w-xs">
+                      <Button
+                        className="w-full"
+                        asChild
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link href="/vendor/auth/sign-up">
+                          List your Business
+                        </Link>
+                      </Button>
+                    </li>
+                  )}
+                </>
               )}
             </ul>
           </div>
@@ -490,7 +514,12 @@ function HomeHeaderContent() {
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          {user ? (
+          {isUserLoading ? (
+            <>
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-36" />
+            </>
+          ) : user ? (
             <UserDropdown user={user} />
           ) : (
             <>
@@ -575,7 +604,12 @@ function HomeHeaderContent() {
                 <p className="text-sm font-medium text-muted-foreground mb-3">
                   Account
                 </p>
-                {user ? (
+                {isUserLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : user ? (
                   <div className="flex justify-start">
                     <UserDropdown user={user} />
                   </div>
