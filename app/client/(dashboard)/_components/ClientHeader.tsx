@@ -39,7 +39,7 @@ export const ClientHeader = () => {
           </Button>
 
           <Button size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/client/requests">Create a custom request</Link>
+            <Link href="/client/custom-request">Create a custom request</Link>
           </Button>
         </div>
       </div>
