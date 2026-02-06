@@ -22,7 +22,7 @@ import {
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { ServiceCategory } from "@/types/service";
 
 // Radius options in km

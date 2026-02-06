@@ -16,7 +16,7 @@ import {
   useServiceCategories,
   useServiceSpecialties,
   useSuggestedTags,
-} from "@/lib/react-query/hooks/use-service-categories";
+} from "@/hooks/api/use-service-categories";
 
 // Removed hardcoded SERVICE_CATEGORIES and SPECIALTIES_BY_CATEGORY
 // Now fetched from API via TanStack Query hooks

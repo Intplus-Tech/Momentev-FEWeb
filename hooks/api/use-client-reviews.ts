@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getClientReviews } from "@/lib/actions/reviews";
-import { queryKeys } from "../keys";
+import { queryKeys } from "@/lib/react-query/keys";
 
 export function useClientReviews(customerId: string | undefined, page = 1) {
   return useQuery({

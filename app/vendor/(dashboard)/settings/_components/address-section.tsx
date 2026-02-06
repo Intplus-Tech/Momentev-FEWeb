@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
-import { useUserAddress } from "@/lib/react-query/hooks/use-user-address";
+import { useUserAddress } from "@/hooks/api/use-user-address";
 import { AddressForm } from "@/app/vendor/(dashboard)/settings/_components/address-form";
 import { SectionShell } from "./section-shell";
 import { toast } from "sonner";

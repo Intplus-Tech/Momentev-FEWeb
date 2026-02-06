@@ -5,7 +5,7 @@ import { useSelectedLayoutSegment, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { useIsMobile } from "@/hooks/use-mobile";
 
-import { useConversations } from "@/lib/react-query/hooks/use-chat";
+import { useConversations } from "@/hooks/api/use-chat";
 import type { ChatConversation } from "@/types/chat";
 import type { MessageThread } from "./data";
 import { ThreadSidebar } from "./_components/thread-sidebar";

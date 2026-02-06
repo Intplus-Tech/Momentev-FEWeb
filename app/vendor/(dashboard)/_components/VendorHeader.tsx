@@ -7,7 +7,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import LogoSmall from "@/components/brand/LogoSmall";
 
 import { usePathname } from "next/navigation";
-import { useConversations } from "@/lib/react-query/hooks/use-chat";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useConversations } from "@/hooks/api/use-chat";
 
 export const VendorHeader = () => {
   const pathname = usePathname();

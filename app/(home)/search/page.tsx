@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, MapPin, AlertCircle } from "lucide-react";
+import { Home, MapPin, AlertCircle, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 
 import { PromotedVendorCard, VendorListCard, Pagination } from "./_components";
 import { promotedVendors } from "./_data/vendors";
-import { useVendorSearch, useNearbyVendors } from "./_data/hooks";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useVendors } from "@/hooks/api/use-vendors";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { Vendor } from "./_data/types";
 
 const ITEMS_PER_PAGE = 10;
@@ -44,7 +44,6 @@ function SearchContent() {
   // Determine if we should use nearby search
   const hasUrlLocation = urlLat !== null && urlLong !== null;
   const isNearbySort = sortParam === "distance";
-  const shouldUseNearby = hasUrlLocation || isNearbySort;
 
   // Fetch categories to resolve ID to Name
   const { data: categoriesData } = useServiceCategories();
@@ -58,35 +57,24 @@ function SearchContent() {
     return category ? category.name : null;
   }, [categoryParam, categoriesData]);
 
-  // Hook 1: Standard Search
-  const searchResult = useVendorSearch({
-    q: queryParam,
-    service: categoryParam,
-    specialty: specialtyParam,
-    sort: sortParam,
-    page: pageParam,
-    limit: ITEMS_PER_PAGE,
-  });
-
-  // Hook 2: Nearby Search (uses URL coordinates)
-  const nearbyResult = useNearbyVendors(
-    urlLat,
-    urlLong,
+  // Unified Search Hook
+  const { data, isLoading, isError } = useVendors(
     {
       q: queryParam,
       service: categoryParam,
       specialty: specialtyParam,
+      sort: sortParam,
       page: pageParam,
       limit: ITEMS_PER_PAGE,
     },
-    maxDistanceKm,
+    hasUrlLocation
+      ? {
+          lat: urlLat,
+          long: urlLong,
+          radius: maxDistanceKm,
+        }
+      : undefined,
   );
-
-  // Decide which data to show
-  const canUseNearby = shouldUseNearby && hasUrlLocation;
-  const { data, isLoading, isError } = canUseNearby
-    ? nearbyResult
-    : searchResult;
 
   const vendors = data?.data?.data || [];
   const totalItems = data?.data?.total || 0;
@@ -137,7 +125,7 @@ function SearchContent() {
             </Select>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-4">
-            <h1 className="text-xl sm:text-xl font-semibold">
+            <h1 className="text-xl sm:text-xl flex items-center gap-2 font-semibold">
               <span className="text-foreground">{displayTitle}</span>
               {hasUrlLocation && (
                 <span className="text-muted-foreground flex items-center gap-1 text-sm ml-2">
@@ -193,15 +181,27 @@ function SearchContent() {
                 />
               ))
             ) : vendors.length > 0 ? (
-              vendors.map((vendor) => (
+              vendors.map((vendor: Vendor) => (
                 <VendorListCard key={vendor._id} vendor={vendor} />
               ))
             ) : (
               // Empty State
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {`No vendors found for "${queryParam}"`}
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">No vendors found</h3>
+                <p className="text-muted-foreground max-w-sm mb-6">
+                  {`We couldn't find any vendors matching "${queryParam}". Try adjusting your search term or filters.`}
                 </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    router.push("/search");
+                  }}
+                >
+                  Clear Filters
+                </Button>
               </div>
             )
           }

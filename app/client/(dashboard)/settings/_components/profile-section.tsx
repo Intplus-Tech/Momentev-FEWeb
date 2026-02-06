@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDownIcon, Loader2, UploadCloud } from "lucide-react";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { queryKeys } from "@/lib/react-query/keys";
 
 import { Button } from "@/components/ui/button";

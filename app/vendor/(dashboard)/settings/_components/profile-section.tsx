@@ -12,7 +12,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/react-query/keys";
 
@@ -107,7 +107,7 @@ export const ProfileSection = () => {
       const firstName = names[0];
       const lastName = names.slice(1).join(" ") || "";
 
-      const payload: any = {
+      const payload: Record<string, unknown> = {
         firstName,
         lastName,
         phoneNumber: values.phone,

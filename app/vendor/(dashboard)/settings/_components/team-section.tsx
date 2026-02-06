@@ -38,7 +38,8 @@ import {
   useVendorPermissions,
   useUpdateVendorStaff,
   useDeleteVendorStaff,
-} from "@/lib/react-query/hooks/use-vendor";
+} from "@/hooks/api/use-vendor";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 import { SectionShell } from "./section-shell";
 import { AddMemberModal } from "./add-member-modal";
@@ -158,8 +159,10 @@ export const TeamSection = () => {
         },
       });
       toast.success("Permissions updated successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to update permissions");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update permissions",
+      );
     }
   };
 
@@ -173,8 +176,10 @@ export const TeamSection = () => {
       toast.success("Team member removed");
       if (openMemberId === id) setOpenMemberId(null);
       setMemberToDelete(null);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to remove team member");
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to remove team member",
+      );
     }
   };
 
