@@ -24,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();

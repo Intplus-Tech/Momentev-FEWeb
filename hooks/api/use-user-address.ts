@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getAddress } from '@/lib/actions/address';
 import { queryKeys } from '@/lib/react-query/keys';
-import { useUserProfile } from '@/lib/react-query/hooks/use-user-profile';
+import { useUserProfile } from '@/hooks/api/use-user-profile';
 
 export function useUserAddress() {
   const { data: user } = useUserProfile();

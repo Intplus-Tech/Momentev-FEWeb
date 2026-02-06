@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
 import { useState, useEffect, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { fetchServiceSpecialtiesByCategory } from "@/lib/actions/service-categories";
 import type { ServiceCategory, ServiceSpecialty } from "@/types/service";
 

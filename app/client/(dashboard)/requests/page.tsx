@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { Button } from "@/components/ui/button";
-import { useCustomerRequests } from "@/lib/react-query/hooks/use-custom-requests";
+import { useCustomerRequests } from "@/hooks/api/use-custom-requests";
 import { RequestCard } from "./_components/RequestCard";
 import { EmptyState } from "./_components/EmptyState";
 import { RequestsSkeleton } from "./_components/RequestsSkeleton";
 
-export default function ClientRequestsPage() {
+function ClientRequestsContent() {
   const searchParams = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
   const limit = 10;
@@ -50,5 +51,13 @@ export default function ClientRequestsPage() {
         )}
       </div>
     </section>
+  );
+}
+
+export default function ClientRequestsPage() {
+  return (
+    <Suspense fallback={<RequestsSkeleton />}>
+      <ClientRequestsContent />
+    </Suspense>
   );
 }

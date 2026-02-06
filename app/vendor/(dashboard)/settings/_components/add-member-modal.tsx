@@ -19,7 +19,7 @@ import { type VendorPermissionInput } from "@/lib/actions/user";
 import {
   useVendorPermissions,
   useAddVendorStaff,
-} from "@/lib/react-query/hooks/use-vendor";
+} from "@/hooks/api/use-vendor";
 
 interface AddMemberModalProps {
   open: boolean;
@@ -117,8 +117,10 @@ export function AddMemberModal({
       setSelectedPermissions(initialstate);
 
       onMemberAdded?.();
-    } catch (error: any) {
-      toast.error(error.message || "Failed to add team member");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add team member",
+      );
     }
   };
 

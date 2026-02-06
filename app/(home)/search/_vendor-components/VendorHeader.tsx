@@ -4,7 +4,7 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 interface VendorHeaderProps {
   name: string;

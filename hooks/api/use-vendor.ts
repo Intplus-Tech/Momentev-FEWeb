@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "../keys";
 import {
   getVendorStaff,
   getVendorPermissions,
@@ -8,6 +7,7 @@ import {
   deleteVendorStaff,
   type VendorPermissionInput,
 } from "@/lib/actions/user";
+import { queryKeys } from "@/lib/react-query/keys";
 
 export type StaffMember = {
   _id: string;

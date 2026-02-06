@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  useMotionValueEvent,
+} from "framer-motion";
 import Logo from "@/components/brand/logo";
 import {
   Search,
@@ -15,9 +21,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { UserDropdown } from "./UserDropdown";
+import { useLocation } from "@/hooks/use-location";
 import {
   Sheet,
   SheetClose,
@@ -59,11 +66,32 @@ function HomeHeaderContent() {
   const isHome = pathname === "/";
 
   // Location state
-  const [userLat, setUserLat] = useState<number | null>(null);
-  const [userLong, setUserLong] = useState<number | null>(null);
+  const {
+    lat: userLat,
+    long: userLong,
+    loading: isLocating,
+    requestLocation: requestLocationInternal,
+    clearLocation: handleClearLocationHook,
+    setLocationState,
+  } = useLocation();
+
   const [selectedRadius, setSelectedRadius] = useState(50);
-  const [isLocating, setIsLocating] = useState(false);
   const [locationLabel, setLocationLabel] = useState("Set location");
+
+  const handleGetLocation = () => {
+    requestLocationInternal();
+    // ideally we'd set label on success, but for now we can watch state or just set it
+    // The previous code set it on success.
+  };
+
+  useEffect(() => {
+    if (userLat && userLong) {
+      setLocationLabel("My location");
+    }
+  }, [userLat, userLong]);
+  /* Scroll logic */
+  const [width, setWidth] = useState(0);
+  const slideContainerRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -97,8 +125,11 @@ function HomeHeaderContent() {
     const radiusParam = searchParams.get("radius");
 
     if (latParam && longParam) {
-      setUserLat(parseFloat(latParam));
-      setUserLong(parseFloat(longParam));
+      setLocationState((prev) => ({
+        ...prev,
+        lat: parseFloat(latParam),
+        long: parseFloat(longParam),
+      }));
       setLocationLabel("My location");
     }
 
@@ -131,6 +162,19 @@ function HomeHeaderContent() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
+  const x = useMotionValue(0);
+  const leftOpacity = useTransform(x, [0, -20], [0, 1]);
+  const rightOpacity = useTransform(x, [-width + 20, -width], [1, 0]);
+
+  useEffect(() => {
+    if (slideContainerRef.current) {
+      // Calculate the draggable constraint based on difference between content width and container width
+      const scrollWidth = slideContainerRef.current.scrollWidth;
+      const offsetWidth = slideContainerRef.current.offsetWidth;
+      setWidth(scrollWidth - offsetWidth);
+    }
+  }, [categoriesData, menuOpen]); // Recalculate when data loads or layout changes
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
@@ -143,48 +187,9 @@ function HomeHeaderContent() {
     };
   }, [menuOpen]);
 
-  // Request user's geolocation
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported", {
-        description: "Your browser doesn't support geolocation.",
-      });
-      return;
-    }
-
-    setIsLocating(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLat(position.coords.latitude);
-        setUserLong(position.coords.longitude);
-        setLocationLabel("My location");
-        setIsLocating(false);
-        toast.success("Location set", {
-          description: "We'll show vendors near you.",
-        });
-      },
-      (error) => {
-        setIsLocating(false);
-        let message = "Could not get your location";
-        if (error.code === error.PERMISSION_DENIED) {
-          message =
-            "Location access denied. Please enable it in browser settings.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = "Location unavailable";
-        } else if (error.code === error.TIMEOUT) {
-          message = "Location request timed out";
-        }
-        toast.error("Location error", { description: message });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
-    );
-  };
-
   // Clear location
   const handleClearLocation = () => {
-    setUserLat(null);
-    setUserLong(null);
+    handleClearLocationHook();
     setLocationLabel("Set location");
   };
 
@@ -663,77 +668,47 @@ function HomeHeaderContent() {
                     />
                   ))
                 ) : (
-                  <>
-                    {/* Visible category buttons */}
-                    {(() => {
-                      const MAX_VISIBLE = 7;
-                      const selectedIndex = categories.findIndex(
-                        (c: ServiceCategory) => c._id === selectedCategory,
-                      );
+                  /* Scrollable Container */
+                  <div
+                    ref={slideContainerRef}
+                    className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
+                  >
+                    {/* Left Gradient Indicator */}
+                    <motion.div
+                      className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
+                      style={{ opacity: leftOpacity }}
+                    />
 
-                      let visibleCategories: ServiceCategory[];
+                    {/* Right Gradient Indicator */}
+                    <motion.div
+                      className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-background  via to-transparent z-10 pointer-events-none"
+                      style={{ opacity: rightOpacity }}
+                    />
 
-                      if (selectedIndex === -1 || selectedIndex < MAX_VISIBLE) {
-                        visibleCategories = categories.slice(0, MAX_VISIBLE);
-                      } else {
-                        visibleCategories = [
-                          ...categories.slice(0, MAX_VISIBLE - 1),
-                          categories[selectedIndex],
-                        ];
-                      }
-
-                      return visibleCategories.map(
-                        (category: ServiceCategory) => {
-                          const isActive = selectedCategory === category._id;
-                          return (
-                            <button
-                              key={category._id}
-                              onClick={() => handleCategoryClick(category._id)}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
-                                isActive
-                                  ? "bg-[#80808030] text-[#808080] border-[#80808030]"
-                                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                              }`}
-                              suppressHydrationWarning
-                            >
-                              <span>{category.name}</span>
-                            </button>
-                          );
-                        },
-                      );
-                    })()}
-
-                    {/* "All" dropdown with all categories */}
-                    {categories.length > 0 && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border">
-                            <span>All</span>
-                            <ChevronDown className="w-3 h-3" />
+                    <motion.div
+                      drag="x"
+                      dragConstraints={{ right: 0, left: -width }}
+                      style={{ x }}
+                      className="flex gap-2 w-fit"
+                    >
+                      {categories.map((category: ServiceCategory) => {
+                        const isActive = selectedCategory === category._id;
+                        return (
+                          <button
+                            key={category._id}
+                            onClick={() => handleCategoryClick(category._id)}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/20 font-medium"
+                                : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                            }`}
+                          >
+                            {category.name}
                           </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-fit">
-                          <ScrollArea className="h-[300px] ">
-                            {categories.map((category: ServiceCategory) => (
-                              <DropdownMenuItem
-                                key={category._id}
-                                onClick={() =>
-                                  handleCategoryClick(category._id)
-                                }
-                                className={
-                                  selectedCategory === category._id
-                                    ? "bg-primary/10 text-primary font-medium whitespace-nowrap"
-                                    : ""
-                                }
-                              >
-                                {category.name}
-                              </DropdownMenuItem>
-                            ))}
-                          </ScrollArea>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </>
+                        );
+                      })}
+                    </motion.div>
+                  </div>
                 )}
               </div>
             </div>

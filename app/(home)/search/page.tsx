@@ -15,8 +15,8 @@ import { Button } from "@/components/ui/button";
 
 import { PromotedVendorCard, VendorListCard, Pagination } from "./_components";
 import { promotedVendors } from "./_data/vendors";
-import { useVendorSearch, useNearbyVendors } from "./_data/hooks";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useVendors } from "@/hooks/api/use-vendors";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { Vendor } from "./_data/types";
 
 const ITEMS_PER_PAGE = 10;
@@ -44,7 +44,6 @@ function SearchContent() {
   // Determine if we should use nearby search
   const hasUrlLocation = urlLat !== null && urlLong !== null;
   const isNearbySort = sortParam === "distance";
-  const shouldUseNearby = hasUrlLocation || isNearbySort;
 
   // Fetch categories to resolve ID to Name
   const { data: categoriesData } = useServiceCategories();
@@ -58,35 +57,24 @@ function SearchContent() {
     return category ? category.name : null;
   }, [categoryParam, categoriesData]);
 
-  // Hook 1: Standard Search
-  const searchResult = useVendorSearch({
-    q: queryParam,
-    service: categoryParam,
-    specialty: specialtyParam,
-    sort: sortParam,
-    page: pageParam,
-    limit: ITEMS_PER_PAGE,
-  });
-
-  // Hook 2: Nearby Search (uses URL coordinates)
-  const nearbyResult = useNearbyVendors(
-    urlLat,
-    urlLong,
+  // Unified Search Hook
+  const { data, isLoading, isError } = useVendors(
     {
       q: queryParam,
       service: categoryParam,
       specialty: specialtyParam,
+      sort: sortParam,
       page: pageParam,
       limit: ITEMS_PER_PAGE,
     },
-    maxDistanceKm,
+    hasUrlLocation
+      ? {
+          lat: urlLat,
+          long: urlLong,
+          radius: maxDistanceKm,
+        }
+      : undefined,
   );
-
-  // Decide which data to show
-  const canUseNearby = shouldUseNearby && hasUrlLocation;
-  const { data, isLoading, isError } = canUseNearby
-    ? nearbyResult
-    : searchResult;
 
   const vendors = data?.data?.data || [];
   const totalItems = data?.data?.total || 0;
@@ -193,7 +181,7 @@ function SearchContent() {
                 />
               ))
             ) : vendors.length > 0 ? (
-              vendors.map((vendor) => (
+              vendors.map((vendor: Vendor) => (
                 <VendorListCard key={vendor._id} vendor={vendor} />
               ))
             ) : (

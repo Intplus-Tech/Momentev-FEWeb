@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { ClientHeader } from "./_components/ClientHeader";
 import { ClientSidebar } from "./_components/ClientSidebar";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 export default function ClientDashboardLayout({
   children,

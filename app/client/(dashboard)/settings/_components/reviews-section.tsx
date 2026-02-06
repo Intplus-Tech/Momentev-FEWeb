@@ -8,8 +8,8 @@ import {
 import { format } from "date-fns";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
-import { useClientReviews } from "@/lib/react-query/hooks/use-client-reviews";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useClientReviews } from "@/hooks/api/use-client-reviews";
 
 import { SectionShell } from "./section-shell";
 
