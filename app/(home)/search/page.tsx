@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Home, MapPin, AlertCircle } from "lucide-react";
+import { Home, MapPin, AlertCircle, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -137,7 +137,7 @@ function SearchContent() {
             </Select>
           </div>
           <div className="flex items-center justify-between sm:justify-end gap-4">
-            <h1 className="text-xl sm:text-xl font-semibold">
+            <h1 className="text-xl sm:text-xl flex items-center gap-2 font-semibold">
               <span className="text-foreground">{displayTitle}</span>
               {hasUrlLocation && (
                 <span className="text-muted-foreground flex items-center gap-1 text-sm ml-2">
@@ -198,10 +198,22 @@ function SearchContent() {
               ))
             ) : (
               // Empty State
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {`No vendors found for "${queryParam}"`}
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="w-16 h-16 bg-muted/50 rounded-full flex items-center justify-center mb-4">
+                  <Search className="w-8 h-8 text-muted-foreground" />
+                </div>
+                <h3 className="text-xl font-semibold mb-2">No vendors found</h3>
+                <p className="text-muted-foreground max-w-sm mb-6">
+                  {`We couldn't find any vendors matching "${queryParam}". Try adjusting your search term or filters.`}
                 </p>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    router.push("/search");
+                  }}
+                >
+                  Clear Filters
+                </Button>
               </div>
             )
           }

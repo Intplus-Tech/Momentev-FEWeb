@@ -1,5 +1,7 @@
 # Momentev Frontend - Consumed API Endpoints
 
+> **Last Updated:** 2026-02-05
+
 This document lists all the backend API endpoints consumed by the Momentev frontend application, organized by module.
 
 **Base URL**: `${BACKEND_URL}/api/v1`
@@ -61,12 +63,15 @@ This document lists all the backend API endpoints consumed by the Momentev front
 | `PATCH`  | `/vendors/{vendorId}/staff/{staffId}` | Update vendor staff member       | ✅            | `lib/actions/user.ts` |
 | `DELETE` | `/vendors/{vendorId}/staff/{staffId}` | Delete vendor staff member       | ✅            | `lib/actions/user.ts` |
 
-### Vendor Search
+### Vendor Search & Formatting (Public)
 
-| Method | Endpoint          | Description                         | Auth Required | Source File                          |
-| ------ | ----------------- | ----------------------------------- | ------------- | ------------------------------------ |
-| `GET`  | `/vendors/search` | Search vendors with filters         | ❌            | `app/(home)/search/_data/actions.ts` |
-| `GET`  | `/vendors/nearby` | Get nearby vendors (location-based) | ❌            | `app/(home)/search/_data/actions.ts` |
+| Method | Endpoint                          | Description                         | Auth Required | Source File                          |
+| ------ | --------------------------------- | ----------------------------------- | ------------- | ------------------------------------ |
+| `GET`  | `/vendors/search`                 | Search vendors with filters         | ❌            | `app/(home)/search/_data/actions.ts` |
+| `GET`  | `/vendors/nearby`                 | Get nearby vendors (location-based) | ❌            | `app/(home)/search/_data/actions.ts` |
+| `GET`  | `/vendors/{vendorId}/services`    | Get vendor's services               | ❌            | `app/(home)/search/_data/actions.ts` |
+| `GET`  | `/vendors/{vendorId}/specialties` | Get vendor's specialties            | ❌            | `app/(home)/search/_data/actions.ts` |
+| `GET`  | `/vendors/{vendorId}/reviews`     | Get vendor's reviews                | ❌            | `app/(home)/search/_data/actions.ts` |
 
 ---
 
@@ -92,7 +97,7 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ---
 
-## ⭐ Reviews
+## ⭐ Reviews (Customer)
 
 | Method | Endpoint                                            | Description          | Auth Required | Source File              |
 | ------ | --------------------------------------------------- | -------------------- | ------------- | ------------------------ |
@@ -128,9 +133,10 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ## 📤 File Upload
 
-| Method | Endpoint   | Description            | Auth Required | Source File             |
-| ------ | ---------- | ---------------------- | ------------- | ----------------------- |
-| `POST` | `/uploads` | Upload file (max 10MB) | ✅            | `lib/actions/upload.ts` |
+| Method | Endpoint        | Description            | Auth Required | Source File             |
+| ------ | --------------- | ---------------------- | ------------- | ----------------------- |
+| `POST` | `/uploads`      | Upload file (max 10MB) | ✅            | `lib/actions/upload.ts` |
+| `GET`  | `/uploads/{id}` | Get file details by ID | ✅            | `lib/actions/upload.ts` |
 
 ---
 

@@ -24,8 +24,8 @@ export interface BudgetPlanningData {
 }
 
 export interface AdditionalDetailsData {
-  visualInspirationLinks: string[];
-  uploadedImages: string[];
+  inspirationLinks: string[];
+  uploadedFiles: { id: string; url: string; name: string }[];
 }
 
 interface CustomRequestStore {

@@ -253,7 +253,11 @@ function HomeHeaderContent() {
               <MapPin className="w-4 h-4 text-muted-foreground" />
             )}
             <span className={isMobile ? "" : "hidden lg:inline"}>
-              {isLocating ? "Locating..." : locationLabel}
+              {isLocating
+                ? "Locating..."
+                : userLat && userLong
+                  ? `My location (${selectedRadius} km)`
+                  : locationLabel}
             </span>
           </span>
           <ChevronDown className="w-3 h-3 text-muted-foreground" />
@@ -507,7 +511,7 @@ function HomeHeaderContent() {
               onClick={handleSearch}
               className="ml-4 rounded-r-md px-6 min-w-[160px] border-none"
             >
-              Find
+              {userLat && userLong ? "Apply" : "Find"}
             </Button>
           </div>
         </div>

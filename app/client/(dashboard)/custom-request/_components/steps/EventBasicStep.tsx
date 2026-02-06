@@ -4,63 +4,83 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelTextarea } from "@/components/ui/floating-label-textarea";
 import { FloatingLabelSelect } from "@/components/ui/floating-label-select";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useState, useEffect } from "react";
-import { Calendar } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { Button } from "@/components/ui/button";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  eventBasicSchema,
+  EventBasicFormData,
+  EVENT_TYPES,
+  TIME_OPTIONS,
+} from "../../_schemas/eventBasicSchema";
 
-const EVENT_TYPES = [
-  "Wedding",
-  "Corporate Event",
-  "Birthday Party",
-  "Anniversary",
-  "Other",
-];
+type CommitRegistrar = (fn: () => void) => void;
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, i) => {
-  const hour = i.toString().padStart(2, "0");
-  return { value: `${hour}:00`, label: `${hour}:00` };
-});
-
-export function EventBasicStep() {
+export function EventBasicStep({
+  registerCommit,
+}: {
+  registerCommit?: CommitRegistrar;
+}) {
   const eventBasic = useCustomRequestStore((state) => state.eventBasic);
   const setEventBasic = useCustomRequestStore((state) => state.setEventBasic);
   const setIsEventBasicValid = useCustomRequestStore(
     (state) => state.setIsEventBasicValid,
   );
 
-  const [formData, setFormData] = useState(
-    eventBasic || {
-      eventType: "",
-      eventDate: "",
-      eventStartTime: "",
-      eventEndTime: "",
-      guestCount: 0,
-      location: "",
-      eventName: "",
-      eventDescription: "",
+  const {
+    control,
+    watch,
+    getValues,
+    formState: { isValid, errors },
+  } = useForm<EventBasicFormData>({
+    resolver: zodResolver(eventBasicSchema),
+    mode: "onChange",
+    defaultValues: {
+      eventType: eventBasic?.eventType || "",
+      otherEventType: eventBasic?.otherEventType || "",
+      eventDate: eventBasic?.eventDate || "",
+      eventStartTime: eventBasic?.eventStartTime || "",
+      eventEndTime: eventBasic?.eventEndTime || "",
+      guestCount: eventBasic?.guestCount || 0,
+      location: eventBasic?.location || "",
+      eventName: eventBasic?.eventName || "",
+      eventDescription: eventBasic?.eventDescription || "",
     },
-  );
+  });
 
-  const isSection1Valid =
-    formData.eventType && formData.eventDate && formData.eventStartTime;
-  const isSection2Valid = formData.guestCount > 0 && formData.location;
-  const isSection3Valid = formData.eventName && formData.eventDescription;
+  const [dateOpen, setDateOpen] = useState(false);
+  const eventType = watch("eventType");
+  const eventDateValue = watch("eventDate");
 
+  const selectedDate = eventDateValue ? new Date(eventDateValue) : undefined;
+
+  const formatDateValue = (date: Date) => date.toISOString().slice(0, 10);
+
+  // Update store validity when form validity changes
   useEffect(() => {
-    const allValid = isSection1Valid && isSection2Valid && isSection3Valid;
-    setIsEventBasicValid(Boolean(allValid));
-  }, [
-    formData,
-    isSection1Valid,
-    isSection2Valid,
-    isSection3Valid,
-    setIsEventBasicValid,
-  ]);
+    setIsEventBasicValid(isValid);
+  }, [isValid, setIsEventBasicValid]);
 
-  const handleInputChange = (field: string, value: any) => {
-    const newData = { ...formData, [field]: value };
-    setFormData(newData);
-    setEventBasic(newData);
-  };
+  // Memoize commit function to avoid re-registering on every render
+  const commitData = useCallback(() => {
+    setEventBasic(getValues());
+  }, [getValues, setEventBasic]);
+
+  // Register commit function to persist when parent advances
+  useEffect(() => {
+    if (!registerCommit) return;
+    registerCommit(commitData);
+  }, [registerCommit, commitData]);
 
   return (
     <div className="space-y-4">
@@ -71,31 +91,41 @@ export function EventBasicStep() {
             1. Event Type
           </span>
         </div>
-        <div className="p-4 space-y-3">
-          {EVENT_TYPES.map((type) => (
-            <label
-              key={type}
-              className="flex items-center gap-3 cursor-pointer"
-            >
-              <input
-                type="radio"
-                name="eventType"
-                value={type}
-                checked={formData.eventType === type}
-                onChange={(e) => handleInputChange("eventType", e.target.value)}
-                className="w-4 h-4 text-primary border-gray-300 focus:ring-primary"
-              />
-              <span className="text-sm">{type}</span>
-            </label>
-          ))}
-          {formData.eventType === "Other" && (
-            <FloatingLabelInput
-              label="Specify event type"
-              value={formData.otherEventType || ""}
-              onChange={(e) =>
-                handleInputChange("otherEventType", e.target.value)
-              }
-              className="mt-2"
+        <div className="p-4">
+          <Controller
+            name="eventType"
+            control={control}
+            render={({ field }) => (
+              <RadioGroup value={field.value} onValueChange={field.onChange}>
+                <div className="space-y-3">
+                  {EVENT_TYPES.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <RadioGroupItem value={type} id={type} />
+                      <label htmlFor={type} className="text-sm cursor-pointer">
+                        {type}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              </RadioGroup>
+            )}
+          />
+          {errors.eventType && (
+            <FieldError>{errors.eventType.message}</FieldError>
+          )}
+          {eventType === "Other" && (
+            <Controller
+              name="otherEventType"
+              control={control}
+              render={({ field }) => (
+                <FloatingLabelInput
+                  label="Specify event type"
+                  value={field.value || ""}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  className="mt-2"
+                />
+              )}
             />
           )}
         </div>
@@ -109,52 +139,124 @@ export function EventBasicStep() {
           </span>
         </div>
         <div className="p-4 space-y-4">
-          <FloatingLabelInput
-            label="Event Date"
-            type="date"
-            value={formData.eventDate}
-            onChange={(e) => handleInputChange("eventDate", e.target.value)}
-            suffix={<Calendar className="w-4 h-4 text-muted-foreground" />}
+          <Controller
+            name="eventDate"
+            control={control}
+            render={({ field }) => (
+              <Field className="w-full">
+                <FieldLabel htmlFor="event-date">Event Date</FieldLabel>
+                <Popover open={dateOpen} onOpenChange={setDateOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="event-date"
+                      variant="outline"
+                      className="w-full justify-between font-normal"
+                    >
+                      {selectedDate
+                        ? selectedDate.toLocaleDateString("en-GB")
+                        : "Select date"}
+                      <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-auto overflow-hidden p-0"
+                    align="start"
+                  >
+                    <Calendar
+                      mode="single"
+                      selected={selectedDate}
+                      defaultMonth={selectedDate}
+                      captionLayout="dropdown"
+                      onSelect={(date) => {
+                        if (!date) return;
+                        field.onChange(formatDateValue(date));
+                        setDateOpen(false);
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+                {errors.eventDate && (
+                  <FieldError>{errors.eventDate.message}</FieldError>
+                )}
+              </Field>
+            )}
           />
 
           <div className="grid grid-cols-2 gap-4 items-center">
-            <FloatingLabelSelect
-              label="Event Start Time"
-              options={TIME_OPTIONS}
-              value={formData.eventStartTime}
-              onValueChange={(value) =>
-                handleInputChange("eventStartTime", value)
-              }
+            <Controller
+              name="eventStartTime"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FloatingLabelSelect
+                    label="Event Start Time"
+                    options={TIME_OPTIONS}
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  />
+                  {errors.eventStartTime && (
+                    <FieldError>{errors.eventStartTime.message}</FieldError>
+                  )}
+                </Field>
+              )}
             />
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">to</span>
               <div className="flex-1">
-                <FloatingLabelSelect
-                  label="Event End Time"
-                  options={TIME_OPTIONS}
-                  value={formData.eventEndTime}
-                  onValueChange={(value) =>
-                    handleInputChange("eventEndTime", value)
-                  }
+                <Controller
+                  name="eventEndTime"
+                  control={control}
+                  render={({ field }) => (
+                    <FloatingLabelSelect
+                      label="Event End Time"
+                      options={TIME_OPTIONS}
+                      value={field.value || ""}
+                      onValueChange={field.onChange}
+                    />
+                  )}
                 />
               </div>
             </div>
           </div>
 
-          <FloatingLabelInput
-            label="Guest Count"
-            type="number"
-            min={1}
-            value={formData.guestCount || ""}
-            onChange={(e) =>
-              handleInputChange("guestCount", parseInt(e.target.value) || 0)
-            }
+          <Controller
+            name="guestCount"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FloatingLabelInput
+                  label="Guest Count"
+                  type="number"
+                  min={1}
+                  value={field.value || ""}
+                  onChange={(e) =>
+                    field.onChange(parseInt(e.target.value) || 0)
+                  }
+                  onBlur={field.onBlur}
+                />
+                {errors.guestCount && (
+                  <FieldError>{errors.guestCount.message}</FieldError>
+                )}
+              </Field>
+            )}
           />
 
-          <FloatingLabelInput
-            label="Location"
-            value={formData.location}
-            onChange={(e) => handleInputChange("location", e.target.value)}
+          <Controller
+            name="location"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FloatingLabelInput
+                  label="Location"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+                {errors.location && (
+                  <FieldError>{errors.location.message}</FieldError>
+                )}
+              </Field>
+            )}
           />
         </div>
       </div>
@@ -167,20 +269,42 @@ export function EventBasicStep() {
           </span>
         </div>
         <div className="p-4 space-y-4">
-          <FloatingLabelInput
-            label="Event Name"
-            value={formData.eventName}
-            onChange={(e) => handleInputChange("eventName", e.target.value)}
+          <Controller
+            name="eventName"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FloatingLabelInput
+                  label="Event Name"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                />
+                {errors.eventName && (
+                  <FieldError>{errors.eventName.message}</FieldError>
+                )}
+              </Field>
+            )}
           />
 
-          <FloatingLabelTextarea
-            label="Event Description"
-            value={formData.eventDescription}
-            onChange={(e) =>
-              handleInputChange("eventDescription", e.target.value)
-            }
-            maxLength={500}
-            showCharCount
+          <Controller
+            name="eventDescription"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FloatingLabelTextarea
+                  label="Event Description"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  maxLength={500}
+                  showCharCount
+                />
+                {errors.eventDescription && (
+                  <FieldError>{errors.eventDescription.message}</FieldError>
+                )}
+              </Field>
+            )}
           />
         </div>
       </div>

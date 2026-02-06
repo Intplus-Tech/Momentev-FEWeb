@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "./_components/ProgressBar";
 import { useCustomRequestStore } from "./_store/customRequestStore";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import {
@@ -29,6 +29,8 @@ const STEPS = [
 export default function CustomRequestPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const hydrated = useRef(false);
+  const commitRef = useRef<(() => void) | null>(null);
 
   // Store state
   const currentStep = useCustomRequestStore((state) => state.currentStep);
@@ -50,9 +52,75 @@ export default function CustomRequestPage() {
   );
   const reset = useCustomRequestStore((state) => state.reset);
 
+  // Hydrate step from URL or localStorage
   useEffect(() => {
+    if (hydrated.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const urlStep = Number(params.get("step"));
+    const storedStep = Number(localStorage.getItem("customRequestStep"));
+
+    const validStep = (step: number) => step >= 1 && step <= 5;
+    const nextStep = validStep(urlStep)
+      ? urlStep
+      : validStep(storedStep)
+        ? storedStep
+        : 1;
+
+    if (nextStep !== currentStep) {
+      setCurrentStep(nextStep);
+    }
+
+    hydrated.current = true;
     setMounted(true);
-  }, []);
+  }, [currentStep, setCurrentStep]);
+
+  // Keep URL + localStorage in sync with current step
+  useEffect(() => {
+    if (!mounted) return;
+
+    localStorage.setItem("customRequestStep", String(currentStep));
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("step") !== String(currentStep)) {
+      params.set("step", String(currentStep));
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
+  }, [currentStep, mounted, router]);
+
+  // Warn before leaving the page (refresh/close/back)
+  useEffect(() => {
+    if (!mounted) return;
+    const handler = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [mounted]);
+
+  // Intercept in-app link navigation to prompt draft saving (placeholder)
+  useEffect(() => {
+    if (!mounted) return;
+    const onLinkClick = (e: MouseEvent) => {
+      const target = (e.target as HTMLElement).closest("a");
+      if (!target) return;
+      const href = target.getAttribute("href");
+      if (!href || href.startsWith("#") || href.startsWith("javascript"))
+        return;
+      if (href === window.location.pathname + window.location.search) return;
+      const confirmed = window.confirm(
+        "You have unsaved changes. Save as draft before leaving?",
+      );
+      if (!confirmed) {
+        e.preventDefault();
+        e.stopPropagation();
+      } else {
+        toast.message("Draft saving coming soon");
+      }
+    };
+    document.addEventListener("click", onLinkClick, true);
+    return () => document.removeEventListener("click", onLinkClick, true);
+  }, [mounted]);
 
   if (!mounted) return null;
 
@@ -81,6 +149,8 @@ export default function CustomRequestPage() {
       return;
     }
 
+    commitRef.current?.();
+
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
       toast.success(`Step ${currentStep} saved!`);
@@ -93,20 +163,73 @@ export default function CustomRequestPage() {
     }
   };
 
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("Event posted successfully!");
+  const eventBasic = useCustomRequestStore((state) => state.eventBasic);
+  const vendorNeeds = useCustomRequestStore((state) => state.vendorNeeds);
+  const budgetPlanning = useCustomRequestStore((state) => state.budgetPlanning);
+  const additionalDetails = useCustomRequestStore(
+    (state) => state.additionalDetails,
+  );
 
-      // Reset form and redirect
-      setTimeout(() => {
-        reset();
-        router.push("/client/dashboard");
-      }, 1000);
+  const handleSubmit = async () => {
+    commitRef.current?.();
+    setIsSubmitting(true);
+
+    if (!eventBasic || !vendorNeeds || !budgetPlanning) {
+      toast.error("Missing required event information");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      // Construct payload
+      const payload = {
+        eventDetails: {
+          title: eventBasic.eventName,
+          description: eventBasic.eventDescription,
+          startDate: eventBasic.eventDate, // Note: Ensure backend expects YYYY-MM-DD or handle ISO conversion if needed
+          startTime: eventBasic.eventStartTime,
+          endTime: eventBasic.eventEndTime,
+          guestCount: eventBasic.guestCount,
+          location: eventBasic.location,
+          eventType:
+            eventBasic.eventType === "Other"
+              ? eventBasic.otherEventType || "Other"
+              : eventBasic.eventType,
+        },
+        vendorNeeds: {
+          categories: vendorNeeds.selectedCategories,
+          specificRequirements: vendorNeeds.specificRequirements,
+        },
+        budgetAllocations: Object.entries(budgetPlanning.budgetPerVendor).map(
+          ([category, amount]) => ({
+            categoryName: category,
+            budgetedAmount: amount,
+          }),
+        ),
+        attachments: additionalDetails?.uploadedFiles.map((file) => ({
+          fileUrl: file.url,
+          fileName: file.name,
+        })),
+        inspirationLinks: additionalDetails?.inspirationLinks,
+      };
+
+      const result = await import("@/lib/actions/custom-request").then((mod) =>
+        mod.createCustomRequest(payload),
+      );
+
+      if (result.success) {
+        toast.success("Event posted successfully!");
+        // Reset form and redirect
+        setTimeout(() => {
+          reset();
+          router.push("/client/dashboard");
+        }, 1000);
+      } else {
+        toast.error(result.error || "Failed to post event");
+      }
     } catch (error) {
-      toast.error("Failed to post event");
+      toast.error("An unexpected error occurred");
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +238,9 @@ export default function CustomRequestPage() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <EventBasicStep />;
+        return (
+          <EventBasicStep registerCommit={(fn) => (commitRef.current = fn)} />
+        );
       case 2:
         return <VendorNeedsStep />;
       case 3:
@@ -165,6 +290,7 @@ export default function CustomRequestPage() {
             variant="link"
             className="text-muted-foreground"
             disabled={isSubmitting}
+            onClick={() => toast.message("Draft saving coming soon")}
           >
             Save As Draft
           </Button>

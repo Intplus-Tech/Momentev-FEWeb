@@ -163,6 +163,7 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
   try {
     const params = new URLSearchParams();
 
+    if (filters.q && filters.q.trim().length > 0) params.append("search", filters.q);
     if (filters.service && filters.service !== "all") params.append("service", filters.service);
     if (filters.specialty && filters.specialty !== "all") params.append("specialty", filters.specialty);
     if (filters.sort === "rating") params.append("sort", "rate_desc");
@@ -195,13 +196,8 @@ export async function getVendorsAction(filters: SearchFilters): Promise<VendorRe
 
     let totalItems = parsed.data.data.total;
 
-    // Client-Side Filter
-    let finalVendors = mappedVendors;
-    if (filters.q && filters.q.trim().length > 0) {
-      const query = filters.q.toLowerCase();
-      finalVendors = mappedVendors.filter(v => v.name.toLowerCase().includes(query));
-      totalItems = finalVendors.length;
-    }
+    // Client-Side Filter Removed - handled by backend
+    const finalVendors = mappedVendors;
 
     return {
       success: true,
@@ -226,6 +222,7 @@ export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<Ve
     params.append("lat", filters.lat.toString());
     params.append("long", filters.long.toString());
     if (filters.maxDistanceKm) params.append("maxDistanceKm", filters.maxDistanceKm.toString());
+    if (filters.q && filters.q.trim().length > 0) params.append("search", filters.q);
     if (filters.service && filters.service !== "all") params.append("service", filters.service);
     if (filters.specialty && filters.specialty !== "all") params.append("specialty", filters.specialty);
 
@@ -255,13 +252,8 @@ export async function getNearbyVendorsAction(filters: NearbyFilters): Promise<Ve
     const mappedVendors = parsed.data.data.data.map(mapRawToUIVendor);
     let totalItems = parsed.data.data.total;
 
-    // Client-Side Filter
-    let finalVendors = mappedVendors;
-    if (filters.q && filters.q.trim().length > 0) {
-      const query = filters.q.toLowerCase();
-      finalVendors = mappedVendors.filter(v => v.name.toLowerCase().includes(query));
-      totalItems = finalVendors.length;
-    }
+    // Client-Side Filter Removed - handled by backend
+    const finalVendors = mappedVendors;
 
     return {
       success: true,

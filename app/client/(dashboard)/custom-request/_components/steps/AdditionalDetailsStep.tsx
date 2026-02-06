@@ -1,21 +1,10 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { FileUploadCard } from "@/app/vendor/(vendor-setup)/_components/FileUploadCard";
+import type { UploadedFile } from "@/lib/actions/upload";
 import { toast } from "sonner";
-import { X, Upload } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
-
-interface UploadSlot {
-  id: string;
-  file: File | null;
-  name: string;
-  size: string;
-  progress: number;
-  status: "idle" | "uploading" | "complete" | "error";
-}
 
 export function AdditionalDetailsStep() {
   const additionalDetails = useCustomRequestStore(
@@ -28,85 +17,55 @@ export function AdditionalDetailsStep() {
     (state) => state.setIsAdditionalDetailsValid,
   );
 
-  const [uploadSlots, setUploadSlots] = useState<UploadSlot[]>([
-    { id: "1", file: null, name: "", size: "", progress: 0, status: "idle" },
-    { id: "2", file: null, name: "", size: "", progress: 0, status: "idle" },
-    { id: "3", file: null, name: "", size: "", progress: 0, status: "idle" },
-  ]);
+  const [uploads, setUploads] = useState<
+    ({ id: string; url: string; name: string } | null)[]
+  >(() => {
+    const existing = additionalDetails?.uploadedFiles || [];
+    const base = [null, null, null];
+    return base.map((_, idx) => existing[idx] || null);
+  });
 
-  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  // Memoized payload for store
+  const payload = useMemo(
+    () => ({
+      inspirationLinks: additionalDetails?.inspirationLinks || [],
+      uploadedFiles: uploads.filter(Boolean) as {
+        id: string;
+        url: string;
+        name: string;
+      }[],
+    }),
+    [additionalDetails?.inspirationLinks, uploads],
+  );
 
   useEffect(() => {
-    // This step is always valid (optional)
     setIsAdditionalDetailsValid(true);
   }, [setIsAdditionalDetailsValid]);
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + " bytes";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+  // Persist to store when uploads change
+  useEffect(() => {
+    setAdditionalDetails(payload);
+  }, [payload, setAdditionalDetails]);
+
+  const handleUploadComplete = (index: number, file: UploadedFile) => {
+    setUploads((prev) => {
+      const next = [...prev];
+      next[index] = {
+        id: file._id,
+        url: file.url,
+        name: file.originalName,
+      };
+      return next;
+    });
+    // toast.success(`${file.originalName} uploaded successfully`);
   };
 
-  const handleFileSelect = (slotId: string, file: File) => {
-    setUploadSlots((prev) =>
-      prev.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              file,
-              name: file.name,
-              size: formatFileSize(file.size),
-              progress: 0,
-              status: "uploading" as const,
-            }
-          : slot,
-      ),
-    );
-
-    // Simulate upload progress
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += Math.random() * 20;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(interval);
-        setUploadSlots((prev) =>
-          prev.map((slot) =>
-            slot.id === slotId
-              ? { ...slot, progress: 100, status: "complete" as const }
-              : slot,
-          ),
-        );
-        toast.success(`${file.name} uploaded successfully`);
-      } else {
-        setUploadSlots((prev) =>
-          prev.map((slot) =>
-            slot.id === slotId ? { ...slot, progress } : slot,
-          ),
-        );
-      }
-    }, 200);
-  };
-
-  const handleRemoveFile = (slotId: string) => {
-    setUploadSlots((prev) =>
-      prev.map((slot) =>
-        slot.id === slotId
-          ? {
-              ...slot,
-              file: null,
-              name: "",
-              size: "",
-              progress: 0,
-              status: "idle" as const,
-            }
-          : slot,
-      ),
-    );
-  };
-
-  const handleUploadClick = (slotId: string) => {
-    fileInputRefs.current[slotId]?.click();
+  const handleRemove = (index: number) => {
+    setUploads((prev) => {
+      const next = [...prev];
+      next[index] = null;
+      return next;
+    });
   };
 
   return (
@@ -119,78 +78,20 @@ export function AdditionalDetailsStep() {
           </span>
         </div>
         <div className="p-4 space-y-4">
-          {uploadSlots.map((slot) => (
-            <div key={slot.id} className="space-y-2">
-              {slot.status === "idle" ? (
-                <div className="flex items-center gap-2">
-                  <FloatingLabelInput
-                    label="Upload Image"
-                    value=""
-                    disabled
-                    className="flex-1"
-                  />
-                  <input
-                    ref={(el) => {
-                      fileInputRefs.current[slot.id] = el;
-                    }}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleFileSelect(slot.id, file);
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => handleUploadClick(slot.id)}
-                    className="shrink-0"
-                  >
-                    Upload
-                  </Button>
-                </div>
-              ) : (
-                <div className="border rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">
-                        <Upload className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{slot.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {slot.size}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleRemoveFile(slot.id)}
-                      className="text-destructive hover:text-destructive/80"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                  {slot.status === "uploading" && (
-                    <div className="space-y-1">
-                      <p className="text-xs text-muted-foreground">
-                        Uploading... {Math.round(slot.progress)}% •{" "}
-                        {Math.ceil((100 - slot.progress) / 10)} seconds
-                        remaining
-                      </p>
-                      <Progress value={slot.progress} className="h-2" />
-                    </div>
-                  )}
-                  {slot.status === "complete" && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-green-500" />
-                      <p className="text-xs text-green-600">Upload complete</p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
+          <div className="flex flex-col gap-4">
+            {uploads.map((file, idx) => (
+              <FileUploadCard
+                key={idx}
+                onUploadComplete={(uploaded) =>
+                  handleUploadComplete(idx, uploaded)
+                }
+                onRemove={() => handleRemove(idx)}
+                uploadedFile={
+                  file ? { id: file.id, url: file.url, name: file.name } : null
+                }
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>
