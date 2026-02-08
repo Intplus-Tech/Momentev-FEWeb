@@ -22,37 +22,42 @@ export function BudgetPlanningStep() {
     (state) => state.setIsBudgetPlanningValid,
   );
 
-  const selectedCategories = vendorNeeds?.selectedCategories || [];
+  const selectedSpecialties = vendorNeeds?.selectedSpecialties || [];
 
-  const [budgetPerVendor, setBudgetPerVendor] = useState<
+  const [budgetPerSpecialty, setBudgetPerSpecialty] = useState<
     Record<string, number>
-  >(budgetPlanning?.budgetPerVendor || {});
+  >(budgetPlanning?.budgetPerSpecialty || {});
 
   const [inputValues, setInputValues] = useState<Record<string, string>>(() => {
-    const initial = budgetPlanning?.budgetPerVendor || {};
+    const initial = budgetPlanning?.budgetPerSpecialty || {};
     return Object.fromEntries(
-      Object.entries(initial).map(([category, amount]) => [
-        category,
+      Object.entries(initial).map(([id, amount]) => [
+        id,
         amount ? formatGBP(amount) : "",
       ]),
     );
   });
 
-  const totalBudget = Object.values(budgetPerVendor).reduce(
+  const totalBudget = Object.values(budgetPerSpecialty).reduce(
     (sum, val) => sum + (val || 0),
     0,
   );
 
   useEffect(() => {
-    setIsBudgetPlanningValid(selectedCategories.length > 0 && totalBudget > 0);
-  }, [selectedCategories, totalBudget, setIsBudgetPlanningValid]);
+    // Valid if all selected specialties have a budget > 0 (or just total > 0?)
+    // Let's require budget for all selected specialties for now.
+    const allHaveBudget = selectedSpecialties.every(
+      (s) => (budgetPerSpecialty[s._id] || 0) > 0,
+    );
+    setIsBudgetPlanningValid(selectedSpecialties.length > 0 && allHaveBudget);
+  }, [selectedSpecialties, budgetPerSpecialty, setIsBudgetPlanningValid]);
 
-  const handleBudgetChange = (category: string, rawValue: string) => {
+  const handleBudgetChange = (specialtyId: string, rawValue: string) => {
     const numericValue = parseGBP(rawValue);
-    const newBudget = { ...budgetPerVendor, [category]: numericValue };
+    const newBudget = { ...budgetPerSpecialty, [specialtyId]: numericValue };
 
-    setInputValues((prev) => ({ ...prev, [category]: rawValue }));
-    setBudgetPerVendor(newBudget);
+    setInputValues((prev) => ({ ...prev, [specialtyId]: rawValue }));
+    setBudgetPerSpecialty(newBudget);
 
     const newTotal = Object.values(newBudget).reduce(
       (sum, val) => sum + (val || 0),
@@ -60,35 +65,35 @@ export function BudgetPlanningStep() {
     );
 
     setBudgetPlanning({
-      budgetPerVendor: newBudget,
+      budgetPerSpecialty: newBudget,
       totalBudget: newTotal,
     });
   };
 
-  const handleBudgetBlur = (category: string, rawValue: string) => {
+  const handleBudgetBlur = (specialtyId: string, rawValue: string) => {
     const numericValue = parseGBP(rawValue);
     setInputValues((prev) => ({
       ...prev,
-      [category]: numericValue ? formatGBP(numericValue) : "",
+      [specialtyId]: numericValue ? formatGBP(numericValue) : "",
     }));
   };
 
   return (
     <div className="space-y-4">
-      {/* Section 1: Allocate Budget per Vendor */}
+      {/* Section 1: Allocate Budget per Specialty */}
       <div className="rounded-lg overflow-hidden border border-primary/20">
         <div className="bg-primary/10 px-4 py-2">
           <span className="text-sm font-semibold text-primary">
-            Allocate Budget per Vendor
+            Allocate Budget per Service
           </span>
         </div>
         <div className="p-4">
-          {selectedCategories.length > 0 ? (
+          {selectedSpecialties.length > 0 ? (
             <div className="space-y-1">
               {/* Header */}
               <div className="grid grid-cols-2 gap-4 py-2 border-b">
                 <span className="text-sm font-medium text-muted-foreground">
-                  Vendor
+                  Service
                 </span>
                 <span className="text-sm font-medium text-muted-foreground">
                   Budget
@@ -96,21 +101,23 @@ export function BudgetPlanningStep() {
               </div>
 
               {/* Rows */}
-              {selectedCategories.map((category) => (
+              {selectedSpecialties.map((specialty) => (
                 <div
-                  key={category}
+                  key={specialty._id}
                   className="grid grid-cols-2 gap-4 py-3 items-center"
                 >
-                  <span className="text-sm">{category}</span>
+                  <span className="text-sm">{specialty.name}</span>
                   <FloatingLabelInput
                     label="Amount (GBP)"
                     type="text"
                     inputMode="numeric"
-                    value={inputValues[category] || ""}
+                    value={inputValues[specialty._id] || ""}
                     onChange={(e) =>
-                      handleBudgetChange(category, e.target.value)
+                      handleBudgetChange(specialty._id, e.target.value)
                     }
-                    onBlur={(e) => handleBudgetBlur(category, e.target.value)}
+                    onBlur={(e) =>
+                      handleBudgetBlur(specialty._id, e.target.value)
+                    }
                   />
                 </div>
               ))}
@@ -127,7 +134,7 @@ export function BudgetPlanningStep() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-8">
-              No vendor categories selected. Please go back to Step 2.
+              No services selected. Please go back to Step 2.
             </p>
           )}
         </div>

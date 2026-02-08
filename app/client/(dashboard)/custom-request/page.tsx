@@ -45,6 +45,13 @@ export default function CustomRequestPage() {
     (state) => state.isBudgetPlanningValid,
   );
 
+  const eventBasic = useCustomRequestStore((state) => state.eventBasic);
+  const vendorNeeds = useCustomRequestStore((state) => state.vendorNeeds);
+  const budgetPlanning = useCustomRequestStore((state) => state.budgetPlanning);
+  const additionalDetails = useCustomRequestStore(
+    (state) => state.additionalDetails,
+  );
+
   // Actions
   const setCurrentStep = useCustomRequestStore((state) => state.setCurrentStep);
   const setIsSubmitting = useCustomRequestStore(
@@ -163,18 +170,16 @@ export default function CustomRequestPage() {
     }
   };
 
-  const eventBasic = useCustomRequestStore((state) => state.eventBasic);
-  const vendorNeeds = useCustomRequestStore((state) => state.vendorNeeds);
-  const budgetPlanning = useCustomRequestStore((state) => state.budgetPlanning);
-  const additionalDetails = useCustomRequestStore(
-    (state) => state.additionalDetails,
-  );
-
-  const handleSubmit = async () => {
+  const handleSubmit = async (
+    status: "draft" | "pending_approval" = "pending_approval",
+  ) => {
     commitRef.current?.();
     setIsSubmitting(true);
 
-    if (!eventBasic || !vendorNeeds || !budgetPlanning) {
+    if (
+      status !== "draft" &&
+      (!eventBasic || !vendorNeeds || !budgetPlanning)
+    ) {
       toast.error("Missing required event information");
       setIsSubmitting(false);
       return;
@@ -182,35 +187,33 @@ export default function CustomRequestPage() {
 
     try {
       // Construct payload
-      const payload = {
+      const payload: any = {
+        // Type assertion to bypass strict frontend checks if types aren't perfectly aligned yet
+        serviceCategoryId: vendorNeeds?.selectedCategory?._id || "",
+        customerId: "", // Injected on server
         eventDetails: {
-          title: eventBasic.eventName,
-          description: eventBasic.eventDescription,
-          startDate: eventBasic.eventDate, // Note: Ensure backend expects YYYY-MM-DD or handle ISO conversion if needed
-          startTime: eventBasic.eventStartTime,
-          endTime: eventBasic.eventEndTime,
-          guestCount: eventBasic.guestCount,
-          location: eventBasic.location,
+          title: eventBasic?.eventName || "Draft Event",
+          description: eventBasic?.eventDescription || "",
+          startDate: eventBasic?.eventDate || new Date().toISOString(),
+          startTime: eventBasic?.eventStartTime || "",
+          endTime: eventBasic?.eventEndTime || "",
+          guestCount: eventBasic?.guestCount || 0,
+          location: eventBasic?.location || "",
           eventType:
-            eventBasic.eventType === "Other"
-              ? eventBasic.otherEventType || "Other"
-              : eventBasic.eventType,
+            eventBasic?.eventType === "Other"
+              ? eventBasic?.otherEventType || "Other"
+              : eventBasic?.eventType || "",
         },
-        vendorNeeds: {
-          categories: vendorNeeds.selectedCategories,
-          specificRequirements: vendorNeeds.specificRequirements,
-        },
-        budgetAllocations: Object.entries(budgetPlanning.budgetPerVendor).map(
-          ([category, amount]) => ({
-            categoryName: category,
-            budgetedAmount: amount,
-          }),
-        ),
-        attachments: additionalDetails?.uploadedFiles.map((file) => ({
-          fileUrl: file.url,
-          fileName: file.name,
-        })),
-        inspirationLinks: additionalDetails?.inspirationLinks,
+        budgetAllocations:
+          vendorNeeds?.selectedSpecialties?.map((specialty) => ({
+            serviceSpecialtyId: specialty._id,
+            budgetedAmount:
+              budgetPlanning?.budgetPerSpecialty?.[specialty._id] || 0,
+          })) || [],
+        attachments:
+          additionalDetails?.uploadedFiles.map((file) => file._id) || [],
+        inspirationLinks: additionalDetails?.inspirationLinks || [],
+        status,
       };
 
       const result = await import("@/lib/actions/custom-request").then((mod) =>
@@ -218,14 +221,21 @@ export default function CustomRequestPage() {
       );
 
       if (result.success) {
-        toast.success("Event posted successfully!");
+        if (status === "draft") {
+          toast.success("Draft saved successfully!");
+        } else {
+          toast.success("Event posted successfully!");
+        }
         // Reset form and redirect
         setTimeout(() => {
           reset();
           router.push("/client/dashboard");
         }, 1000);
       } else {
-        toast.error(result.error || "Failed to post event");
+        toast.error(
+          result.error ||
+            `Failed to ${status === "draft" ? "save draft" : "post event"}`,
+        );
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
@@ -290,7 +300,7 @@ export default function CustomRequestPage() {
             variant="link"
             className="text-muted-foreground"
             disabled={isSubmitting}
-            onClick={() => toast.message("Draft saving coming soon")}
+            onClick={() => handleSubmit("draft")}
           >
             Save As Draft
           </Button>
@@ -303,7 +313,10 @@ export default function CustomRequestPage() {
               Next →
             </Button>
           ) : (
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button
+              onClick={() => handleSubmit("pending_approval")}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Posting..." : "Post Event →"}
             </Button>
           )}

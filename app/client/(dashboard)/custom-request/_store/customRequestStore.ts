@@ -1,4 +1,6 @@
-import { create } from 'zustand';
+import type { ServiceCategory, ServiceSpecialty } from "@/types/service";
+import type { UploadedFile } from "@/lib/actions/upload";
+import { create } from "zustand";
 
 export interface EventBasicData {
   eventType: string;
@@ -13,19 +15,18 @@ export interface EventBasicData {
 }
 
 export interface VendorNeedsData {
-  selectedCategories: string[];
-  selectedVendors?: Record<string, string[]>;
-  specificRequirements: Record<string, string>;
+  selectedCategory: ServiceCategory | null;
+  selectedSpecialties: ServiceSpecialty[];
 }
 
 export interface BudgetPlanningData {
-  budgetPerVendor: Record<string, number>;
+  budgetPerSpecialty: Record<string, number>; // key: specialtyId
   totalBudget: number;
 }
 
 export interface AdditionalDetailsData {
   inspirationLinks: string[];
-  uploadedFiles: { id: string; url: string; name: string }[];
+  uploadedFiles: UploadedFile[];
 }
 
 interface CustomRequestStore {

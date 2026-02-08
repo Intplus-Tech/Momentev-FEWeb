@@ -1,6 +1,7 @@
 "use server";
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
+import { getUserProfile } from "@/lib/actions/user";
 import {
   CustomRequestPayload,
   CustomerRequestListResponse,
@@ -14,10 +15,6 @@ type ActionResponse<T> = {
   error?: string;
 };
 
-/**
- * Create a new custom request
- * POST /api/v1/custom-requests
- */
 export async function createCustomRequest(
   payload: CustomRequestPayload
 ): Promise<ActionResponse<any>> {
@@ -32,23 +29,37 @@ export async function createCustomRequest(
       return { success: false, error: "Not authenticated" };
     }
 
-    const response = await fetch(`${API_URL}/api/v1/custom-requests`, {
+    // Fetch user profile to get customer ID
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data) {
+      return { success: false, error: "Failed to fetch user profile for customer ID" };
+    }
+
+    // Inject customerId
+    const finalPayload = {
+      ...payload,
+      customerId: profileResult.data._id,
+    };
+
+    const response = await fetch(`${API_URL}/api/v1/customer-requests`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(finalPayload),
     });
 
     const data = await response.json();
+    console.log("Create Custom Request Payload:", JSON.stringify(payload, null, 2));
+    console.log("Create Custom Request Response:", response.status, JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       // Handle token expiration retry logic if needed, similar to other actions
       if (response.status === 401) {
         const refreshResult = await tryRefreshToken();
         if (refreshResult.success && refreshResult.token) {
-          const retryResponse = await fetch(`${API_URL}/api/v1/custom-requests`, {
+          const retryResponse = await fetch(`${API_URL}/api/v1/customer-requests`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

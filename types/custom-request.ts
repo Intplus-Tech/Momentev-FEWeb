@@ -23,6 +23,7 @@ export interface CustomRequestPayload {
     fileName: string;
   }[];
   inspirationLinks?: string[];
+  status?: "draft" | "pending_approval" | "approved" | "declined"; // Default: pending_approval
 }
 
 // Based on user provided sample response

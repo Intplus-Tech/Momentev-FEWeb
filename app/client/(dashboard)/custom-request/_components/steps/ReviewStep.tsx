@@ -37,28 +37,29 @@ export function ReviewStep() {
           </div>
 
           {/* Vendors Needed */}
-          {vendorNeeds && vendorNeeds.selectedCategories?.length > 0 && (
+          {vendorNeeds && vendorNeeds.selectedCategory && (
             <div className="p-4 border-t">
               <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
-                Vendors Needed:
+                Selected Category:
               </p>
-              <ul className="space-y-1">
-                {vendorNeeds.selectedCategories.map((category) => {
-                  const requirement =
-                    vendorNeeds.specificRequirements?.[category];
-                  return (
-                    <li key={category} className="text-sm">
-                      • {category}
-                      {requirement && (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          ({requirement})
-                        </span>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
+              <p className="text-sm font-medium mb-3">
+                {vendorNeeds.selectedCategory.name}
+              </p>
+
+              {vendorNeeds.selectedSpecialties.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">
+                    Services Needed:
+                  </p>
+                  <ul className="space-y-1">
+                    {vendorNeeds.selectedSpecialties.map((specialty) => (
+                      <li key={specialty._id} className="text-sm">
+                        • {specialty.name}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </div>
           )}
 
@@ -70,19 +71,17 @@ export function ReviewStep() {
                 {budgetPlanning.totalBudget.toLocaleString()}
               </p>
               <ul className="space-y-1">
-                {Object.entries(budgetPlanning.budgetPerVendor).map(
-                  ([category, amount]) =>
-                    amount > 0 && (
-                      <li key={category} className="text-sm">
-                        • {category}: £{amount.toLocaleString()} (
-                        {calculatePercentage(
-                          amount,
-                          budgetPlanning.totalBudget,
-                        )}
-                        %)
-                      </li>
-                    ),
-                )}
+                {vendorNeeds?.selectedSpecialties.map((specialty) => {
+                  const amount =
+                    budgetPlanning.budgetPerSpecialty[specialty._id] || 0;
+                  return amount > 0 ? (
+                    <li key={specialty._id} className="text-sm">
+                      • {specialty.name}: £{amount.toLocaleString()} (
+                      {calculatePercentage(amount, budgetPlanning.totalBudget)}
+                      %)
+                    </li>
+                  ) : null;
+                })}
               </ul>
             </div>
           )}

@@ -18,22 +18,43 @@ export function AdditionalDetailsStep() {
   );
 
   const [uploads, setUploads] = useState<
-    ({ id: string; url: string; name: string } | null)[]
+    ({ _id: string; url: string; name: string } | null)[]
   >(() => {
     const existing = additionalDetails?.uploadedFiles || [];
     const base = [null, null, null];
-    return base.map((_, idx) => existing[idx] || null);
+    // Map existing UploadedFile objects to our local state shape if needed, or just use them
+    // The store expects UploadedFile[], but our local state is simpler.
+    // Let's ensure we map cleanly.
+    return base.map((_, idx) => {
+      const file = existing[idx];
+      if (file) {
+        return {
+          _id: file._id,
+          url: file.url,
+          name: file.originalName,
+        };
+      }
+      return null;
+    });
   });
 
   // Memoized payload for store
   const payload = useMemo(
     () => ({
       inspirationLinks: additionalDetails?.inspirationLinks || [],
-      uploadedFiles: uploads.filter(Boolean) as {
-        id: string;
-        url: string;
-        name: string;
-      }[],
+      // We need to match UploadedFile shape roughly or cast it.
+      // The store expects UploadedFile.
+      // Let's coerce our local state to simpler objects that have _id, which is what we need.
+      // Ideally we should store the full UploadedFile, but for now let's fix the ID.
+      uploadedFiles: uploads.filter(Boolean).map((u) => ({
+        _id: u!._id,
+        url: u!.url,
+        originalName: u!.name,
+        // Add dummy values for other fields if strict typing complains,
+        // or assume partial match is okay if we cast.
+        // For now, let's just ensure _id is present.
+        name: u!.name, // store expects originalName typically but let's keep name for UI
+      })) as any as UploadedFile[],
     }),
     [additionalDetails?.inspirationLinks, uploads],
   );
@@ -51,7 +72,7 @@ export function AdditionalDetailsStep() {
     setUploads((prev) => {
       const next = [...prev];
       next[index] = {
-        id: file._id,
+        _id: file._id,
         url: file.url,
         name: file.originalName,
       };
@@ -87,7 +108,7 @@ export function AdditionalDetailsStep() {
                 }
                 onRemove={() => handleRemove(idx)}
                 uploadedFile={
-                  file ? { id: file.id, url: file.url, name: file.name } : null
+                  file ? { id: file._id, url: file.url, name: file.name } : null
                 }
               />
             ))}
