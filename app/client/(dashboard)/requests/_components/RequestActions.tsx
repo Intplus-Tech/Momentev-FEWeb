@@ -1,5 +1,12 @@
 import { useTransition, useState } from "react";
-import { MoreHorizontal, Trash, Pencil, Share } from "lucide-react";
+import {
+  MoreHorizontal,
+  Trash,
+  Pencil,
+  Share,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -23,13 +30,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { deleteCustomerRequest } from "@/lib/actions/custom-request";
+import {
+  deleteCustomerRequest,
+  cancelCustomerRequest,
+  submitDraft,
+} from "@/lib/actions/custom-request";
 
 interface RequestActionsProps {
   requestId: string;
+  status: string;
 }
 
-export function RequestActions({ requestId }: RequestActionsProps) {
+export function RequestActions({ requestId, status }: RequestActionsProps) {
   const [isPending, startTransition] = useTransition();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const router = useRouter();
@@ -53,6 +65,41 @@ export function RequestActions({ requestId }: RequestActionsProps) {
     });
   };
 
+  const handleSubmitDraft = () => {
+    startTransition(async () => {
+      try {
+        const result = await submitDraft(requestId);
+        if (result.success) {
+          toast.success("Draft submitted successfully!");
+          queryClient.invalidateQueries({ queryKey: ["customer-requests"] });
+        } else {
+          toast.error(result.error || "Failed to submit draft");
+        }
+      } catch (error) {
+        toast.error("An error occurred while submitting");
+      }
+    });
+  };
+
+  const handleCancel = () => {
+    startTransition(async () => {
+      try {
+        const result = await cancelCustomerRequest(requestId);
+        if (result.success) {
+          toast.success("Request cancelled successfully");
+          queryClient.invalidateQueries({ queryKey: ["customer-requests"] });
+        } else {
+          toast.error(result.error || "Failed to cancel request");
+        }
+      } catch (error) {
+        toast.error("An error occurred while cancelling");
+      }
+    });
+  };
+
+  const isDraft = status === "draft";
+  const canCancel = status === "pending_approval" || status === "active";
+
   return (
     <>
       <DropdownMenu>
@@ -63,15 +110,29 @@ export function RequestActions({ requestId }: RequestActionsProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Placeholders for future actions */}
-          <DropdownMenuItem disabled>
-            <Pencil className="mr-2 h-4 w-4" />
-            Edit
-          </DropdownMenuItem>
-          <DropdownMenuItem disabled>
-            <Share className="mr-2 h-4 w-4" />
-            Share
-          </DropdownMenuItem>
+          {isDraft && (
+            <DropdownMenuItem
+              onClick={() =>
+                router.push(`/client/custom-request/edit/${requestId}`)
+              }
+              disabled={isPending}
+            >
+              <Pencil className="mr-2 h-4 w-4" />
+              Edit Draft
+            </DropdownMenuItem>
+          )}
+          {isDraft && (
+            <DropdownMenuItem onClick={handleSubmitDraft} disabled={isPending}>
+              <Send className="mr-2 h-4 w-4" />
+              Submit Draft
+            </DropdownMenuItem>
+          )}
+          {canCancel && (
+            <DropdownMenuItem onClick={handleCancel} disabled={isPending}>
+              <XCircle className="mr-2 h-4 w-4" />
+              Cancel Request
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"

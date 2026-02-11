@@ -2,7 +2,7 @@
 
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 
 const formatGBP = (value: number) =>
   value ? `£${value.toLocaleString("en-GB")}` : "";
@@ -38,45 +38,54 @@ export function BudgetPlanningStep() {
     );
   });
 
-  const totalBudget = Object.values(budgetPerSpecialty).reduce(
-    (sum, val) => sum + (val || 0),
-    0,
+  // Memoize total budget instead of computing on every render
+  const totalBudget = useMemo(
+    () =>
+      Object.values(budgetPerSpecialty).reduce(
+        (sum, val) => sum + (val || 0),
+        0,
+      ),
+    [budgetPerSpecialty],
   );
 
   useEffect(() => {
-    // Valid if all selected specialties have a budget > 0 (or just total > 0?)
-    // Let's require budget for all selected specialties for now.
     const allHaveBudget = selectedSpecialties.every(
       (s) => (budgetPerSpecialty[s._id] || 0) > 0,
     );
     setIsBudgetPlanningValid(selectedSpecialties.length > 0 && allHaveBudget);
   }, [selectedSpecialties, budgetPerSpecialty, setIsBudgetPlanningValid]);
 
-  const handleBudgetChange = (specialtyId: string, rawValue: string) => {
-    const numericValue = parseGBP(rawValue);
-    const newBudget = { ...budgetPerSpecialty, [specialtyId]: numericValue };
+  const handleBudgetChange = useCallback(
+    (specialtyId: string, rawValue: string) => {
+      const numericValue = parseGBP(rawValue);
+      const newBudget = { ...budgetPerSpecialty, [specialtyId]: numericValue };
 
-    setInputValues((prev) => ({ ...prev, [specialtyId]: rawValue }));
-    setBudgetPerSpecialty(newBudget);
+      setInputValues((prev) => ({ ...prev, [specialtyId]: rawValue }));
+      setBudgetPerSpecialty(newBudget);
 
-    const newTotal = Object.values(newBudget).reduce(
-      (sum, val) => sum + (val || 0),
-      0,
-    );
+      const newTotal = Object.values(newBudget).reduce(
+        (sum, val) => sum + (val || 0),
+        0,
+      );
 
-    setBudgetPlanning({
-      budgetPerSpecialty: newBudget,
-      totalBudget: newTotal,
-    });
-  };
+      setBudgetPlanning({
+        budgetPerSpecialty: newBudget,
+        totalBudget: newTotal,
+      });
+    },
+    [budgetPerSpecialty, setBudgetPlanning],
+  );
 
-  const handleBudgetBlur = (specialtyId: string, rawValue: string) => {
-    const numericValue = parseGBP(rawValue);
-    setInputValues((prev) => ({
-      ...prev,
-      [specialtyId]: numericValue ? formatGBP(numericValue) : "",
-    }));
-  };
+  const handleBudgetBlur = useCallback(
+    (specialtyId: string, rawValue: string) => {
+      const numericValue = parseGBP(rawValue);
+      setInputValues((prev) => ({
+        ...prev,
+        [specialtyId]: numericValue ? formatGBP(numericValue) : "",
+      }));
+    },
+    [],
+  );
 
   return (
     <div className="space-y-4">

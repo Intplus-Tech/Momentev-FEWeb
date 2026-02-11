@@ -15,18 +15,30 @@ export interface CustomRequestPayload {
     specificRequirements: Record<string, string>;
   };
   budgetAllocations: {
-    categoryName: string; // Or specific ID if mapped
+    serviceSpecialtyId: string;
     budgetedAmount: number;
   }[];
-  attachments?: {
-    fileUrl: string;
-    fileName: string;
-  }[];
+  attachments?: string[]; // Array of uploaded file IDs
   inspirationLinks?: string[];
-  status?: "draft" | "pending_approval" | "approved" | "declined"; // Default: pending_approval
 }
 
+// For PATCH updates to drafts — all fields are optional
+export type DraftUpdatePayload = Partial<CustomRequestPayload>;
+
 // Based on user provided sample response
+export interface CustomerRequestAttachment {
+  _id: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  url: string;
+  extension: string;
+  provider: string;
+  uploadedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface CustomerRequest {
   _id: string;
   serviceCategoryId?: {
@@ -43,7 +55,7 @@ export interface CustomerRequest {
   eventDetails?: {
     title: string;
     startDate: string;
-    endDate: string;
+    endDate?: string;
     guestCount: number;
     location: string;
     description: string;
@@ -52,7 +64,7 @@ export interface CustomerRequest {
     serviceSpecialtyId: string;
     budgetedAmount: number;
   }[];
-  attachments: any[]; // Define specific structure if known, empty in sample
+  attachments: CustomerRequestAttachment[]; // Changed from any[] or string[]
   status: string;
   approvedAt: string | null;
   createdAt: string;
@@ -64,4 +76,19 @@ export interface CustomerRequestListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+export type CustomerRequestStatus =
+  | "draft"
+  | "pending_approval"
+  | "active"
+  | "rejected"
+  | "cancelled";
+
+export interface CustomerRequestFilters {
+  serviceCategoryId?: string;
+  status?: CustomerRequestStatus | '';
+  dateFrom?: string;
+  dateTo?: string;
+  search?: string;
 }

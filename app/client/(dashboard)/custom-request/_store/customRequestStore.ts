@@ -1,5 +1,6 @@
 import type { ServiceCategory, ServiceSpecialty } from "@/types/service";
 import type { UploadedFile } from "@/lib/actions/upload";
+import type { CustomerRequest } from "@/types/custom-request";
 import { create } from "zustand";
 
 export interface EventBasicData {
@@ -35,6 +36,7 @@ interface CustomRequestStore {
   completedSections: Set<string>;
   isSubmitting: boolean;
   errors: Record<string, string>;
+  draftId: string | null;
 
   // Form data
   eventBasic: EventBasicData | null;
@@ -68,6 +70,10 @@ interface CustomRequestStore {
   setIsBudgetPlanningValid: (isValid: boolean) => void;
   setIsAdditionalDetailsValid: (isValid: boolean) => void;
 
+  // Draft management
+  setDraftId: (id: string | null) => void;
+  loadFromDraft: (request: CustomerRequest) => void;
+
   // Reset
   reset: () => void;
 }
@@ -78,6 +84,7 @@ export const useCustomRequestStore = create<CustomRequestStore>((set) => ({
   completedSections: new Set(),
   isSubmitting: false,
   errors: {},
+  draftId: null,
 
   eventBasic: null,
   vendorNeeds: null,
@@ -114,6 +121,65 @@ export const useCustomRequestStore = create<CustomRequestStore>((set) => ({
   setIsBudgetPlanningValid: (isValid) => set({ isBudgetPlanningValid: isValid }),
   setIsAdditionalDetailsValid: (isValid) => set({ isAdditionalDetailsValid: isValid }),
 
+  setDraftId: (id) => set({ draftId: id }),
+
+  loadFromDraft: (request) => {
+    const eventBasic: EventBasicData = {
+      eventType: request.eventDetails?.description ? "" : "",
+      eventDate: request.eventDetails?.startDate || "",
+      eventStartTime: "",
+      eventEndTime: "",
+      guestCount: request.eventDetails?.guestCount || 0,
+      location: request.eventDetails?.location || "",
+      eventName: request.eventDetails?.title || "",
+      eventDescription: request.eventDetails?.description || "",
+    };
+
+    const vendorNeeds: VendorNeedsData = {
+      selectedCategory: request.serviceCategoryId
+        ? { _id: request.serviceCategoryId._id, name: request.serviceCategoryId.name } as ServiceCategory
+        : null,
+      selectedSpecialties: [],
+    };
+
+    const budgetPerSpecialty: Record<string, number> = {};
+    let totalBudget = 0;
+    for (const alloc of request.budgetAllocations || []) {
+      budgetPerSpecialty[alloc.serviceSpecialtyId] = alloc.budgetedAmount;
+      totalBudget += alloc.budgetedAmount;
+    }
+
+    const budgetPlanning: BudgetPlanningData = {
+      budgetPerSpecialty,
+      totalBudget,
+    };
+
+    const additionalDetails: AdditionalDetailsData = {
+      inspirationLinks: [], // Not in sample but might exist in schema
+      uploadedFiles: (request.attachments || []).map(att => ({
+        _id: att._id,
+        url: att.url,
+        originalName: att.originalName,
+        mimeType: att.mimeType,
+        size: att.size,
+        provider: att.provider
+      })),
+    };
+
+    set({
+      draftId: request._id,
+      eventBasic,
+      vendorNeeds,
+      budgetPlanning,
+      additionalDetails,
+      isEventBasicValid: true,
+      isVendorNeedsValid: !!vendorNeeds.selectedCategory,
+      isBudgetPlanningValid: totalBudget > 0,
+      isAdditionalDetailsValid: true,
+      currentStep: 1,
+    });
+  },
+
   reset: () =>
     set({
       currentStep: 1,
@@ -121,6 +187,7 @@ export const useCustomRequestStore = create<CustomRequestStore>((set) => ({
       completedSections: new Set(),
       isSubmitting: false,
       errors: {},
+      draftId: null,
       eventBasic: null,
       vendorNeeds: null,
       budgetPlanning: null,

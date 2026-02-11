@@ -1,21 +1,24 @@
 "use client";
 
-import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useState, useEffect, useMemo } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { fetchServiceSpecialtiesByCategory } from "@/lib/actions/service-categories";
 import type { ServiceCategory, ServiceSpecialty } from "@/types/service";
 
 export function VendorNeedsStep() {
+  // Read directly from store — no local state mirror
   const vendorNeeds = useCustomRequestStore((state) => state.vendorNeeds);
   const setVendorNeeds = useCustomRequestStore((state) => state.setVendorNeeds);
   const setIsVendorNeedsValid = useCustomRequestStore(
     (state) => state.setIsVendorNeedsValid,
   );
+
+  const selectedCategory = vendorNeeds?.selectedCategory || null;
+  const selectedSpecialties = vendorNeeds?.selectedSpecialties || [];
 
   const {
     data: categoriesData,
@@ -26,90 +29,60 @@ export function VendorNeedsStep() {
 
   const categories: ServiceCategory[] = categoriesData?.data?.data ?? [];
 
-  // Local state
-  const [selectedCategory, setSelectedCategory] =
-    useState<ServiceCategory | null>(vendorNeeds?.selectedCategory || null);
-  const [selectedSpecialties, setSelectedSpecialties] = useState<
-    ServiceSpecialty[]
-  >(vendorNeeds?.selectedSpecialties || []);
-
-  // Fetch specialties for selected category
+  // Fetch specialties for selected category — single query, not useQueries
   const {
     data: specialtiesResponse,
     isLoading: isSpecialtiesLoading,
     isError: isSpecialtiesError,
-    error: specialtiesError,
-  } = useQueries({
-    queries: [
-      {
-        queryKey: ["service-specialties", selectedCategory?._id],
-        queryFn: async () => {
-          if (!selectedCategory?._id) return [];
-          const result = await fetchServiceSpecialtiesByCategory(
-            selectedCategory._id,
-          );
-          if (!result.success || !result.data) {
-            throw new Error(result.error || "Failed to fetch specialties");
-          }
-          return result.data.data;
-        },
-        enabled: !!selectedCategory?._id,
-        staleTime: 1000 * 60 * 30,
-      },
-    ],
-  })[0];
+  } = useQuery({
+    queryKey: ["service-specialties", selectedCategory?._id],
+    queryFn: async () => {
+      if (!selectedCategory?._id) return [];
+      const result = await fetchServiceSpecialtiesByCategory(
+        selectedCategory._id,
+      );
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to fetch specialties");
+      }
+      return result.data.data;
+    },
+    enabled: !!selectedCategory?._id,
+    staleTime: 1000 * 60 * 30,
+  });
 
   const specialties = (specialtiesResponse as ServiceSpecialty[]) || [];
 
-  // Update validation
+  // Update validation when selection changes
   useEffect(() => {
     const isValid = !!selectedCategory && selectedSpecialties.length > 0;
     setIsVendorNeedsValid(isValid);
-  }, [selectedCategory, selectedSpecialties, setIsVendorNeedsValid]);
+  }, [selectedCategory, selectedSpecialties.length, setIsVendorNeedsValid]);
 
-  // Sync to store
-  useEffect(() => {
-    // Avoid infinite loop by checking equality - simple check since objects might be new references
-    // Use IDs for comparison
-    const currentCatId = vendorNeeds?.selectedCategory?._id;
-    const currentSpecialtyIds =
-      vendorNeeds?.selectedSpecialties
-        .map((s) => s._id)
-        .sort()
-        .join(",") || "";
+  const handleCategorySelect = useCallback(
+    (category: ServiceCategory) => {
+      if (selectedCategory?._id === category._id) return;
+      setVendorNeeds({
+        selectedCategory: category,
+        selectedSpecialties: [], // Reset specialties when category changes
+      });
+    },
+    [selectedCategory?._id, setVendorNeeds],
+  );
 
-    const newCatId = selectedCategory?._id;
-    const newSpecialtyIds = selectedSpecialties
-      .map((s) => s._id)
-      .sort()
-      .join(",");
+  const handleSpecialtyToggle = useCallback(
+    (specialty: ServiceSpecialty) => {
+      const exists = selectedSpecialties.find((s) => s._id === specialty._id);
+      const next = exists
+        ? selectedSpecialties.filter((s) => s._id !== specialty._id)
+        : [...selectedSpecialties, specialty];
 
-    if (currentCatId === newCatId && currentSpecialtyIds === newSpecialtyIds) {
-      return;
-    }
-
-    setVendorNeeds({
-      selectedCategory,
-      selectedSpecialties,
-    });
-  }, [selectedCategory, selectedSpecialties, setVendorNeeds, vendorNeeds]);
-
-  const handleCategorySelect = (category: ServiceCategory) => {
-    if (selectedCategory?._id === category._id) return;
-    setSelectedCategory(category);
-    setSelectedSpecialties([]); // Reset specialties when category changes
-  };
-
-  const handleSpecialtyToggle = (specialty: ServiceSpecialty) => {
-    setSelectedSpecialties((prev) => {
-      const exists = prev.find((s) => s._id === specialty._id);
-      if (exists) {
-        return prev.filter((s) => s._id !== specialty._id);
-      } else {
-        return [...prev, specialty];
-      }
-    });
-  };
+      setVendorNeeds({
+        selectedCategory,
+        selectedSpecialties: next,
+      });
+    },
+    [selectedCategory, selectedSpecialties, setVendorNeeds],
+  );
 
   return (
     <div className="space-y-6">

@@ -3,9 +3,20 @@
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "./_components/ProgressBar";
 import { useCustomRequestStore } from "./_store/customRequestStore";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { saveAsDraft, submitCustomRequest } from "@/lib/actions/custom-request";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   EventBasicStep,
   VendorNeedsStep,
@@ -13,6 +24,7 @@ import {
   AdditionalDetailsStep,
   ReviewStep,
 } from "./_components/steps";
+import type { CustomRequestPayload } from "@/types/custom-request";
 
 const STEPS = [
   { id: 1, title: "Event Basic", description: "Tell us about your event" },
@@ -26,13 +38,50 @@ const STEPS = [
   { id: 5, title: "Review & Post", description: "Confirm your event details" },
 ];
 
+/** Build payload from current store state (reads via getState, no subscription needed) */
+function buildPayload(): CustomRequestPayload {
+  const { eventBasic, vendorNeeds, budgetPlanning, additionalDetails } =
+    useCustomRequestStore.getState();
+
+  return {
+    serviceCategoryId: vendorNeeds?.selectedCategory?._id || "",
+    eventDetails: {
+      title: eventBasic?.eventName || "Draft Event",
+      description: eventBasic?.eventDescription || "",
+      startDate: eventBasic?.eventDate || new Date().toISOString(),
+      startTime: eventBasic?.eventStartTime || "",
+      endTime: eventBasic?.eventEndTime || "",
+      guestCount: eventBasic?.guestCount || 0,
+      location: eventBasic?.location || "",
+      eventType:
+        eventBasic?.eventType === "Other"
+          ? eventBasic?.otherEventType || "Other"
+          : eventBasic?.eventType || "",
+    },
+    budgetAllocations:
+      vendorNeeds?.selectedSpecialties?.map((specialty) => ({
+        serviceSpecialtyId: specialty._id,
+        budgetedAmount:
+          budgetPlanning?.budgetPerSpecialty?.[specialty._id] || 0,
+      })) || [],
+    attachments: additionalDetails?.uploadedFiles.map((file) => file._id) || [],
+    inspirationLinks: additionalDetails?.inspirationLinks || [],
+  } as CustomRequestPayload;
+}
+
 export default function CustomRequestPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const hydrated = useRef(false);
   const commitRef = useRef<(() => void) | null>(null);
+  const isRedirecting = useRef(false);
 
-  // Store state
+  // Leave-page dialog state
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null);
+  const [isSavingDraft, setIsSavingDraft] = useState(false);
+
+  // Store state (only subscribe to what drives rendering)
   const currentStep = useCustomRequestStore((state) => state.currentStep);
   const isSubmitting = useCustomRequestStore((state) => state.isSubmitting);
   const isEventBasicValid = useCustomRequestStore(
@@ -43,13 +92,6 @@ export default function CustomRequestPage() {
   );
   const isBudgetPlanningValid = useCustomRequestStore(
     (state) => state.isBudgetPlanningValid,
-  );
-
-  const eventBasic = useCustomRequestStore((state) => state.eventBasic);
-  const vendorNeeds = useCustomRequestStore((state) => state.vendorNeeds);
-  const budgetPlanning = useCustomRequestStore((state) => state.budgetPlanning);
-  const additionalDetails = useCustomRequestStore(
-    (state) => state.additionalDetails,
   );
 
   // Actions
@@ -83,7 +125,7 @@ export default function CustomRequestPage() {
 
   // Keep URL + localStorage in sync with current step
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || isRedirecting.current) return;
 
     localStorage.setItem("customRequestStep", String(currentStep));
 
@@ -94,10 +136,11 @@ export default function CustomRequestPage() {
     }
   }, [currentStep, mounted, router]);
 
-  // Warn before leaving the page (refresh/close/back)
+  // Warn before leaving the page (browser close/refresh only)
   useEffect(() => {
     if (!mounted) return;
     const handler = (event: BeforeUnloadEvent) => {
+      if (isRedirecting.current) return;
       event.preventDefault();
       event.returnValue = "";
     };
@@ -105,29 +148,66 @@ export default function CustomRequestPage() {
     return () => window.removeEventListener("beforeunload", handler);
   }, [mounted]);
 
-  // Intercept in-app link navigation to prompt draft saving (placeholder)
+  // Intercept in-app link navigation — show AlertDialog instead of native confirm
   useEffect(() => {
     if (!mounted) return;
     const onLinkClick = (e: MouseEvent) => {
+      if (isRedirecting.current) return;
       const target = (e.target as HTMLElement).closest("a");
       if (!target) return;
       const href = target.getAttribute("href");
       if (!href || href.startsWith("#") || href.startsWith("javascript"))
         return;
       if (href === window.location.pathname + window.location.search) return;
-      const confirmed = window.confirm(
-        "You have unsaved changes. Save as draft before leaving?",
-      );
-      if (!confirmed) {
-        e.preventDefault();
-        e.stopPropagation();
-      } else {
-        toast.message("Draft saving coming soon");
-      }
+
+      // Prevent navigation and show dialog
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingNavUrl(href);
+      setShowLeaveDialog(true);
     };
     document.addEventListener("click", onLinkClick, true);
     return () => document.removeEventListener("click", onLinkClick, true);
   }, [mounted]);
+
+  /** Navigate away — shared by dialog actions and post-submit redirect */
+  const navigateAway = useCallback(
+    (url: string) => {
+      isRedirecting.current = true;
+      localStorage.removeItem("customRequestStep");
+      reset();
+      router.push(url);
+    },
+    [reset, router],
+  );
+
+  /** Save current form as draft, then navigate to a URL */
+  const saveAndLeave = useCallback(
+    async (url: string) => {
+      setIsSavingDraft(true);
+      commitRef.current?.();
+
+      try {
+        const payload = buildPayload();
+        const result = await saveAsDraft(payload);
+
+        if (result.success) {
+          toast.success("Draft saved successfully!");
+          navigateAway(url);
+        } else {
+          toast.error(result.error || "Failed to save draft");
+        }
+      } catch (error) {
+        toast.error("An unexpected error occurred while saving");
+        console.error(error);
+      } finally {
+        setIsSavingDraft(false);
+        setShowLeaveDialog(false);
+        setPendingNavUrl(null);
+      }
+    },
+    [navigateAway],
+  );
 
   if (!mounted) return null;
 
@@ -176,6 +256,10 @@ export default function CustomRequestPage() {
     commitRef.current?.();
     setIsSubmitting(true);
 
+    // Read latest state at submit time (no subscription needed)
+    const { eventBasic, vendorNeeds, budgetPlanning } =
+      useCustomRequestStore.getState();
+
     if (
       status !== "draft" &&
       (!eventBasic || !vendorNeeds || !budgetPlanning)
@@ -186,51 +270,19 @@ export default function CustomRequestPage() {
     }
 
     try {
-      // Construct payload
-      const payload: any = {
-        // Type assertion to bypass strict frontend checks if types aren't perfectly aligned yet
-        serviceCategoryId: vendorNeeds?.selectedCategory?._id || "",
-        customerId: "", // Injected on server
-        eventDetails: {
-          title: eventBasic?.eventName || "Draft Event",
-          description: eventBasic?.eventDescription || "",
-          startDate: eventBasic?.eventDate || new Date().toISOString(),
-          startTime: eventBasic?.eventStartTime || "",
-          endTime: eventBasic?.eventEndTime || "",
-          guestCount: eventBasic?.guestCount || 0,
-          location: eventBasic?.location || "",
-          eventType:
-            eventBasic?.eventType === "Other"
-              ? eventBasic?.otherEventType || "Other"
-              : eventBasic?.eventType || "",
-        },
-        budgetAllocations:
-          vendorNeeds?.selectedSpecialties?.map((specialty) => ({
-            serviceSpecialtyId: specialty._id,
-            budgetedAmount:
-              budgetPlanning?.budgetPerSpecialty?.[specialty._id] || 0,
-          })) || [],
-        attachments:
-          additionalDetails?.uploadedFiles.map((file) => file._id) || [],
-        inspirationLinks: additionalDetails?.inspirationLinks || [],
-        status,
-      };
-
-      const result = await import("@/lib/actions/custom-request").then((mod) =>
-        mod.createCustomRequest(payload),
-      );
+      const payload = buildPayload();
+      const result =
+        status === "draft"
+          ? await saveAsDraft(payload)
+          : await submitCustomRequest(payload);
 
       if (result.success) {
-        if (status === "draft") {
-          toast.success("Draft saved successfully!");
-        } else {
-          toast.success("Event posted successfully!");
-        }
-        // Reset form and redirect
-        setTimeout(() => {
-          reset();
-          router.push("/client/dashboard");
-        }, 1000);
+        toast.success(
+          status === "draft"
+            ? "Draft saved successfully!"
+            : "Event posted successfully!",
+        );
+        navigateAway("/client/requests");
       } else {
         toast.error(
           result.error ||
@@ -322,6 +374,53 @@ export default function CustomRequestPage() {
           )}
         </div>
       </div>
+
+      {/* Leave Page AlertDialog */}
+      <AlertDialog open={showLeaveDialog} onOpenChange={setShowLeaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Would you like to save your progress as
+              a draft before leaving?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              disabled={isSavingDraft}
+              onClick={() => {
+                setShowLeaveDialog(false);
+                setPendingNavUrl(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              variant="outline"
+              disabled={isSavingDraft}
+              onClick={() => {
+                if (pendingNavUrl) {
+                  navigateAway(pendingNavUrl);
+                }
+                setShowLeaveDialog(false);
+                setPendingNavUrl(null);
+              }}
+            >
+              Leave Without Saving
+            </AlertDialogAction>
+            <AlertDialogAction
+              disabled={isSavingDraft}
+              onClick={() => {
+                if (pendingNavUrl) {
+                  saveAndLeave(pendingNavUrl);
+                }
+              }}
+            >
+              {isSavingDraft ? "Saving..." : "Save & Leave"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

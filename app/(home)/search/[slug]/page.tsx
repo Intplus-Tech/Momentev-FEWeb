@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -16,6 +17,7 @@ import {
   ContactSidebar,
   ServicesSection,
   ReviewsSection,
+  BookingModal,
 } from "../_vendor-components";
 import { getVendorBySlug } from "../_vendor-data/vendorDetails";
 
@@ -42,6 +44,7 @@ function getImageUrl(
 export default function VendorPage() {
   const params = useParams();
   const vendorId = params.slug as string;
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
 
   // Try fetching from API
   const { data: apiVendor, isLoading, isError } = useVendorDetails(vendorId);
@@ -254,6 +257,8 @@ export default function VendorPage() {
               logo={vendor.logo}
               rating={vendor.rating}
               reviewCount={vendor.reviewCount}
+              vendorId={vendorId}
+              onBookVendor={() => setIsBookingModalOpen(true)}
             />
 
             {/* About Section */}
@@ -290,6 +295,15 @@ export default function VendorPage() {
           </div>
         </div>
       </div>
+
+      {/* Booking Modal */}
+      <BookingModal
+        open={isBookingModalOpen}
+        onOpenChange={setIsBookingModalOpen}
+        vendorId={vendorId}
+        vendorName={vendor.name}
+        specialties={specialtiesData?.data?.data}
+      />
     </div>
   );
 }
