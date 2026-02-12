@@ -57,12 +57,40 @@ export function EventBasicStep({
   const eventDateValue = watch("eventDate");
   const endDateValue = watch("endDate");
 
-  const selectedStartDate = eventDateValue
-    ? new Date(eventDateValue)
-    : undefined;
-  const selectedEndDate = endDateValue ? new Date(endDateValue) : undefined;
+  const formatDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, "0");
+    const day = `${date.getDate()}`.padStart(2, "0");
+    const hours = `${date.getHours()}`.padStart(2, "0");
+    const minutes = `${date.getMinutes()}`.padStart(2, "0");
+    const seconds = `${date.getSeconds()}`.padStart(2, "0");
 
-  const formatDateValue = (date: Date) => date.toISOString();
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  };
+
+  const parseDateValue = (value?: string) => {
+    if (!value) return undefined;
+
+    const [datePart, timePart] = value.split("T");
+    const [yearStr, monthStr, dayStr] = (datePart ?? "").split("-");
+    const [hourStr = "0", minuteStr = "0", secondStr = "0"] = (
+      timePart ?? ""
+    ).split(":");
+
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    const day = Number(dayStr);
+    const hours = Number(hourStr);
+    const minutes = Number(minuteStr);
+    const seconds = Number(secondStr);
+
+    if (!year || !month || !day) return undefined;
+
+    return new Date(year, month - 1, day, hours, minutes, seconds);
+  };
+
+  const selectedStartDate = parseDateValue(eventDateValue);
+  const selectedEndDate = parseDateValue(endDateValue);
 
   // Update store validity when form validity changes
   useEffect(() => {
