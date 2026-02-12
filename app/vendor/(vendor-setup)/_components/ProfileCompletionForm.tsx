@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ProgressBar } from "./ProgressBar";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -56,6 +56,9 @@ export function ProfileCompletionForm() {
     (state) => state.removePortfolioImage,
   );
 
+  // Upload tracking
+  const activeUploads = useVendorSetupStore((state) => state.activeUploads);
+
   // Social media links
   const socialMediaLinks = useVendorSetupStore(
     (state) => state.socialMediaLinks,
@@ -72,7 +75,7 @@ export function ProfileCompletionForm() {
 
   // Local state for new link form
   const [newPlatform, setNewPlatform] = useState("");
-  const [customPlatformName, setCustomPlatformName] = useState("");
+
   const [newLink, setNewLink] = useState("");
 
   // Initialize expanded section on mount
@@ -110,10 +113,9 @@ export function ProfileCompletionForm() {
       return;
     }
 
-    const platformName =
-      newPlatform === "custom" ? customPlatformName : newPlatform;
+    const platformName = newPlatform;
     if (!platformName) {
-      toast.error("Please enter a custom platform name");
+      toast.error("Please select a platform");
       return;
     }
 
@@ -129,7 +131,7 @@ export function ProfileCompletionForm() {
 
     addSocialMediaLink({ name: platformName, link: newLink });
     setNewPlatform("");
-    setCustomPlatformName("");
+
     setNewLink("");
     // toast.success("Social media link added");
   };
@@ -184,7 +186,6 @@ export function ProfileCompletionForm() {
     setErrors({});
 
     try {
-      console.log("🚀 Submitting vendor profile...");
       toast.loading("Saving profile...");
 
       const result = await submitVendorProfile({
@@ -203,7 +204,6 @@ export function ProfileCompletionForm() {
         return;
       }
 
-      console.log("🎉 Step 4 Complete - Profile saved!");
       markSectionComplete(4, 2);
       toast.success("Profile setup complete!");
       router.push("/vendor/setup-review");
@@ -217,9 +217,10 @@ export function ProfileCompletionForm() {
   };
 
   const getButtonText = () => {
+    if (activeUploads > 0) return "Uploading...";
     if (isSubmitting) return "Saving...";
-    if (expandedSection === 1) return "Save & Continue";
-    return "Complete Setup";
+    if (expandedSection === 2) return "Save & Continue";
+    return "Save & Continue";
   };
 
   const isSection2Locked = !completedSections.has("step4-section1");
@@ -349,10 +350,12 @@ export function ProfileCompletionForm() {
                   <div className="pt-4 border-t">
                     <Button
                       onClick={handleSaveSection1}
-                      disabled={!canProceedSection1()}
+                      disabled={!canProceedSection1() || activeUploads > 0}
                       className="w-full sm:w-auto"
                     >
-                      Save & Continue to Social Links
+                      {activeUploads > 0
+                        ? "Uploading..."
+                        : "Save & Continue to Social Links"}
                     </Button>
                   </div>
                 </div>
@@ -407,64 +410,73 @@ export function ProfileCompletionForm() {
                   )}
 
                   {/* Add New Link */}
-                  <div className="space-y-4 p-4 border rounded-lg bg-card">
-                    <p className="text-sm font-medium">
-                      Add a social media link
-                    </p>
+                  {socialMediaLinks.length < 5 ? (
+                    <div className="space-y-4 p-4 border rounded-lg bg-card">
+                      <p className="text-sm font-medium">
+                        Add a social media link
+                      </p>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Select
-                          value={newPlatform}
-                          onValueChange={setNewPlatform}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select platform" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {SOCIAL_MEDIA_PLATFORMS.map((platform) => (
-                              <SelectItem
-                                key={platform.value}
-                                value={platform.value}
-                              >
-                                {platform.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Select
+                            value={newPlatform}
+                            onValueChange={setNewPlatform}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Select platform" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SOCIAL_MEDIA_PLATFORMS.filter(
+                                (p) =>
+                                  !socialMediaLinks.some(
+                                    (l) => l.name === p.value,
+                                  ),
+                              ).map((platform) => (
+                                <SelectItem
+                                  key={platform.value}
+                                  value={platform.value}
+                                >
+                                  {platform.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                        {newPlatform === "custom" && (
+                        <div className="space-y-2">
                           <Input
-                            placeholder="Enter platform name"
-                            value={customPlatformName}
-                            onChange={(e) =>
-                              setCustomPlatformName(e.target.value)
-                            }
+                            placeholder={getPlaceholder()}
+                            value={newLink}
+                            onChange={(e) => setNewLink(e.target.value)}
+                            type="url"
                           />
-                        )}
+                        </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Input
-                          placeholder={getPlaceholder()}
-                          value={newLink}
-                          onChange={(e) => setNewLink(e.target.value)}
-                          type="url"
-                        />
-                      </div>
+                      {newPlatform && newLink && (
+                        <Button
+                          type="button"
+                          // variant="outline"
+                          onClick={handleAddSocialLink}
+                          disabled={!newPlatform || !newLink}
+                          className="gap-2"
+                        >
+                          <Check className="h-4 w-4" />
+                          Done
+                        </Button>
+                      )}
                     </div>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddSocialLink}
-                      disabled={!newPlatform || !newLink}
-                      className="gap-2"
-                    >
-                      <Plus className="h-4 w-4" />
-                      Add Link
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="p-4 border border-dashed rounded-lg bg-muted/30 text-center text-sm text-muted-foreground">
+                      <p>
+                        You have reached the maximum limit of 5 links (including
+                        website).
+                      </p>
+                      <p className="text-xs mt-1">
+                        Remove an existing link to add a new one.
+                      </p>
+                    </div>
+                  )}
 
                   {socialMediaLinks.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">
@@ -484,7 +496,7 @@ export function ProfileCompletionForm() {
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
             <Button
               onClick={handleSaveAndContinue}
-              disabled={isSubmitting || !canProceed()}
+              disabled={isSubmitting || !canProceed() || activeUploads > 0}
               className="w-full sm:w-auto"
             >
               {getButtonText()}

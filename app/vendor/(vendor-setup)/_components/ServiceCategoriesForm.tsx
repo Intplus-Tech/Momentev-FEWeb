@@ -152,10 +152,7 @@ export function ServiceCategoriesForm() {
   useEffect(() => {
     if (serviceCategories && !hasLoadedInitialData.current) {
       isUpdatingFromContext.current = true;
-      console.log(
-        "Loading service categories from context:",
-        serviceCategories,
-      );
+
       reset(serviceCategories as ServiceCategoriesFormData, {
         keepDefaultValues: false,
       });
@@ -174,7 +171,6 @@ export function ServiceCategoriesForm() {
     if (isUpdatingFromContext.current) return;
 
     const subscription = watch((formData) => {
-      console.log("📝 Updating service categories in context:", formData);
       updateServiceCategories(formData as Partial<ServiceCategoriesFormData>);
     });
 

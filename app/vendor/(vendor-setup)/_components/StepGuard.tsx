@@ -73,9 +73,6 @@ export function StepGuard({ requiredStep, children }: StepGuardProps) {
         5: "/vendor/setup-review",
       };
 
-      console.log(
-        `⚠️ Step ${requiredStep} requires step ${redirectToStep} to be completed first`,
-      );
       router.replace(stepRoutes[redirectToStep]);
     }
   }, [requiredStep, completedSections, router]);

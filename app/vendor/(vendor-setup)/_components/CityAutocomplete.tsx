@@ -34,7 +34,6 @@ export function CityAutocomplete({
         );
 
   const handleSelect = (city: UKCity) => {
-    console.log("Selected city:", city);
     onLocationSelect(city);
     setQuery(""); // Clear after select? or keep? usually keep or clear. form clears it.
     setOpen(false);

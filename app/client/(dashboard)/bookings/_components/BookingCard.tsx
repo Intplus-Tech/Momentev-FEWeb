@@ -161,6 +161,14 @@ export function BookingCard({
                 Event Details
               </p>
               <div className="space-y-1.5 text-sm text-muted-foreground">
+                {booking._id && (
+                  <p className="line-clamp-2 mt-2">
+                    <span className="font-medium text-foreground">
+                      Booking ID:
+                    </span>{" "}
+                    {booking._id}
+                  </p>
+                )}
                 {booking.budgetAllocations.map((allocation, idx) => {
                   const specialty =
                     allocation.vendorSpecialtyId as PopulatedVendorSpecialty;

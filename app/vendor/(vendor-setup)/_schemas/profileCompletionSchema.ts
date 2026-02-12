@@ -14,7 +14,7 @@ export const profileCompletionSchema = z.object({
   coverPhoto: z.string().min(1, "Please upload a cover photo"),
   portfolioGallery: z.array(z.string()).min(5, "Please upload at least 5 portfolio photos"),
   // Social Media Links (optional)
-  socialMediaLinks: z.array(socialMediaLinkSchema).optional(),
+  socialMediaLinks: z.array(socialMediaLinkSchema).max(5, "You can add up to 5 links including your website").optional(),
 });
 
 export type ProfileCompletionFormData = z.infer<typeof profileCompletionSchema>;
@@ -24,11 +24,8 @@ export const SOCIAL_MEDIA_PLATFORMS = [
   { value: "website", label: "Website", placeholder: "https://yourwebsite.com" },
   { value: "instagram", label: "Instagram", placeholder: "https://instagram.com/username" },
   { value: "facebook", label: "Facebook", placeholder: "https://facebook.com/page" },
-  { value: "twitter", label: "Twitter / X", placeholder: "https://twitter.com/username" },
+  { value: "x", label: "X (Twitter)", placeholder: "https://x.com/username" },
   { value: "tiktok", label: "TikTok", placeholder: "https://tiktok.com/@username" },
   { value: "youtube", label: "YouTube", placeholder: "https://youtube.com/@channel" },
   { value: "linkedin", label: "LinkedIn", placeholder: "https://linkedin.com/in/username" },
-  { value: "pinterest", label: "Pinterest", placeholder: "https://pinterest.com/username" },
-  { value: "threads", label: "Threads", placeholder: "https://threads.net/@username" },
-  { value: "custom", label: "Other (Custom)", placeholder: "https://..." },
 ] as const;

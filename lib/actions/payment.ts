@@ -60,23 +60,6 @@ export async function setPaymentModel(
  * Currently mocked to allow completing the vendor setup flow
  */
 export async function createStripeAccount(): Promise<PaymentActionResponse<{ stripeAccountId: string }>> {
-  // MOCK: Simulate Stripe Connect flow until API keys are available
-  console.log("🔶 [MOCK] Stripe Connect - Simulating account creation...");
-
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1500));
-
-  // Generate a mock Stripe account ID
-  const mockStripeAccountId = `acct_mock_${Date.now()}`;
-
-  console.log(`✅ [MOCK] Stripe account created: ${mockStripeAccountId}`);
-
-  return {
-    success: true,
-    data: { stripeAccountId: mockStripeAccountId }
-  };
-
-  /* ORIGINAL IMPLEMENTATION - Uncomment when Stripe keys are available:
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
@@ -115,7 +98,10 @@ export async function createStripeAccount(): Promise<PaymentActionResponse<{ str
       success: true,
       data: { stripeAccountId: data.data?.stripeAccountId || "unknown_id" }
     };
-  */
+  } catch (error) {
+    console.error("createStripeAccount error:", error);
+    return { success: false, error: "Failed to create Stripe account" };
+  }
 }
 
 /**

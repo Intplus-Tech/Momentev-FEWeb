@@ -27,9 +27,7 @@ export function VendorOnboardingGuard({
 
         if (!result.success || !result.data) {
           // Not authenticated - redirect to login
-          console.log(
-            "⚠️ [VendorGuard] Not authenticated, redirecting to login",
-          );
+
           router.replace("/vendor/auth/login");
           return;
         }
@@ -38,17 +36,12 @@ export function VendorOnboardingGuard({
 
         // Check if user is a vendor
         if (!vendor) {
-          console.log("⚠️ [VendorGuard] User is not a vendor, redirecting");
           router.replace("/");
           return;
         }
 
         // Check onboarding status
         if (!vendor.onBoarded) {
-          console.log(
-            "⚠️ [VendorGuard] Vendor not onboarded, redirecting to setup",
-          );
-
           // Determine which step to redirect to based on onBoardingStage
           const stageRoutes: Record<number, string> = {
             0: "/vendor/business-setup",
@@ -65,7 +58,7 @@ export function VendorOnboardingGuard({
         }
 
         // Vendor is onboarded, allow access
-        console.log("✅ [VendorGuard] Vendor is onboarded, allowing access");
+
         setIsOnboarded(true);
       } catch (error) {
         console.error(

@@ -76,7 +76,7 @@ export async function getUserProfile() {
     }
 
     const optimizedData = optimizeProfileData(data?.data);
-    // console.log('✅ [GetUserProfile] Optimized Data:', JSON.stringify(optimizedData, null, 2));
+
 
     return { success: true, data: optimizedData };
   } catch (error) {

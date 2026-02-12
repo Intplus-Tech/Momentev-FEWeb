@@ -29,6 +29,7 @@ export function BusinessSetupForm() {
   );
   const isSubmitting = useVendorSetupStore((state) => state.isSubmitting);
   const currentStep = useVendorSetupStore((state) => state.currentStep);
+  const activeUploads = useVendorSetupStore((state) => state.activeUploads);
 
   // Actions
   const toggleSection = useVendorSetupStore((state) => state.toggleSection);
@@ -67,7 +68,7 @@ export function BusinessSetupForm() {
         }
 
         // Just mark complete and move to next section (Local Save)
-        console.log("✅ Step 1 - Section 1 validated locally");
+
         markSectionComplete(1, 1); // Step 1, Section 1
         setExpandedSection(2);
       } else if (expandedSection === 2) {
@@ -87,10 +88,6 @@ export function BusinessSetupForm() {
           setIsSubmitting(false);
           return;
         }
-
-        console.log(
-          "🚀 [Step 1 Form] Initiating business information + documents submission",
-        );
 
         toast.loading("Submitting business information...");
 
@@ -115,9 +112,7 @@ export function BusinessSetupForm() {
         }
 
         toast.success("Business setup Step 1 completed successfully!");
-        console.log("✅ Step 1 submitted:", result.data);
 
-        console.log("🎉 Step 1 Complete - Navigating to Step 2");
         markSectionComplete(1, 2); // Step 1, Section 2
         router.push("/vendor/service-setup");
       }
@@ -200,7 +195,7 @@ export function BusinessSetupForm() {
           <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
             <Button
               onClick={handleSaveAndContinue}
-              disabled={isSubmitting || !canProceed()}
+              disabled={isSubmitting || !canProceed() || activeUploads > 0}
               className="w-full sm:w-auto"
             >
               {getButtonText()}
