@@ -268,7 +268,7 @@ function HomeHeaderContent() {
           <ChevronDown className="w-3 h-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[200px]">
+      <DropdownMenuContent align="end" className="min-w-50">
         <DropdownMenuItem
           onClick={handleGetLocation}
           disabled={isLocating}
@@ -389,7 +389,7 @@ function HomeHeaderContent() {
             <div className="w-6 h-5 relative flex flex-col justify-between">
               <span
                 className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "rotate-45 translate-y-[9px]" : ""
+                  menuOpen ? "rotate-45 translate-y-2.25" : ""
                 }`}
               />
               <span
@@ -399,7 +399,7 @@ function HomeHeaderContent() {
               />
               <span
                 className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "-rotate-45 -translate-y-[9px]" : ""
+                  menuOpen ? "-rotate-45 -translate-y-2.25" : ""
                 }`}
               />
             </div>
@@ -514,7 +514,7 @@ function HomeHeaderContent() {
             {/* Find Button */}
             <Button
               onClick={handleSearch}
-              className="ml-4 rounded-r-md px-6 min-w-[160px] border-none"
+              className="ml-4 rounded-r-md px-6 min-w-40 border-none"
             >
               {userLat && userLong ? "Apply" : "Find"}
             </Button>
@@ -655,7 +655,7 @@ function HomeHeaderContent() {
       {isSearchRoute && (
         <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-[1200px] mx-auto">
+            <div className="w-full max-w-300 mx-auto">
               <div
                 className="flex items-center justify-center gap-2 py-3"
                 suppressHydrationWarning
@@ -664,7 +664,7 @@ function HomeHeaderContent() {
                   Array.from({ length: 9 }).map((_, i) => (
                     <Skeleton
                       key={i}
-                      className="h-8 w-24 rounded-full flex-shrink-0"
+                      className="h-8 w-24 rounded-full shrink-0"
                     />
                   ))
                 ) : (
@@ -675,13 +675,13 @@ function HomeHeaderContent() {
                   >
                     {/* Left Gradient Indicator */}
                     <motion.div
-                      className="absolute left-0 top-0 bottom-0 w-40 bg-gradient-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
+                      className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
                       style={{ opacity: leftOpacity }}
                     />
 
                     {/* Right Gradient Indicator */}
                     <motion.div
-                      className="absolute right-0 top-0 bottom-0 w-40 bg-gradient-to-l from-background  via to-transparent z-10 pointer-events-none"
+                      className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background  via to-transparent z-10 pointer-events-none"
                       style={{ opacity: rightOpacity }}
                     />
 
