@@ -73,11 +73,76 @@ export default function EditDraftPage() {
     setMounted(true);
   }, []);
 
-  // Load draft data into store once fetched
+  // Load draft data into store once fetched, enriching with category/specialty data
   useEffect(() => {
     if (draftData && !draftLoaded) {
-      loadFromDraft(draftData);
-      setDraftLoaded(true);
+      console.log("[EditDraftPage] Loaded draft data:", draftData);
+
+      // Fetch missing data if serviceCategoryId or specialties are strings
+      const enrichDraftData = async () => {
+        const enrichedData = { ...draftData };
+
+        // Fetch category if it's a string ID
+        if (
+          typeof draftData.serviceCategoryId === "string" &&
+          draftData.serviceCategoryId
+        ) {
+          const categoryId = draftData.serviceCategoryId;
+          try {
+            const { fetchServiceCategoryById } =
+              await import("@/lib/actions/service-category-by-id");
+            const categoryResult = await fetchServiceCategoryById(categoryId);
+
+            if (categoryResult.success && categoryResult.data) {
+              enrichedData.serviceCategoryId = {
+                _id: categoryResult.data.data._id,
+                name: categoryResult.data.data.name,
+              };
+            }
+          } catch (error) {
+            console.error("[EditDraftPage] Error fetching category:", error);
+          }
+        }
+
+        // Fetch specialties if they are string IDs
+        if (
+          draftData.budgetAllocations &&
+          draftData.budgetAllocations.length > 0
+        ) {
+          try {
+            const { fetchServiceSpecialtyById } =
+              await import("@/lib/actions/service-specialties");
+
+            const enrichedAllocations = await Promise.all(
+              draftData.budgetAllocations.map(async (alloc) => {
+                if (typeof alloc.serviceSpecialtyId === "string") {
+                  const specialtyResult = await fetchServiceSpecialtyById(
+                    alloc.serviceSpecialtyId,
+                  );
+
+                  if (specialtyResult.success && specialtyResult.data) {
+                    return {
+                      ...alloc,
+                      serviceSpecialtyId: specialtyResult.data.data,
+                    };
+                  }
+                }
+                return alloc;
+              }),
+            );
+
+            enrichedData.budgetAllocations = enrichedAllocations;
+          } catch (error) {
+            console.error("[EditDraftPage] Error fetching specialties:", error);
+          }
+        }
+
+        console.log("[EditDraftPage] Enriched draft data:", enrichedData);
+        loadFromDraft(enrichedData);
+        setDraftLoaded(true);
+      };
+
+      enrichDraftData();
     }
   }, [draftData, draftLoaded, loadFromDraft]);
 
@@ -98,6 +163,38 @@ export default function EditDraftPage() {
         <div className="text-center space-y-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
           <p className="text-sm text-muted-foreground">Loading draft...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isError || !draftData) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center space-y-3">
+          <p className="text-lg font-medium text-destructive">
+            Failed to load draft
+          </p>
+          <p className="text-sm text-muted-foreground">
+            The draft may have been deleted or you don&apos;t have access.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/client/requests")}
+          >
+            Back to Requests
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!draftLoaded) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center space-y-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+          <p className="text-sm text-muted-foreground">Preparing draft...</p>
         </div>
       </div>
     );
@@ -183,20 +280,23 @@ export default function EditDraftPage() {
   };
 
   const buildPayload = () => {
+    // Build attachments array defensively — only valid string IDs
+    const attachmentIds = (additionalDetails?.uploadedFiles || [])
+      .filter((file) => file != null && typeof file._id === "string")
+      .map((file) => file._id);
+
+    console.log("[buildPayload] additionalDetails:", additionalDetails);
+    console.log("[buildPayload] attachmentIds:", attachmentIds);
+
     return {
-      serviceCategoryId: vendorNeeds?.selectedCategory?._id || "",
+      serviceCategoryId: vendorNeeds?.selectedCategory?._id || undefined,
       eventDetails: {
         title: eventBasic?.eventName || "Draft Event",
         description: eventBasic?.eventDescription || "",
         startDate: eventBasic?.eventDate || new Date().toISOString(),
-        startTime: eventBasic?.eventStartTime || "",
-        endTime: eventBasic?.eventEndTime || "",
+        endDate: eventBasic?.endDate || undefined,
         guestCount: eventBasic?.guestCount || 0,
         location: eventBasic?.location || "",
-        eventType:
-          eventBasic?.eventType === "Other"
-            ? eventBasic?.otherEventType || "Other"
-            : eventBasic?.eventType || "",
       },
       budgetAllocations:
         vendorNeeds?.selectedSpecialties?.map((specialty) => ({
@@ -204,9 +304,7 @@ export default function EditDraftPage() {
           budgetedAmount:
             budgetPlanning?.budgetPerSpecialty?.[specialty._id] || 0,
         })) || [],
-      attachments:
-        additionalDetails?.uploadedFiles.map((file) => file._id) || [],
-      inspirationLinks: additionalDetails?.inspirationLinks || [],
+      attachments: attachmentIds,
     };
   };
 
@@ -216,6 +314,7 @@ export default function EditDraftPage() {
 
     try {
       const payload = buildPayload();
+      console.log("[handleSaveDraft] Payload:", payload);
       const { updateDraft } = await import("@/lib/actions/custom-request");
       const result = await updateDraft(draftId, payload);
 

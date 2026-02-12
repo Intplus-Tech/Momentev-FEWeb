@@ -64,7 +64,11 @@ async function makeAuthenticatedRequest<T>(
     }
 
     if (!response.ok) {
-      console.error("[makeAuthenticatedRequest] Error:", response.status, data.message || JSON.stringify(data).substring(0, 200));
+      console.error(
+        "[makeAuthenticatedRequest] Error:",
+        response.status,
+        JSON.stringify(data, null, 2),
+      );
 
       if (response.status === 401) {
         console.log("[makeAuthenticatedRequest] Attempting token refresh...");
@@ -226,6 +230,7 @@ export async function updateDraft(
 
   try {
     console.log(`[updateDraft] Updating draft: ${id}`);
+    console.log(`[updateDraft] Payload:`, JSON.stringify(payload, null, 2));
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/drafts/${id}`, {
       method: "PATCH",
@@ -255,7 +260,7 @@ export async function fetchCustomerRequestById(
     console.log(`[fetchCustomerRequestById] Fetching request: ${id}`);
 
     return await makeAuthenticatedRequest<CustomerRequest>(
-      `${API_URL}/api/v1/customer-requests/${id}`,
+      `${API_URL}/api/v1/customer-requests/${id}?populate=serviceCategoryId,budgetAllocations.serviceSpecialtyId`,
       {
         method: "GET",
         cache: "no-store",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useEffect, useCallback, useState, useMemo } from "react";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { FileUploadCard } from "@/app/vendor/(vendor-setup)/_components/FileUploadCard";
 import type { UploadedFile } from "@/lib/actions/upload";
 
@@ -16,36 +16,56 @@ export function AdditionalDetailsStep() {
     (state) => state.setIsAdditionalDetailsValid,
   );
 
-  // Store full UploadedFile objects in local state — no double-casting needed
+  // Track whether the initial store → local sync has happened
+  const hasInitializedFromStore = useRef(false);
+  // Track whether the latest change was local (user action) to avoid re-sync loops
+  const isLocalChange = useRef(false);
+
+  // Initialize local state from store (runs once on mount)
   const [uploads, setUploads] = useState<(UploadedFile | null)[]>(() => {
     const existing = additionalDetails?.uploadedFiles || [];
+    if (existing.length > 0) {
+      hasInitializedFromStore.current = true;
+    }
     const base: (UploadedFile | null)[] = [null, null, null];
     return base.map((_, idx) => existing[idx] || null);
   });
 
-  // Memoized payload for store
-  const payload = useMemo(
-    () => ({
-      inspirationLinks: additionalDetails?.inspirationLinks || [],
-      uploadedFiles: uploads.filter((u): u is UploadedFile => u !== null),
-    }),
-    [additionalDetails?.inspirationLinks, uploads],
-  );
+  // Sync FROM store when draft data loads (only once, only if not already initialized)
+  useEffect(() => {
+    if (isLocalChange.current) {
+      isLocalChange.current = false;
+      return;
+    }
+
+    const existing = additionalDetails?.uploadedFiles || [];
+    if (existing.length > 0 && !hasInitializedFromStore.current) {
+      const base: (UploadedFile | null)[] = [null, null, null];
+      const synced = base.map((_, idx) => existing[idx] || null);
+      setUploads(synced);
+      hasInitializedFromStore.current = true;
+    }
+  }, [additionalDetails]);
+
+  // Sync TO store when local uploads change due to user action
+  useEffect(() => {
+    if (!isLocalChange.current) return;
+
+    const validFiles = uploads.filter((u): u is UploadedFile => u !== null);
+    setAdditionalDetails({ uploadedFiles: validFiles });
+    // isLocalChange is reset in the "sync from store" effect above
+  }, [uploads, setAdditionalDetails]);
 
   useEffect(() => {
     setIsAdditionalDetailsValid(true);
   }, [setIsAdditionalDetailsValid]);
 
-  // Persist to store when uploads change
-  useEffect(() => {
-    setAdditionalDetails(payload);
-  }, [payload, setAdditionalDetails]);
-
   const handleUploadComplete = useCallback(
     (index: number, file: UploadedFile) => {
+      isLocalChange.current = true;
       setUploads((prev) => {
         const next = [...prev];
-        next[index] = file; // Store the full UploadedFile object
+        next[index] = file;
         return next;
       });
     },
@@ -53,6 +73,7 @@ export function AdditionalDetailsStep() {
   );
 
   const handleRemove = useCallback((index: number) => {
+    isLocalChange.current = true;
     setUploads((prev) => {
       const next = [...prev];
       next[index] = null;

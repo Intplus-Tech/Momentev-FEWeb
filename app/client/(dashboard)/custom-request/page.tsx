@@ -44,19 +44,14 @@ function buildPayload(): CustomRequestPayload {
     useCustomRequestStore.getState();
 
   return {
-    serviceCategoryId: vendorNeeds?.selectedCategory?._id || "",
+    serviceCategoryId: vendorNeeds?.selectedCategory?._id || undefined,
     eventDetails: {
       title: eventBasic?.eventName || "Draft Event",
       description: eventBasic?.eventDescription || "",
       startDate: eventBasic?.eventDate || new Date().toISOString(),
-      startTime: eventBasic?.eventStartTime || "",
-      endTime: eventBasic?.eventEndTime || "",
+      endDate: eventBasic?.endDate || undefined,
       guestCount: eventBasic?.guestCount || 0,
       location: eventBasic?.location || "",
-      eventType:
-        eventBasic?.eventType === "Other"
-          ? eventBasic?.otherEventType || "Other"
-          : eventBasic?.eventType || "",
     },
     budgetAllocations:
       vendorNeeds?.selectedSpecialties?.map((specialty) => ({
@@ -64,8 +59,9 @@ function buildPayload(): CustomRequestPayload {
         budgetedAmount:
           budgetPlanning?.budgetPerSpecialty?.[specialty._id] || 0,
       })) || [],
-    attachments: additionalDetails?.uploadedFiles.map((file) => file._id) || [],
-    inspirationLinks: additionalDetails?.inspirationLinks || [],
+    attachments: (additionalDetails?.uploadedFiles || [])
+      .filter((file) => file != null && typeof file._id === "string")
+      .map((file) => file._id),
   } as CustomRequestPayload;
 }
 
@@ -187,6 +183,15 @@ export default function CustomRequestPage() {
       setIsSavingDraft(true);
       commitRef.current?.();
 
+      // Validate that at least a category is selected for draft
+      const { vendorNeeds } = useCustomRequestStore.getState();
+      if (!vendorNeeds?.selectedCategory?._id) {
+        toast.error("Please select a service category before saving as draft");
+        setIsSavingDraft(false);
+        // Don't close dialog so user can cancel and go select category
+        return;
+      }
+
       try {
         const payload = buildPayload();
         const result = await saveAsDraft(payload);
@@ -260,13 +265,19 @@ export default function CustomRequestPage() {
     const { eventBasic, vendorNeeds, budgetPlanning } =
       useCustomRequestStore.getState();
 
-    if (
-      status !== "draft" &&
-      (!eventBasic || !vendorNeeds || !budgetPlanning)
-    ) {
-      toast.error("Missing required event information");
-      setIsSubmitting(false);
-      return;
+    if (status === "draft") {
+      if (!vendorNeeds?.selectedCategory?._id) {
+        toast.error("Please select a service category before saving as draft");
+        setIsSubmitting(false);
+        return;
+      }
+    } else {
+      // Pending Approval validation
+      if (!eventBasic || !vendorNeeds || !budgetPlanning) {
+        toast.error("Missing required event information");
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     try {
@@ -349,7 +360,7 @@ export default function CustomRequestPage() {
 
         <div className="flex items-center gap-3">
           <Button
-            variant="link"
+            variant="secondary"
             className="text-muted-foreground"
             disabled={isSubmitting}
             onClick={() => handleSubmit("draft")}

@@ -28,8 +28,10 @@ export function ReviewStep() {
           <div className="bg-primary/5 p-4 space-y-1">
             <h3 className="font-semibold text-lg">{eventBasic.eventName}</h3>
             <p className="text-sm text-muted-foreground">
-              {formatDate(eventBasic.eventDate)} • {eventBasic.eventStartTime}-
-              {eventBasic.eventEndTime} • {eventBasic.guestCount} guests
+              {formatDate(eventBasic.eventDate)}
+              {eventBasic.endDate &&
+                ` - ${formatDate(eventBasic.endDate)}`} •{" "}
+              {eventBasic.guestCount} guests
             </p>
             <p className="text-sm text-muted-foreground">
               {eventBasic.location}

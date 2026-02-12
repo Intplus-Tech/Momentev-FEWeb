@@ -4,11 +4,8 @@ import type { CustomerRequest } from "@/types/custom-request";
 import { create } from "zustand";
 
 export interface EventBasicData {
-  eventType: string;
-  otherEventType?: string;
-  eventDate: string;
-  eventStartTime: string;
-  eventEndTime: string;
+  eventDate: string; // ISO datetime string (startDate)
+  endDate?: string; // ISO datetime string (optional)
   guestCount: number;
   location: string;
   eventName: string;
@@ -26,7 +23,6 @@ export interface BudgetPlanningData {
 }
 
 export interface AdditionalDetailsData {
-  inspirationLinks: string[];
   uploadedFiles: UploadedFile[];
 }
 
@@ -125,29 +121,45 @@ export const useCustomRequestStore = create<CustomRequestStore>((set) => ({
 
   loadFromDraft: (request) => {
     const eventBasic: EventBasicData = {
-      eventType: request.eventDetails?.description ? "" : "",
       eventDate: request.eventDetails?.startDate || "",
-      eventStartTime: "",
-      eventEndTime: "",
+      endDate: request.eventDetails?.endDate || "",
       guestCount: request.eventDetails?.guestCount || 0,
       location: request.eventDetails?.location || "",
       eventName: request.eventDetails?.title || "",
       eventDescription: request.eventDetails?.description || "",
     };
 
-    const vendorNeeds: VendorNeedsData = {
-      selectedCategory: request.serviceCategoryId
-        ? { _id: request.serviceCategoryId._id, name: request.serviceCategoryId.name } as ServiceCategory
-        : null,
-      selectedSpecialties: [],
-    };
-
+    // Parse specialties
+    const selectedSpecialties: ServiceSpecialty[] = [];
     const budgetPerSpecialty: Record<string, number> = {};
     let totalBudget = 0;
+
     for (const alloc of request.budgetAllocations || []) {
-      budgetPerSpecialty[alloc.serviceSpecialtyId] = alloc.budgetedAmount;
+      const specId =
+        typeof alloc.serviceSpecialtyId === "string"
+          ? alloc.serviceSpecialtyId
+          : alloc.serviceSpecialtyId._id;
+
+      budgetPerSpecialty[specId] = alloc.budgetedAmount;
       totalBudget += alloc.budgetedAmount;
+
+      if (typeof alloc.serviceSpecialtyId !== "string") {
+        selectedSpecialties.push(
+          alloc.serviceSpecialtyId as unknown as ServiceSpecialty,
+        );
+      }
     }
+
+    const vendorNeeds: VendorNeedsData = {
+      selectedCategory:
+        request.serviceCategoryId && typeof request.serviceCategoryId === "object"
+          ? ({
+            _id: request.serviceCategoryId._id,
+            name: request.serviceCategoryId.name,
+          } as ServiceCategory)
+          : null,
+      selectedSpecialties,
+    };
 
     const budgetPlanning: BudgetPlanningData = {
       budgetPerSpecialty,
@@ -155,14 +167,13 @@ export const useCustomRequestStore = create<CustomRequestStore>((set) => ({
     };
 
     const additionalDetails: AdditionalDetailsData = {
-      inspirationLinks: [], // Not in sample but might exist in schema
-      uploadedFiles: (request.attachments || []).map(att => ({
+      uploadedFiles: (request.attachments || []).map((att) => ({
         _id: att._id,
         url: att.url,
         originalName: att.originalName,
         mimeType: att.mimeType,
         size: att.size,
-        provider: att.provider
+        provider: att.provider,
       })),
     };
 

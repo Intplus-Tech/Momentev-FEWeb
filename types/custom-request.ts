@@ -1,14 +1,12 @@
 export interface CustomRequestPayload {
-  serviceCategoryId?: string; // Optional if not part of initial basic step, but likely derived
+  serviceCategoryId?: string;
   eventDetails: {
     title: string;
     description: string;
-    startDate: string; // ISO string
-    startTime?: string;
-    endTime?: string;
+    startDate: string; // ISO datetime string
+    endDate?: string; // ISO datetime string
     guestCount: number;
     location: string;
-    eventType: string;
   };
   vendorNeeds?: {
     categories: string[];
@@ -19,7 +17,6 @@ export interface CustomRequestPayload {
     budgetedAmount: number;
   }[];
   attachments?: string[]; // Array of uploaded file IDs
-  inspirationLinks?: string[];
 }
 
 // For PATCH updates to drafts — all fields are optional
@@ -54,16 +51,24 @@ export interface CustomerRequest {
   };
   eventDetails?: {
     title: string;
-    startDate: string;
-    endDate?: string;
+    startDate: string; // ISO datetime string
+    endDate?: string; // ISO datetime string
     guestCount: number;
     location: string;
     description: string;
   };
   budgetAllocations: {
-    serviceSpecialtyId: string;
+    serviceSpecialtyId:
+    | string
+    | {
+      _id: string;
+      name: string;
+      description: string;
+      serviceCategoryId: string;
+    };
     budgetedAmount: number;
   }[];
+  inspirationLinks?: string[];
   attachments: CustomerRequestAttachment[]; // Changed from any[] or string[]
   status: string;
   approvedAt: string | null;
