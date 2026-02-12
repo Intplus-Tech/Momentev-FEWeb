@@ -1,14 +1,15 @@
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { format } from "date-fns";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-import type { RequestCardData } from "../_data";
+import type { CustomerRequest } from "@/types/custom-request";
+import { RequestActions } from "./RequestActions";
 
 type RequestCardProps = {
-  request: RequestCardData;
+  request: CustomerRequest;
 };
 
 function DetailRow({ label, value }: { label: string; value: string }) {
@@ -19,111 +20,113 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function StatusBadge({ status }: { status: string }) {
+  const getStatusStyles = () => {
+    switch (status) {
+      case "draft":
+        return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+      case "pending_approval":
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      case "active":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      case "rejected":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      case "cancelled":
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+      default:
+        return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const formatStatus = (s: string) => {
+    return s.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getStatusStyles()}`}
+    >
+      {formatStatus(status)}
+    </span>
+  );
+}
+
 export function RequestCard({ request }: RequestCardProps) {
-  const { quotes } = request;
-  const hasQuotes = quotes.entries.length > 0;
+  const {
+    _id,
+    eventDetails,
+    budgetAllocations,
+    serviceCategoryId,
+    status,
+    createdAt,
+  } = request;
+
+  const totalBudget = budgetAllocations.reduce(
+    (sum, item) => sum + (item.budgetedAmount || 0),
+    0,
+  );
 
   return (
     <Card className="border border-border/50">
       <CardContent className="space-y-4 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-          <p>Posted: {request.postedDate}</p>
-          {request.expiresIn && (
-            <p className="font-medium text-foreground">
-              Expires in {request.expiresIn}
+          <div className="flex items-center gap-3">
+            <p>
+              Posted:{" "}
+              {createdAt ? format(new Date(createdAt), "MMMM d, yyyy") : "N/A"}
             </p>
-          )}
+            <StatusBadge status={status} />
+          </div>
+          <RequestActions requestId={_id} status={status} />
         </div>
         <Separator />
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1">
             <p className="text-lg font-semibold text-foreground">
-              {request.title}
+              {eventDetails?.title || "Untitled Event"}
             </p>
-            <DetailRow label="Location" value={request.location} />
-            <DetailRow label="Budget" value={request.budget} />
+            <DetailRow
+              label="Location"
+              value={eventDetails?.location || "N/A"}
+            />
+            <DetailRow
+              label="Budget"
+              value={`£${totalBudget.toLocaleString()}`}
+            />
           </div>
 
           <div className="space-y-1">
-            <DetailRow label="Event Type" value={request.eventType} />
-            <DetailRow label="Event Date" value={request.eventDate} />
+            <DetailRow
+              label="Category"
+              value={serviceCategoryId?.name || "Uncategorized"}
+            />
+            <DetailRow
+              label="Event Date"
+              value={
+                eventDetails?.startDate
+                  ? format(new Date(eventDetails.startDate), "MMMM d, yyyy")
+                  : "N/A"
+              }
+            />
+            <DetailRow
+              label="Guests"
+              value={eventDetails?.guestCount?.toString() || "N/A"}
+            />
           </div>
         </div>
 
-        <Separator />
-
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">Status</p>
-            <p className="text-sm text-muted-foreground">
-              {request.status.label}
-            </p>
-            <p className="text-3xl font-semibold text-foreground">
-              {request.status.sentCount}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground">
-              Quote Received ({quotes.received}/{quotes.target})
-            </p>
-
-            {hasQuotes ? (
-              <div className="space-y-2 text-sm text-muted-foreground ">
-                {quotes.entries.map((quote) => (
-                  <div
-                    key={quote.vendor}
-                    className="space-y-0.5 border-b border-border/50 pb-2 last:border-0 last:pb-0"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="font-medium text-foreground">
-                        {quote.vendor}
-                      </span>
-                      <span>{quote.amount}</span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-current text-amber-500" />
-                        {quote.rating.toFixed(1)}
-                      </span>
-                      <span>• {quote.reviews} reviews</span>
-                      {quote.summary && <span>• {quote.summary}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No quotes received yet.
-              </p>
-            )}
-          </div>
-        </div>
-
-        <Separator />
+        {/* <Separator />
 
         <div className="flex flex-wrap gap-3">
-          {request.primaryAction.href ? (
-            <Button
-              asChild
-              variant={request.primaryAction.variant ?? "default"}
-            >
-              <Link href={request.primaryAction.href}>
-                {request.primaryAction.label}
+          {status === "draft" && (
+            <Button asChild variant="outline">
+              <Link href={`/client/custom-request/edit/${request._id}`}>
+                Edit Draft
               </Link>
             </Button>
-          ) : (
-            <Button variant={request.primaryAction.variant ?? "default"}>
-              {request.primaryAction.label}
-            </Button>
           )}
-          {request.secondaryActions.map((action) => (
-            <Button key={action} variant="link" className="px-0 text-primary">
-              {action}
-            </Button>
-          ))}
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

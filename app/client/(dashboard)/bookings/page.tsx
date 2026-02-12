@@ -1,63 +1,139 @@
-import { BookingCard, BookingCardData } from "./_components/BookingCard";
+import { BookingCard } from "./_components/BookingCard";
+import { fetchBookings } from "@/lib/actions/booking";
+import { getVendorPublicProfile } from "@/lib/actions/chat";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-const bookings: BookingCardData[] = [
-  {
-    id: "sarah-james",
-    title: "Sarah & James Wedding",
-    details: [
-      { label: "Vendor", value: "Elegant Weddings Photography" },
-      { label: "Amount", value: "£1,830" },
-    ],
-    eventInfo: {
-      date: "Sat, 15 Jul 2025 (12 days)",
-      service: "Weddings Photography",
-      status: "Balance due tomorrow",
-      tone: "warning",
-    },
-    timeline: ["Balance due Oct 27", "Event: Oct 28", "Photo delivery: Nov 1"],
-    primaryAction: "Pay Balance",
-    secondaryActions: ["Message Vendor", "View Details"],
-  },
-  {
-    id: "office-party",
-    title: "Office Christmas Party",
-    details: [
-      { label: "Vendors", value: "5" },
-      { label: "Amount", value: "£5,000" },
-    ],
-    eventInfo: {
-      date: "December 15, 2024 (49 days)",
-      service: "Corporate Catering",
-      status: "Deposit paid",
-      tone: "success",
-    },
-    timeline: ["Deposit Paid", "Event: Dec 15", "Balance due tomorrow"],
-    primaryAction: "Finalize Booking",
-    secondaryActions: ["Message Vendor", "View Details"],
-  },
-];
+export default async function ClientBookingsPage() {
+  const response = await fetchBookings(1, 50);
 
-export default function ClientBookingsPage() {
+  if (!response.success || !response.data) {
+    return (
+      <section className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-semibold text-foreground">Bookings</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your event bookings
+          </p>
+        </div>
+
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {response.error ||
+              "Failed to load bookings. Please try again later."}
+          </AlertDescription>
+        </Alert>
+      </section>
+    );
+  }
+
+  const bookings = response.data.data;
+  const totalBookings = response.data.total;
+
+  // Fetch vendor details for all bookings
+  const vendorDetailsMap = new Map<
+    string,
+    { businessName: string; rating: number }
+  >();
+
+  const uniqueVendorIds = [
+    ...new Set(
+      bookings.map((booking) => {
+        const vendor = booking.vendorId;
+        return typeof vendor === "string" ? vendor : vendor._id;
+      }),
+    ),
+  ];
+
+  await Promise.all(
+    uniqueVendorIds.map(async (vendorId) => {
+      const vendorResult = await getVendorPublicProfile(vendorId);
+      if (vendorResult.success && vendorResult.data) {
+        vendorDetailsMap.set(vendorId, {
+          businessName:
+            vendorResult.data.businessProfile?.businessName || "Unknown Vendor",
+          rating: vendorResult.data.rate || 0,
+        });
+      }
+    }),
+  );
+
+  // Separate upcoming and past bookings
+  const now = new Date();
+  const upcomingBookings = bookings.filter(
+    (booking) => new Date(booking.eventDetails.startDate) > now,
+  );
+  const completedBookings = bookings.filter(
+    (booking) =>
+      booking.status === "completed" || booking.status === "cancelled",
+  );
+
   return (
     <section className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold text-foreground">Booking</h1>
+        <h1 className="text-3xl font-semibold text-foreground">Bookings</h1>
         <p className="text-sm text-muted-foreground">
-          2 Upcoming • 5 Completed
+          {upcomingBookings.length} Upcoming • {completedBookings.length}{" "}
+          Completed
         </p>
       </div>
 
-      <div className="space-y-4">
-        <p className="text-base font-semibold text-foreground">
-          Upcoming Bookings:
-        </p>
-
+      {upcomingBookings.length > 0 && (
         <div className="space-y-4">
-          {bookings.map((booking) => (
-            <BookingCard key={booking.id} booking={booking} />
-          ))}
+          <p className="text-base font-semibold text-foreground">
+            Upcoming Bookings:
+          </p>
+
+          <div className="space-y-4">
+            {upcomingBookings.map((booking) => {
+              const vendor = booking.vendorId;
+              const vendorId = typeof vendor === "string" ? vendor : vendor._id;
+              const vendorDetails = vendorDetailsMap.get(vendorId);
+
+              return (
+                <BookingCard
+                  key={booking._id}
+                  booking={booking}
+                  vendorBusinessName={vendorDetails?.businessName}
+                  vendorRating={vendorDetails?.rating}
+                />
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
+
+      {completedBookings.length > 0 && (
+        <div className="space-y-4">
+          <p className="text-base font-semibold text-foreground">
+            Past Bookings:
+          </p>
+
+          <div className="space-y-4">
+            {completedBookings.map((booking) => {
+              const vendor = booking.vendorId;
+              const vendorId = typeof vendor === "string" ? vendor : vendor._id;
+              const vendorDetails = vendorDetailsMap.get(vendorId);
+
+              return (
+                <BookingCard
+                  key={booking._id}
+                  booking={booking}
+                  vendorBusinessName={vendorDetails?.businessName}
+                  vendorRating={vendorDetails?.rating}
+                />
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {bookings.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No bookings found</p>
+        </div>
+      )}
     </section>
   );
 }

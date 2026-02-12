@@ -148,7 +148,7 @@ export function ContactSidebar({
       </div>
 
       {/* Map Placeholder */}
-      <div className="relative h-32 rounded-xl overflow-hidden bg-gradient-to-br from-blue-100 to-blue-50">
+      <div className="relative h-32 rounded-xl overflow-hidden bg-linear-to-br from-blue-100 to-blue-50">
         <div className="absolute inset-0 opacity-30">
           {/* Decorative map-like pattern */}
           <div className="absolute top-2 left-4 w-16 h-0.5 bg-blue-300 rounded" />

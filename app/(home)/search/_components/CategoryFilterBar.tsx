@@ -1,6 +1,6 @@
 "use client";
 
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceCategory } from "@/types/service";
 

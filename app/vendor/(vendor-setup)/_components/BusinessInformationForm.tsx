@@ -98,7 +98,6 @@ export function BusinessInformationForm() {
   useEffect(() => {
     if (businessInfo && !hasLoadedInitialData.current) {
       isUpdatingFromContext.current = true;
-      console.log("Loading form data from context:", businessInfo);
 
       // Reset with keepDefaultValues: false to ensure all fields update
       reset(businessInfo as unknown as BusinessInfoFormData, {
@@ -127,7 +126,6 @@ export function BusinessInformationForm() {
   useEffect(() => {
     const subscription = watch((formData) => {
       if (!isUpdatingFromContext.current) {
-        console.log("Updating context with form data:", formData);
         updateBusinessInfo(
           formData as unknown as Partial<BusinessInfoFormData>,
         );

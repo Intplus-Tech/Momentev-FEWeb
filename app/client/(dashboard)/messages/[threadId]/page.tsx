@@ -14,7 +14,7 @@ import {
   useSendMessage,
   useChatRealtime,
   useVendorProfile,
-} from "@/lib/react-query/hooks/use-chat";
+} from "@/hooks/api/use-chat";
 import type { ChatConversation } from "@/types/chat";
 import { uploadFile } from "@/lib/actions/upload";
 

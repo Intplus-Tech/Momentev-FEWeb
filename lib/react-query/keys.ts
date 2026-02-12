@@ -31,4 +31,9 @@ export const queryKeys = {
     conversations: () => [...queryKeys.chat.all, 'conversations'] as const,
     messages: (conversationId: string) => [...queryKeys.chat.all, 'messages', conversationId] as const,
   },
+  bookings: {
+    all: ['bookings'] as const,
+    list: (page?: number, limit?: number) => [...queryKeys.bookings.all, 'list', page, limit] as const,
+    detail: (bookingId: string) => [...queryKeys.bookings.all, 'detail', bookingId] as const,
+  },
 };

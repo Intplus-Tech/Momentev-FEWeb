@@ -1,7 +1,13 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import {
+  motion,
+  useMotionValue,
+  useTransform,
+  useMotionValueEvent,
+} from "framer-motion";
 import Logo from "@/components/brand/logo";
 import {
   Search,
@@ -15,9 +21,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
-import { useServiceCategories } from "@/lib/react-query/hooks/use-service-categories";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { UserDropdown } from "./UserDropdown";
+import { useLocation } from "@/hooks/use-location";
 import {
   Sheet,
   SheetClose,
@@ -59,16 +66,37 @@ function HomeHeaderContent() {
   const isHome = pathname === "/";
 
   // Location state
-  const [userLat, setUserLat] = useState<number | null>(null);
-  const [userLong, setUserLong] = useState<number | null>(null);
+  const {
+    lat: userLat,
+    long: userLong,
+    loading: isLocating,
+    requestLocation: requestLocationInternal,
+    clearLocation: handleClearLocationHook,
+    setLocationState,
+  } = useLocation();
+
   const [selectedRadius, setSelectedRadius] = useState(50);
-  const [isLocating, setIsLocating] = useState(false);
   const [locationLabel, setLocationLabel] = useState("Set location");
+
+  const handleGetLocation = () => {
+    requestLocationInternal();
+    // ideally we'd set label on success, but for now we can watch state or just set it
+    // The previous code set it on success.
+  };
+
+  useEffect(() => {
+    if (userLat && userLong) {
+      setLocationLabel("My location");
+    }
+  }, [userLat, userLong]);
+  /* Scroll logic */
+  const [width, setWidth] = useState(0);
+  const slideContainerRef = useRef<HTMLDivElement>(null);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
 
-  const { data: user } = useUserProfile();
+  const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { data: categoriesData, isLoading: isCategoriesLoading } =
     useServiceCategories();
 
@@ -97,8 +125,11 @@ function HomeHeaderContent() {
     const radiusParam = searchParams.get("radius");
 
     if (latParam && longParam) {
-      setUserLat(parseFloat(latParam));
-      setUserLong(parseFloat(longParam));
+      setLocationState((prev) => ({
+        ...prev,
+        lat: parseFloat(latParam),
+        long: parseFloat(longParam),
+      }));
       setLocationLabel("My location");
     }
 
@@ -131,6 +162,19 @@ function HomeHeaderContent() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
+  const x = useMotionValue(0);
+  const leftOpacity = useTransform(x, [0, -20], [0, 1]);
+  const rightOpacity = useTransform(x, [-width + 20, -width], [1, 0]);
+
+  useEffect(() => {
+    if (slideContainerRef.current) {
+      // Calculate the draggable constraint based on difference between content width and container width
+      const scrollWidth = slideContainerRef.current.scrollWidth;
+      const offsetWidth = slideContainerRef.current.offsetWidth;
+      setWidth(scrollWidth - offsetWidth);
+    }
+  }, [categoriesData, menuOpen]); // Recalculate when data loads or layout changes
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
@@ -143,48 +187,9 @@ function HomeHeaderContent() {
     };
   }, [menuOpen]);
 
-  // Request user's geolocation
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation not supported", {
-        description: "Your browser doesn't support geolocation.",
-      });
-      return;
-    }
-
-    setIsLocating(true);
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLat(position.coords.latitude);
-        setUserLong(position.coords.longitude);
-        setLocationLabel("My location");
-        setIsLocating(false);
-        toast.success("Location set", {
-          description: "We'll show vendors near you.",
-        });
-      },
-      (error) => {
-        setIsLocating(false);
-        let message = "Could not get your location";
-        if (error.code === error.PERMISSION_DENIED) {
-          message =
-            "Location access denied. Please enable it in browser settings.";
-        } else if (error.code === error.POSITION_UNAVAILABLE) {
-          message = "Location unavailable";
-        } else if (error.code === error.TIMEOUT) {
-          message = "Location request timed out";
-        }
-        toast.error("Location error", { description: message });
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
-    );
-  };
-
   // Clear location
   const handleClearLocation = () => {
-    setUserLat(null);
-    setUserLong(null);
+    handleClearLocationHook();
     setLocationLabel("Set location");
   };
 
@@ -253,13 +258,17 @@ function HomeHeaderContent() {
               <MapPin className="w-4 h-4 text-muted-foreground" />
             )}
             <span className={isMobile ? "" : "hidden lg:inline"}>
-              {isLocating ? "Locating..." : locationLabel}
+              {isLocating
+                ? "Locating..."
+                : userLat && userLong
+                  ? `My location (${selectedRadius} km)`
+                  : locationLabel}
             </span>
           </span>
           <ChevronDown className="w-3 h-3 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-[200px]">
+      <DropdownMenuContent align="end" className="min-w-50">
         <DropdownMenuItem
           onClick={handleGetLocation}
           disabled={isLocating}
@@ -316,45 +325,58 @@ function HomeHeaderContent() {
 
           {/* Desktop Nav */}
           <ul className="hidden lg:flex items-center gap-4 xl:gap-6 text-white text-sm">
-            {(!user || user.role === "CUSTOMER") && (
-              <li>
-                <button className="relative px-3 py-2 font-medium group">
-                  <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
-                    Post A Request
-                  </span>
-                  <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
-                </button>
-              </li>
-            )}
-
-            {user ? (
-              <li>
-                <UserDropdown user={user} />
-              </li>
+            {isUserLoading ? (
+              <>
+                <Skeleton className="h-10 w-32 bg-white/20" />
+                <Skeleton className="h-10 w-32 bg-white/20" />
+              </>
             ) : (
-              <li>
-                <Button
-                  className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
-                  asChild
-                >
-                  <Link href="/client/auth/log-in">
-                    <CircleUserIcon className="w-4 h-4" />
-                    <span className="hidden xl:inline">Sign in/Sign up</span>
-                    <span className="xl:hidden">Sign in</span>
-                  </Link>
-                </Button>
-              </li>
-            )}
+              <>
+                {(!user || user.role === "CUSTOMER") && (
+                  <li>
+                    <button className="relative px-3 py-2 font-medium group">
+                      <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
+                        Post A Request
+                      </span>
+                      <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
+                    </button>
+                  </li>
+                )}
 
-            {!user && (
-              <li>
-                <Button
-                  asChild
-                  className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
-                >
-                  <Link href="/vendor/auth/sign-up">List your Business</Link>
-                </Button>
-              </li>
+                {user ? (
+                  <li>
+                    <UserDropdown user={user} />
+                  </li>
+                ) : (
+                  <li>
+                    <Button
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
+                      asChild
+                    >
+                      <Link href="/client/auth/log-in">
+                        <CircleUserIcon className="w-4 h-4" />
+                        <span className="hidden xl:inline">
+                          Sign in/Sign up
+                        </span>
+                        <span className="xl:hidden">Sign in</span>
+                      </Link>
+                    </Button>
+                  </li>
+                )}
+
+                {!user && (
+                  <li>
+                    <Button
+                      asChild
+                      className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                    >
+                      <Link href="/vendor/auth/sign-up">
+                        List your Business
+                      </Link>
+                    </Button>
+                  </li>
+                )}
+              </>
             )}
           </ul>
 
@@ -367,7 +389,7 @@ function HomeHeaderContent() {
             <div className="w-6 h-5 relative flex flex-col justify-between">
               <span
                 className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "rotate-45 translate-y-[9px]" : ""
+                  menuOpen ? "rotate-45 translate-y-2.25" : ""
                 }`}
               />
               <span
@@ -377,7 +399,7 @@ function HomeHeaderContent() {
               />
               <span
                 className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "-rotate-45 -translate-y-[9px]" : ""
+                  menuOpen ? "-rotate-45 -translate-y-2.25" : ""
                 }`}
               />
             </div>
@@ -402,44 +424,55 @@ function HomeHeaderContent() {
         >
           <div className="pt-20 pb-8 px-6">
             <ul className="flex flex-col items-center gap-4">
-              {(!user || user.role === "CUSTOMER") && (
-                <li className="w-full max-w-xs">
-                  <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
-                    Post A Request
-                  </button>
-                </li>
-              )}
-
-              {user ? (
-                <li className="w-full max-w-xs flex justify-center">
-                  <UserDropdown user={user} />
-                </li>
+              {isUserLoading ? (
+                <>
+                  <Skeleton className="h-12 w-full max-w-xs" />
+                  <Skeleton className="h-12 w-full max-w-xs" />
+                </>
               ) : (
-                <li className="w-full max-w-xs">
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    asChild
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Link href="/client/auth/log-in">
-                      <CircleUserIcon className="w-4 h-4" />
-                      Sign in/Sign up
-                    </Link>
-                  </Button>
-                </li>
-              )}
+                <>
+                  {(!user || user.role === "CUSTOMER") && (
+                    <li className="w-full max-w-xs">
+                      <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
+                        Post A Request
+                      </button>
+                    </li>
+                  )}
 
-              {!user && (
-                <li className="w-full max-w-xs">
-                  <Button
-                    className="w-full"
-                    asChild
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <Link href="/vendor/auth/sign-up">List your Business</Link>
-                  </Button>
-                </li>
+                  {user ? (
+                    <li className="w-full max-w-xs flex justify-center">
+                      <UserDropdown user={user} />
+                    </li>
+                  ) : (
+                    <li className="w-full max-w-xs">
+                      <Button
+                        className="w-full"
+                        variant="outline"
+                        asChild
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link href="/client/auth/log-in">
+                          <CircleUserIcon className="w-4 h-4" />
+                          Sign in/Sign up
+                        </Link>
+                      </Button>
+                    </li>
+                  )}
+
+                  {!user && (
+                    <li className="w-full max-w-xs">
+                      <Button
+                        className="w-full"
+                        asChild
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <Link href="/vendor/auth/sign-up">
+                          List your Business
+                        </Link>
+                      </Button>
+                    </li>
+                  )}
+                </>
               )}
             </ul>
           </div>
@@ -481,16 +514,21 @@ function HomeHeaderContent() {
             {/* Find Button */}
             <Button
               onClick={handleSearch}
-              className="ml-4 rounded-r-md px-6 min-w-[160px] border-none"
+              className="ml-4 rounded-r-md px-6 min-w-40 border-none"
             >
-              Find
+              {userLat && userLong ? "Apply" : "Find"}
             </Button>
           </div>
         </div>
 
         {/* Desktop Auth Buttons */}
         <div className="hidden md:flex items-center gap-3 shrink-0">
-          {user ? (
+          {isUserLoading ? (
+            <>
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-36" />
+            </>
+          ) : user ? (
             <UserDropdown user={user} />
           ) : (
             <>
@@ -575,7 +613,12 @@ function HomeHeaderContent() {
                 <p className="text-sm font-medium text-muted-foreground mb-3">
                   Account
                 </p>
-                {user ? (
+                {isUserLoading ? (
+                  <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : user ? (
                   <div className="flex justify-start">
                     <UserDropdown user={user} />
                   </div>
@@ -612,7 +655,7 @@ function HomeHeaderContent() {
       {isSearchRoute && (
         <div className="backdrop-blur-sm border-t">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-[1200px] mx-auto">
+            <div className="w-full max-w-300 mx-auto">
               <div
                 className="flex items-center justify-center gap-2 py-3"
                 suppressHydrationWarning
@@ -621,81 +664,51 @@ function HomeHeaderContent() {
                   Array.from({ length: 9 }).map((_, i) => (
                     <Skeleton
                       key={i}
-                      className="h-8 w-24 rounded-full flex-shrink-0"
+                      className="h-8 w-24 rounded-full shrink-0"
                     />
                   ))
                 ) : (
-                  <>
-                    {/* Visible category buttons */}
-                    {(() => {
-                      const MAX_VISIBLE = 7;
-                      const selectedIndex = categories.findIndex(
-                        (c: ServiceCategory) => c._id === selectedCategory,
-                      );
+                  /* Scrollable Container */
+                  <div
+                    ref={slideContainerRef}
+                    className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
+                  >
+                    {/* Left Gradient Indicator */}
+                    <motion.div
+                      className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
+                      style={{ opacity: leftOpacity }}
+                    />
 
-                      let visibleCategories: ServiceCategory[];
+                    {/* Right Gradient Indicator */}
+                    <motion.div
+                      className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background  via to-transparent z-10 pointer-events-none"
+                      style={{ opacity: rightOpacity }}
+                    />
 
-                      if (selectedIndex === -1 || selectedIndex < MAX_VISIBLE) {
-                        visibleCategories = categories.slice(0, MAX_VISIBLE);
-                      } else {
-                        visibleCategories = [
-                          ...categories.slice(0, MAX_VISIBLE - 1),
-                          categories[selectedIndex],
-                        ];
-                      }
-
-                      return visibleCategories.map(
-                        (category: ServiceCategory) => {
-                          const isActive = selectedCategory === category._id;
-                          return (
-                            <button
-                              key={category._id}
-                              onClick={() => handleCategoryClick(category._id)}
-                              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border ${
-                                isActive
-                                  ? "bg-[#80808030] text-[#808080] border-[#80808030]"
-                                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                              }`}
-                              suppressHydrationWarning
-                            >
-                              <span>{category.name}</span>
-                            </button>
-                          );
-                        },
-                      );
-                    })()}
-
-                    {/* "All" dropdown with all categories */}
-                    {categories.length > 0 && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border">
-                            <span>All</span>
-                            <ChevronDown className="w-3 h-3" />
+                    <motion.div
+                      drag="x"
+                      dragConstraints={{ right: 0, left: -width }}
+                      style={{ x }}
+                      className="flex gap-2 w-fit"
+                    >
+                      {categories.map((category: ServiceCategory) => {
+                        const isActive = selectedCategory === category._id;
+                        return (
+                          <button
+                            key={category._id}
+                            onClick={() => handleCategoryClick(category._id)}
+                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${
+                              isActive
+                                ? "bg-primary/10 text-primary border-primary/20 font-medium"
+                                : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                            }`}
+                          >
+                            {category.name}
                           </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-fit">
-                          <ScrollArea className="h-[300px] ">
-                            {categories.map((category: ServiceCategory) => (
-                              <DropdownMenuItem
-                                key={category._id}
-                                onClick={() =>
-                                  handleCategoryClick(category._id)
-                                }
-                                className={
-                                  selectedCategory === category._id
-                                    ? "bg-primary/10 text-primary font-medium whitespace-nowrap"
-                                    : ""
-                                }
-                              >
-                                {category.name}
-                              </DropdownMenuItem>
-                            ))}
-                          </ScrollArea>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                  </>
+                        );
+                      })}
+                    </motion.div>
+                  </div>
                 )}
               </div>
             </div>

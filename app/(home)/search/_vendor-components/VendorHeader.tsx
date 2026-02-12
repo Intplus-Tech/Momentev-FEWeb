@@ -4,13 +4,17 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useUserProfile } from "@/lib/react-query/hooks/use-user-profile";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useStartVendorConversation } from "@/hooks/api/use-chat";
+import { toast } from "sonner";
 
 interface VendorHeaderProps {
   name: string;
   logo?: string | null;
   rating: number;
   reviewCount: number;
+  vendorId: string;
+  onBookVendor?: () => void;
 }
 
 export function VendorHeader({
@@ -18,10 +22,13 @@ export function VendorHeader({
   logo,
   rating,
   reviewCount,
+  vendorId,
+  onBookVendor,
 }: VendorHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isLoading, isError } = useUserProfile();
+  const startConversation = useStartVendorConversation();
 
   const role = user?.role?.toUpperCase();
   const isVendor = role === "VENDOR";
@@ -41,7 +48,11 @@ export function VendorHeader({
     }
 
     if (isClient) {
-      // TODO: implement booking flow for clients
+      if (onBookVendor) {
+        onBookVendor();
+        return;
+      }
+
       console.log("Book Vendor clicked (client flow pending)");
       return;
     }
@@ -50,15 +61,32 @@ export function VendorHeader({
     redirectToLogin();
   };
 
-  const handleMessage = () => {
+  const handleMessage = async () => {
     if (isLoggedOut) {
       redirectToLogin();
       return;
     }
 
     if (isClient) {
-      // TODO: implement messaging flow for clients
-      console.log("Message Vendor clicked (client flow pending)");
+      if (!vendorId) {
+        toast.error("Missing vendor info. Please try again.");
+        return;
+      }
+
+      try {
+        const conversation = await startConversation.mutateAsync(vendorId);
+        if (conversation?._id) {
+          router.push(`/client/messages/${conversation._id}`);
+          return;
+        }
+        toast.error("Unable to open chat. Please try again.");
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Failed to start conversation";
+        toast.error(message);
+      }
       return;
     }
 
@@ -119,7 +147,7 @@ export function VendorHeader({
             variant="outline"
             className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={handleMessage}
-            disabled={isLoading}
+            disabled={isLoading || startConversation.isPending}
           >
             Message Vendor
           </Button>

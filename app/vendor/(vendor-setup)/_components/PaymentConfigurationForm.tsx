@@ -87,7 +87,6 @@ export function PaymentConfigurationForm() {
         throw new Error(result.error || "Failed to set payment model");
       }
 
-      console.log("✅ Payment Model set:", model);
       toast.success("Payment model saved");
 
       markSectionComplete(3, 1); // Step 3, Section 1
@@ -114,8 +113,6 @@ export function PaymentConfigurationForm() {
       if (!result.success) {
         throw new Error(result.error || "Failed to connect Stripe");
       }
-
-      console.log("✅ Stripe Account Created:", result.data?.stripeAccountId);
 
       setStripeConnected(true);
       setShowSuccessModal(true);
@@ -157,9 +154,6 @@ export function PaymentConfigurationForm() {
             result.error || "Failed to accept commission agreement",
           );
         }
-
-        console.log("✅ Commission Agreed");
-        console.log("🎉 Step 3 Complete - Navigating to Step 4");
 
         markSectionComplete(3, 3); // Step 3, Section 3
         router.push("/vendor/profile-setup"); // Navigate to next page/step

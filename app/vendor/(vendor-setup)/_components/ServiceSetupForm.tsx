@@ -66,7 +66,7 @@ export function ServiceSetupForm() {
         }
 
         await new Promise((resolve) => setTimeout(resolve, 500));
-        console.log("✅ Step 2 - Section 1 validated");
+
         markSectionComplete(2, 1); // Step 2, Section 1
         setExpandedSection(2);
       } else if (expandedSection === 2) {
@@ -81,7 +81,6 @@ export function ServiceSetupForm() {
         const { serviceCategories, pricingStructure } =
           useVendorSetupStore.getState();
 
-        console.log("🚀 Submitting service setup...");
         const result = await submitServiceSetup(
           serviceCategories as ServiceCategoriesFormData,
           pricingStructure as PricingStructureFormData,
@@ -97,7 +96,6 @@ export function ServiceSetupForm() {
           return;
         }
 
-        console.log("✅ Service setup submitted successfully");
         markSectionComplete(2, 2); // Step 2, Section 2
         router.push("/vendor/payment-setup");
       }

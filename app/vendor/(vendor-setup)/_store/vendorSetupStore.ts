@@ -60,6 +60,7 @@ interface VendorSetupState {
   // UI State
   isSubmitting: boolean;
   errors: Record<string, string>;
+  activeUploads: number; // Track number of ongoing uploads
 
   // Actions - Step Management
   setCurrentStep: (step: number) => void;
@@ -109,6 +110,8 @@ interface VendorSetupState {
   // Actions - UI State
   setIsSubmitting: (submitting: boolean) => void;
   setErrors: (errors: Record<string, string>) => void;
+  incrementUpload: () => void; // Track upload start
+  decrementUpload: () => void; // Track upload end
   clearDraft: () => void;
 }
 
@@ -139,6 +142,7 @@ export const useVendorSetupStore = create<VendorSetupState>()(
       isProfileCompletionValid: false,
       isSubmitting: false,
       errors: {},
+      activeUploads: 0,
 
       // Getters for backward compatibility
       get documentIds() {
@@ -276,6 +280,8 @@ export const useVendorSetupStore = create<VendorSetupState>()(
       // UI State Actions
       setIsSubmitting: (submitting) => set({ isSubmitting: submitting }),
       setErrors: (errors) => set({ errors }),
+      incrementUpload: () => set((state) => ({ activeUploads: state.activeUploads + 1 })),
+      decrementUpload: () => set((state) => ({ activeUploads: Math.max(0, state.activeUploads - 1) })),
 
       clearDraft: () => set({
         currentStep: 1,

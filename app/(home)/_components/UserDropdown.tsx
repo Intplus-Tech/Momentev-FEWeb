@@ -32,12 +32,8 @@ export function UserDropdown({ user }: UserDropdownProps) {
 
   const dashboardLink = isVendor ? "/vendor/dashboard" : "/client/dashboard";
   // Assuming generic settings/messages paths for now based on dashboard structure
-  const settingsLink = isVendor
-    ? "/vendor/dashboard/settings"
-    : "/client/dashboard/settings";
-  const messagesLink = isVendor
-    ? "/vendor/dashboard/messages"
-    : "/client/dashboard/messages";
+  const settingsLink = isVendor ? "/vendor/settings" : "/client/settings";
+  const messagesLink = isVendor ? "/vendor/messages" : "/client/messages";
 
   const handleLogout = async () => {
     await logout();
@@ -48,8 +44,8 @@ export function UserDropdown({ user }: UserDropdownProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          className="relative flex h-10 items-center gap-3 rounded-full px-2 transition-colors hover:bg-transparent hover:border-primary focus-visible:border-primary focus-visible:bg-transparent focus-visible:text-primary data-[state=open]:bg-transparent data-[state=open]:border-primary data-[state=open]:text-primary"
+          variant="outline"
+          className="relative flex h-10 items-center gap-3 rounded-full pl-1 pr-4 border-black/50 shadow-none transition-colors hover:bg-transparent hover:border-primary focus-visible:border-primary focus-visible:bg-transparent focus-visible:text-primary data-[state=open]:bg-transparent data-[state=open]:border-primary data-[state=open]:text-primary"
         >
           <Avatar className="h-8 w-8 border border-black shadow-sm">
             <AvatarImage src={user.avatar?.url} alt={user.firstName} />
@@ -58,7 +54,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
               {user.lastName?.[0]}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden font-medium text-white md:block group-data-[state=open]:text-white">
+          <span className="hidden font-medium md:block group-data-[state=open]:text-white">
             {user.firstName}
           </span>
         </Button>

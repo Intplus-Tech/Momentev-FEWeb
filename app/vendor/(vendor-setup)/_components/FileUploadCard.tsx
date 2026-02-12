@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X, Check, Upload as UploadIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { uploadFile } from "@/lib/actions/upload";
 import type { UploadedFile } from "@/lib/actions/upload";
+import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
 type UploadState = "idle" | "uploading" | "complete" | "error";
 
@@ -39,6 +40,18 @@ export function FileUploadCard({
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     uploadedFile?.url || null,
   );
+
+  // Upload tracking
+  const incrementUpload = useVendorSetupStore((state) => state.incrementUpload);
+  const decrementUpload = useVendorSetupStore((state) => state.decrementUpload);
+
+  // Track upload state changes
+  useEffect(() => {
+    if (state === "uploading") {
+      incrementUpload();
+      return () => decrementUpload();
+    }
+  }, [state, incrementUpload, decrementUpload]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";

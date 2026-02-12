@@ -93,7 +93,7 @@ export function PricingStructureForm() {
   useEffect(() => {
     if (pricingStructure && !hasLoadedInitialData.current) {
       isUpdatingFromContext.current = true;
-      console.log("Loading pricing structure from context:", pricingStructure);
+
       reset(pricingStructure as PricingStructureFormData, {
         keepDefaultValues: false,
       });
@@ -112,7 +112,6 @@ export function PricingStructureForm() {
     if (isUpdatingFromContext.current) return;
 
     const subscription = watch((formData) => {
-      console.log("📝 Updating pricing structure in context:", formData);
       updatePricingStructure(formData as Partial<PricingStructureFormData>);
     });
 

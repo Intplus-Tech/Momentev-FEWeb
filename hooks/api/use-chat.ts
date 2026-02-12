@@ -8,7 +8,8 @@ import {
   getMessages,
   sendMessage,
   markAsRead,
-  getVendorPublicProfile
+  getVendorPublicProfile,
+  getOrCreateConversation,
 } from "@/lib/actions/chat";
 import { queryKeys } from "@/lib/react-query/keys";
 import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/types/chat";
@@ -243,4 +244,25 @@ export function useVendorProfiles(vendorIds: string[]): {
   });
 
   return { profiles, isLoading };
+}
+
+/**
+ * Hook to get or create a conversation with a vendor
+ * POST /api/v1/chats/vendor/{vendorId}
+ */
+export function useStartVendorConversation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (vendorId: string) => {
+      const result = await getOrCreateConversation(vendorId);
+      if (!result.success || !result.data) {
+        throw new Error(result.error || "Failed to start conversation");
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
+    },
+  });
 }

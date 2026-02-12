@@ -23,9 +23,12 @@ import { LogOut, Search } from "lucide-react";
 import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 export const VendorSidebar = () => {
   const pathname = usePathname();
+  const { isLoading, data } = useUserProfile();
+  console.log(JSON.stringify(data?.vendor?.id, null, 2));
 
   return (
     <Sidebar
@@ -66,7 +69,7 @@ export const VendorSidebar = () => {
                         "group relative rounded-sm px-4 py-3 text-sm font-semibold text-muted-foreground transition hover:bg-muted/60",
                         "before:absolute before:left-1 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-transparent",
                         "data-[active=true]:bg-transparent data-[active=true]:text-primary data-[active=true]:shadow-none",
-                        "data-[active=true]:before:bg-primary"
+                        "data-[active=true]:before:bg-primary",
                       )}
                     >
                       <Link
