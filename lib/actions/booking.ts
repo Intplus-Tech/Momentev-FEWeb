@@ -236,7 +236,7 @@ export async function cancelBooking(
     const response = await fetch(
       `${API_URL}/api/v1/bookings/${bookingId}/cancel`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,

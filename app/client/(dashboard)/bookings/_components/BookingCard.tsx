@@ -3,18 +3,31 @@
 import { Calendar, MapPin, Users, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 import { getOrCreateConversation } from "@/lib/actions/chat";
+import { cancelBooking } from "@/lib/actions/booking";
 import type {
   BookingResponse,
   PopulatedVendor,
   PopulatedVendorSpecialty,
 } from "@/types/booking";
-import { useState } from "react";
 
 type BookingCardProps = {
   booking: BookingResponse;
@@ -56,6 +69,7 @@ export function BookingCard({
 }: BookingCardProps) {
   const router = useRouter();
   const [isMessaging, setIsMessaging] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const vendor = booking.vendorId as PopulatedVendor;
   const vendorId = typeof vendor === "string" ? vendor : vendor._id;
@@ -102,6 +116,28 @@ export function BookingCard({
       setIsMessaging(false);
     }
   };
+
+  const handleCancelBooking = async () => {
+    if (isCancelling) return;
+
+    setIsCancelling(true);
+    try {
+      const result = await cancelBooking(booking._id);
+
+      if (result.success) {
+        router.refresh();
+      } else {
+        console.error("Failed to cancel booking:", result.error);
+        alert(result.error || "Failed to cancel booking");
+      }
+    } catch (error) {
+      console.error("Error cancelling booking:", error);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const showCancelButton = booking.status === "pending_payment";
 
   return (
     <Card className="border border-border/70 hover:shadow-md transition-shadow">
@@ -206,11 +242,45 @@ export function BookingCard({
           </div>
 
           <div className="flex flex-wrap gap-3 md:justify-end">
+            {showCancelButton && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={isMessaging || isCancelling}
+                  >
+                    {isCancelling ? "Cancelling..." : "Cancel Booking"}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to cancel this booking? This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Keep Booking</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleCancelBooking();
+                      }}
+                      className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                    >
+                      {isCancelling ? "Cancelling..." : "Yes, Cancel Booking"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <Button
               size="sm"
               variant="outline"
               onClick={handleMessageVendor}
-              disabled={isMessaging}
+              disabled={isMessaging || isCancelling}
             >
               {isMessaging ? "Loading..." : "Message Vendor"}
             </Button>
