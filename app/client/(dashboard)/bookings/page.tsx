@@ -16,7 +16,7 @@ const bookings: BookingCardData[] = [
     },
     timeline: ["Balance due Oct 27", "Event: Oct 28", "Photo delivery: Nov 1"],
     primaryAction: "Pay Balance",
-    secondaryActions: ["Message Vendor", "View Details"],
+    secondaryActions: ["Message Vendor"],
   },
   {
     id: "office-party",
@@ -33,7 +33,7 @@ const bookings: BookingCardData[] = [
     },
     timeline: ["Deposit Paid", "Event: Dec 15", "Balance due tomorrow"],
     primaryAction: "Finalize Booking",
-    secondaryActions: ["Message Vendor", "View Details"],
+    secondaryActions: ["Message Vendor"],
   },
 ];
 

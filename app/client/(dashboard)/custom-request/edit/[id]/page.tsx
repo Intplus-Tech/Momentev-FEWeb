@@ -269,7 +269,6 @@ export default function EditDraftPage() {
 
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
-      toast.success(`Step ${currentStep} saved!`);
     }
   };
 

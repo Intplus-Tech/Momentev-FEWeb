@@ -109,7 +109,7 @@ export function RequestActions({ requestId, status }: RequestActionsProps) {
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-fit">
           {isDraft && (
             <DropdownMenuItem
               onClick={() =>

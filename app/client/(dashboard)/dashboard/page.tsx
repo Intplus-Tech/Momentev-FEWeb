@@ -16,7 +16,7 @@ const upcomingEvents: UpcomingEvent[] = [
     financialValue: "£915",
     timeRange: "10:00-18:00",
     location: "St. Mary's Church, London",
-    actions: ["View Details", "Message Vendor"],
+    actions: ["Message Vendor"],
     ctaLabel: "Pay Balance",
   },
   {
@@ -29,7 +29,7 @@ const upcomingEvents: UpcomingEvent[] = [
     financialValue: "£1,000",
     timeRange: "10:00-18:00",
     location: "Grand Hotel Ballroom",
-    actions: ["View Details", "Message Vendor"],
+    actions: ["Message Vendor"],
     ctaLabel: "Pay Balance",
   },
 ];

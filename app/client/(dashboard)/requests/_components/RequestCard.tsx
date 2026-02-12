@@ -116,12 +116,9 @@ export function RequestCard({ request }: RequestCardProps) {
           </div>
         </div>
 
-        <Separator />
+        {/* <Separator />
 
         <div className="flex flex-wrap gap-3">
-          <Button asChild variant="default">
-            <Link href={`/client/requests/${request._id}`}>View Details</Link>
-          </Button>
           {status === "draft" && (
             <Button asChild variant="outline">
               <Link href={`/client/custom-request/edit/${request._id}`}>
@@ -129,7 +126,7 @@ export function RequestCard({ request }: RequestCardProps) {
               </Link>
             </Button>
           )}
-        </div>
+        </div> */}
       </CardContent>
     </Card>
   );

@@ -245,7 +245,6 @@ export default function CustomRequestPage() {
 
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
-      toast.success(`Step ${currentStep} saved!`);
     }
   };
 

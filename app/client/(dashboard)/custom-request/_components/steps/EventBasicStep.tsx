@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { TimePicker } from "@/components/ui/time-picker";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -153,26 +154,43 @@ export function EventBasicStep({
                       className="w-full justify-between font-normal"
                     >
                       {selectedStartDate
-                        ? selectedStartDate.toLocaleString("en-GB")
+                        ? selectedStartDate.toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "Select start date & time"}
                       <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto overflow-hidden p-0"
-                    align="start"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={selectedStartDate}
-                      defaultMonth={selectedStartDate}
-                      captionLayout="dropdown"
-                      onSelect={(date) => {
-                        if (!date) return;
-                        field.onChange(formatDateValue(date));
-                        setStartDateOpen(false);
-                      }}
-                    />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex flex-col sm:flex-row">
+                      <Calendar
+                        mode="single"
+                        selected={selectedStartDate}
+                        defaultMonth={selectedStartDate}
+                        captionLayout="dropdown"
+                        onSelect={(date) => {
+                          if (!date) return;
+                          const newDate = new Date(date);
+                          if (selectedStartDate) {
+                            newDate.setHours(selectedStartDate.getHours());
+                            newDate.setMinutes(selectedStartDate.getMinutes());
+                          }
+                          field.onChange(formatDateValue(newDate));
+                        }}
+                      />
+                      <div className="border-t sm:border-t-0 sm:border-l">
+                        <TimePicker
+                          date={selectedStartDate}
+                          setDate={(date) => {
+                            field.onChange(formatDateValue(date));
+                          }}
+                        />
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
                 {errors.eventDate && (
@@ -198,26 +216,43 @@ export function EventBasicStep({
                       className="w-full justify-between font-normal"
                     >
                       {selectedEndDate
-                        ? selectedEndDate.toLocaleString("en-GB")
+                        ? selectedEndDate.toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "Select end date & time"}
                       <CalendarIcon className="w-4 h-4 text-muted-foreground" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent
-                    className="w-auto overflow-hidden p-0"
-                    align="start"
-                  >
-                    <Calendar
-                      mode="single"
-                      selected={selectedEndDate}
-                      defaultMonth={selectedEndDate || selectedStartDate}
-                      captionLayout="dropdown"
-                      onSelect={(date) => {
-                        if (!date) return;
-                        field.onChange(formatDateValue(date));
-                        setEndDateOpen(false);
-                      }}
-                    />
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <div className="flex flex-col sm:flex-row">
+                      <Calendar
+                        mode="single"
+                        selected={selectedEndDate}
+                        defaultMonth={selectedEndDate || selectedStartDate}
+                        captionLayout="dropdown"
+                        onSelect={(date) => {
+                          if (!date) return;
+                          const newDate = new Date(date);
+                          if (selectedEndDate) {
+                            newDate.setHours(selectedEndDate.getHours());
+                            newDate.setMinutes(selectedEndDate.getMinutes());
+                          }
+                          field.onChange(formatDateValue(newDate));
+                        }}
+                      />
+                      <div className="border-t sm:border-t-0 sm:border-l">
+                        <TimePicker
+                          date={selectedEndDate}
+                          setDate={(date) => {
+                            field.onChange(formatDateValue(date));
+                          }}
+                        />
+                      </div>
+                    </div>
                   </PopoverContent>
                 </Popover>
                 {errors.endDate && (
