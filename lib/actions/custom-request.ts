@@ -26,10 +26,10 @@ async function makeAuthenticatedRequest<T>(
   options: RequestInit
 ): Promise<ActionResponse<T>> {
   const startTime = Date.now();
-  console.log(`[makeAuthenticatedRequest] START ${options.method || "GET"} ${url}`);
+
 
   const token = await getAccessToken();
-  console.log(`[makeAuthenticatedRequest] Token obtained: ${token ? 'yes' : 'NO TOKEN'} (${Date.now() - startTime}ms)`);
+
 
   if (!token) {
     return { success: false, error: "Not authenticated" };
@@ -50,10 +50,10 @@ async function makeAuthenticatedRequest<T>(
     });
 
     clearTimeout(timeoutId);
-    console.log(`[makeAuthenticatedRequest] Response Status: ${response.status} (${Date.now() - startTime}ms)`);
+
 
     const text = await response.text();
-    console.log(`[makeAuthenticatedRequest] Body length: ${text.length} chars`);
+
 
     let data;
     try {
@@ -71,10 +71,10 @@ async function makeAuthenticatedRequest<T>(
       );
 
       if (response.status === 401) {
-        console.log("[makeAuthenticatedRequest] Attempting token refresh...");
+
         const refreshResult = await tryRefreshToken();
         if (refreshResult.success && refreshResult.token) {
-          console.log("[makeAuthenticatedRequest] Token refreshed, retrying...");
+
           const retryResponse = await fetch(url, {
             ...options,
             headers: {
@@ -85,7 +85,7 @@ async function makeAuthenticatedRequest<T>(
           });
 
           const retryText = await retryResponse.text();
-          console.log(`[makeAuthenticatedRequest] Retry Status: ${retryResponse.status} (${Date.now() - startTime}ms)`);
+
 
           let retryData;
           try {
@@ -95,7 +95,7 @@ async function makeAuthenticatedRequest<T>(
           }
 
           if (retryResponse.ok) {
-            console.log(`[makeAuthenticatedRequest] Retry SUCCESS (${Date.now() - startTime}ms)`);
+
             return { success: true, data: retryData.data };
           }
           console.error("[makeAuthenticatedRequest] Retry Failed:", retryData.message);
@@ -106,7 +106,7 @@ async function makeAuthenticatedRequest<T>(
       return { success: false, error: data.message || "Request failed" };
     }
 
-    console.log(`[makeAuthenticatedRequest] SUCCESS (${Date.now() - startTime}ms)`);
+
     return { success: true, data: data.data };
   } catch (error: any) {
     if (error.name === 'AbortError') {
@@ -140,7 +140,7 @@ export async function submitCustomRequest(
       customerId: profileResult.data._id,
     };
 
-    console.log("[submitCustomRequest] Payload:", JSON.stringify(finalPayload, null, 2));
+
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/submit`, {
       method: "POST",
@@ -177,7 +177,7 @@ export async function saveAsDraft(
       customerId: profileResult.data._id,
     };
 
-    console.log("[saveAsDraft] Payload:", JSON.stringify(finalPayload, null, 2));
+
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/drafts`, {
       method: "POST",
@@ -202,7 +202,7 @@ export async function submitDraft(id: string): Promise<ActionResponse<any>> {
   }
 
   try {
-    console.log(`[submitDraft] Submitting draft: ${id}`);
+
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/submit/${id}`, {
       method: "POST",
@@ -229,8 +229,8 @@ export async function updateDraft(
   }
 
   try {
-    console.log(`[updateDraft] Updating draft: ${id}`);
-    console.log(`[updateDraft] Payload:`, JSON.stringify(payload, null, 2));
+
+
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/drafts/${id}`, {
       method: "PATCH",
@@ -257,7 +257,7 @@ export async function fetchCustomerRequestById(
   }
 
   try {
-    console.log(`[fetchCustomerRequestById] Fetching request: ${id}`);
+
 
     return await makeAuthenticatedRequest<CustomerRequest>(
       `${API_URL}/api/v1/customer-requests/${id}?populate=serviceCategoryId,budgetAllocations.serviceSpecialtyId`,
@@ -284,7 +284,7 @@ export async function fetchCustomerRequests(
   limit = 10,
   filters?: CustomerRequestFilters
 ): Promise<ActionResponse<CustomerRequestListResponse>> {
-  console.log(`[fetchCustomerRequests] CALLED page=${page} limit=${limit} filters=${JSON.stringify(filters)}`);
+
 
   if (!API_URL) {
     console.error("[fetchCustomerRequests] BACKEND_URL not configured!");
@@ -314,14 +314,14 @@ export async function fetchCustomerRequests(
     }
 
     const url = `${API_URL}/api/v1/customer-requests/me?${queryParams}`;
-    console.log("[fetchCustomerRequests] URL:", url);
+
 
     const result = await makeAuthenticatedRequest<CustomerRequestListResponse>(url, {
       method: "GET",
       cache: "no-store",
     });
 
-    console.log(`[fetchCustomerRequests] Result: success=${result.success}, hasData=${!!result.data}, error=${result.error || 'none'}`);
+
     return result;
   } catch (error) {
     console.error("[fetchCustomerRequests] UNCAUGHT ERROR:", error);
@@ -344,7 +344,7 @@ export async function deleteCustomerRequest(
   }
 
   try {
-    console.log(`[deleteCustomerRequest] Deleting request: ${id}`);
+
 
     const result = await makeAuthenticatedRequest<void>(
       `${API_URL}/api/v1/customer-requests/${id}`,
@@ -377,7 +377,7 @@ export async function cancelCustomerRequest(
   }
 
   try {
-    console.log(`[cancelCustomerRequest] Cancelling request: ${id}`);
+
 
     const result = await makeAuthenticatedRequest(
       `${API_URL}/api/v1/customer-requests/${id}/cancel`,

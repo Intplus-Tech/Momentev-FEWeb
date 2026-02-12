@@ -76,8 +76,6 @@ export default function EditDraftPage() {
   // Load draft data into store once fetched, enriching with category/specialty data
   useEffect(() => {
     if (draftData && !draftLoaded) {
-      console.log("[EditDraftPage] Loaded draft data:", draftData);
-
       // Fetch missing data if serviceCategoryId or specialties are strings
       const enrichDraftData = async () => {
         const enrichedData = { ...draftData };
@@ -137,7 +135,6 @@ export default function EditDraftPage() {
           }
         }
 
-        console.log("[EditDraftPage] Enriched draft data:", enrichedData);
         loadFromDraft(enrichedData);
         setDraftLoaded(true);
       };
@@ -284,9 +281,6 @@ export default function EditDraftPage() {
       .filter((file) => file != null && typeof file._id === "string")
       .map((file) => file._id);
 
-    console.log("[buildPayload] additionalDetails:", additionalDetails);
-    console.log("[buildPayload] attachmentIds:", attachmentIds);
-
     return {
       serviceCategoryId: vendorNeeds?.selectedCategory?._id || undefined,
       eventDetails: {
@@ -313,7 +307,7 @@ export default function EditDraftPage() {
 
     try {
       const payload = buildPayload();
-      console.log("[handleSaveDraft] Payload:", payload);
+
       const { updateDraft } = await import("@/lib/actions/custom-request");
       const result = await updateDraft(draftId, payload);
 
