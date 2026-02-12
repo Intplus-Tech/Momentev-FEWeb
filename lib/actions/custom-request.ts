@@ -64,10 +64,11 @@ async function makeAuthenticatedRequest<T>(
     }
 
     if (!response.ok) {
+      // Log only status and high-level message to avoid dumping full payloads into server logs
       console.error(
         "[makeAuthenticatedRequest] Error:",
         response.status,
-        JSON.stringify(data, null, 2),
+        data?.message || "Unknown error",
       );
 
       if (response.status === 401) {

@@ -30,6 +30,21 @@ export const ClientSidebar = () => {
   const pathname = usePathname();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
 
+  const initials = (() => {
+    const first = user?.firstName?.trim();
+    const last = user?.lastName?.trim();
+
+    const segments = [first, ...(last ? last.split(/\s+/) : [])].filter(
+      Boolean,
+    ) as string[];
+    const letters = segments
+      .map((segment: string) => segment[0])
+      .filter(Boolean);
+    const value = letters.join("").slice(0, 2).toUpperCase();
+
+    return value || "CL";
+  })();
+
   return (
     <Sidebar
       collapsible="icon"
@@ -55,15 +70,7 @@ export const ClientSidebar = () => {
                     user?.firstName + " " + user?.lastName || "Client avatar"
                   }
                 />
-                <AvatarFallback>
-                  {user?.firstName +
-                    " " +
-                    user?.lastName
-                      ?.split(" ")
-                      .map((n: any[]) => n[0])
-                      .join("")
-                      .toUpperCase() || "CL"}
-                </AvatarFallback>
+                <AvatarFallback>{initials}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-foreground">
