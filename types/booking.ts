@@ -113,6 +113,12 @@ export interface CreateBookingPayload {
   currency: string;
 }
 
+export interface BookingPayment {
+  provider: string;
+  status: string;
+  paymentIntentId?: string;
+}
+
 export interface BookingResponse {
   _id: string;
   customerId: string | PopulatedCustomer;
@@ -124,6 +130,7 @@ export interface BookingResponse {
   amounts: BookingAmounts;
   paymentModel: string;
   status: BookingStatus;
+  payment?: BookingPayment;
   createdAt: string;
   updatedAt: string;
   __v?: number;
