@@ -36,27 +36,40 @@ export function PayoutHistoryTable({ rows }: PayoutHistoryTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow key={`${row.payoutId}-${row.date}`} className="text-sm">
-                <TableCell className="font-medium text-foreground">
-                  {row.date}
-                </TableCell>
-                <TableCell className="text-muted-foreground">
-                  {row.payoutId}
-                </TableCell>
-                <TableCell className="font-semibold text-foreground">
-                  {row.amount}
-                </TableCell>
-                <TableCell>
-                  <Badge className="flex items-center gap-1 rounded-full bg-[#E6F7F1] text-[#078B54]">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> {row.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right text-muted-foreground">
-                  {row.bankAccount}
+            {rows.length > 0 ? (
+              rows.map((row) => (
+                <TableRow key={`${row.payoutId}-${row.date}`} className="text-sm">
+                  <TableCell className="font-medium text-foreground">
+                    {row.date}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {row.payoutId}
+                  </TableCell>
+                  <TableCell className="font-semibold text-foreground">
+                    {row.amount}
+                  </TableCell>
+                  <TableCell>
+                    <Badge className="flex items-center gap-1 rounded-full bg-[#E6F7F1] text-[#078B54]">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> {row.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right text-muted-foreground">
+                    {row.bankAccount}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <p>No payout history available yet.</p>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

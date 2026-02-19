@@ -367,9 +367,11 @@ export function TransactionHistoryTable({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="py-8 text-center text-sm text-muted-foreground"
+                  className="py-10 text-center text-sm text-muted-foreground"
                 >
-                  No transactions match your filters.
+                  <div className="flex flex-col items-center gap-2">
+                    <p>No transactions match your filters.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}

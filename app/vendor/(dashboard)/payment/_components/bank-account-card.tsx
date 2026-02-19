@@ -1,55 +1,65 @@
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+"use client";
 
-import type { BankAccountDetails } from "../data";
-import { Calendar, Dot, Landmark } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
+import { Building2, CreditCard } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+import type { VendorPaymentMethod } from "@/lib/actions/payment";
 
 interface BankAccountCardProps {
-  details: BankAccountDetails;
+  paymentMethods: VendorPaymentMethod[];
 }
 
-export function BankAccountCard({ details }: BankAccountCardProps) {
+export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
+  // We'll just show the first bank account if multiple exist, or map them all.
+  // The API returns a list, so let's handle the empty case or list case.
+  
+  if (!paymentMethods || paymentMethods.length === 0) {
+    return null; // Don't show the card if no payment methods are linked
+  }
+
+  // Assuming we just want to show the list of attached bank accounts
   return (
     <Card className="rounded-3xl border bg-white p-6">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-col md:flex-row md:flex-wrap items-center gap-3">
-          <Button className="w-full md:w-fit">
-            <Calendar />
-            Payout Schedule
-          </Button>
-          <Button className="w-full md:w-fit" variant="outline">
-            <Landmark />
-            Update Bank Details
-          </Button>
-          <Separator
-            className="h-20 ml-6  hidden md:block"
-            orientation="vertical"
-          />
-        </div>
-        <div className="text-center md:text-right">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            Bank Account Details
-          </p>
-          <p className="text-base font-semibold text-foreground">
-            Account: {details.account} · {details.bank}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Last payout: {details.lastPayout}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Account Holder: {details.owner}
-          </p>
-          <div className="flex items-center justify-end text-xs font-semibold">
-            <Button variant={"link"} size={"sm"} className="text-xs">
-              Update Bank Details
-            </Button>
-            <Dot className="text-primary" />
-            <Button variant={"link"} size={"sm"} className="text-xs">
-              Add Backup Account
-            </Button>
+      <div className="mb-4">
+        <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
+          <Building2 className="h-5 w-5 text-muted-foreground" />
+          Payout Methods
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Bank accounts connected for payouts
+        </p>
+      </div>
+
+      <div className="space-y-3">
+        {paymentMethods.map((method) => (
+          <div
+            key={method.id}
+            className="flex items-center justify-between rounded-2xl border bg-muted/30 p-4 transition-colors"
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#EEF2FF] text-[#2F6BFF]">
+                <CreditCard className="h-5 w-5" />
+              </div>
+              <div className="space-y-0.5">
+                <p className="text-sm font-semibold text-foreground">
+                  {method.bank_name} •••• {method.last4}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {method.currency.toUpperCase()} — {method.object}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Badge
+                variant="outline"
+                className="gap-1 rounded-full border-transparent bg-[#E6F7F1] px-2 py-0.5 text-xs font-medium text-[#078B54] hover:bg-[#E6F7F1]"
+              >
+                {method.status}
+              </Badge>
+            </div>
           </div>
-        </div>
+        ))}
       </div>
     </Card>
   );

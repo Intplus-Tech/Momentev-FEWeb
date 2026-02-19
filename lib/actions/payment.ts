@@ -29,10 +29,6 @@ export async function setPaymentModel(
     if (!accessToken)
       return { success: false, error: "Authentication required" };
 
-    console.log(
-      `Setting payment model to ${paymentModel} for vendor ${vendorId}`,
-    );
-
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/payment-model`,
       {
@@ -81,8 +77,6 @@ export async function createStripeAccount(): Promise<
     const accessToken = await getAccessToken();
     if (!accessToken)
       return { success: false, error: "Authentication required" };
-
-    console.log(`Creating Stripe account for vendor ${vendorId}`);
 
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
@@ -145,8 +139,6 @@ export async function acceptCommission(): Promise<PaymentActionResponse> {
       currency: "GBP",
     };
 
-    console.log(`Accepting commission for vendor ${vendorId}`);
-
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/commission-agreement/accept`,
       {
@@ -201,8 +193,6 @@ export async function getStripeAccount(): Promise<
     if (!accessToken)
       return { success: false, error: "Authentication required" };
 
-    console.log(`Fetching Stripe account status for vendor ${vendorId}`);
-
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
       {
@@ -224,7 +214,6 @@ export async function getStripeAccount(): Promise<
     }
 
     const data = await res.json();
-    console.log("Stripe account check response:", data);
     return {
       success: true,
       data: data.data,
@@ -243,7 +232,7 @@ export type StripeOnboardingLink = {
   vendorId: string;
   url: string;
   expiresAt: string;
-};
+  };
 
 export async function getStripeOnboarding(): Promise<
   PaymentActionResponse<StripeOnboardingLink>
@@ -258,8 +247,6 @@ export async function getStripeOnboarding(): Promise<
     const accessToken = await getAccessToken();
     if (!accessToken)
       return { success: false, error: "Authentication required" };
-
-    console.log(`Fetching Stripe onboarding link for vendor ${vendorId}`);
 
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/stripe-onboarding`,
@@ -307,8 +294,6 @@ export async function getStripeDashboard(): Promise<
     if (!accessToken)
       return { success: false, error: "Authentication required" };
 
-    console.log(`Fetching Stripe dashboard link for vendor ${vendorId}`);
-
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/stripe-dashboard`,
       {
@@ -337,5 +322,245 @@ export async function getStripeDashboard(): Promise<
   } catch (error) {
     console.error("getStripeDashboard error:", error);
     return { success: false, error: "Failed to get dashboard link" };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Vendor Balance
+// GET /api/v1/vendors/{vendorId}/balance
+// ────────────────────────────────────────────────────────────
+
+export type VendorBalance = {
+  vendorId: string;
+  available: number;
+  pending: number;
+  currency: string;
+};
+
+export async function getVendorBalance(): Promise<
+  PaymentActionResponse<VendorBalance>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/balance`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getVendorBalance failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to fetch balance",
+      };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getVendorBalance error:", error);
+    return { success: false, error: "Failed to fetch balance" };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Vendor Earnings
+// GET /api/v1/vendors/{vendorId}/earnings
+// ────────────────────────────────────────────────────────────
+
+export type EarningsEntry = {
+  id: string;
+  amount: number;
+  currency: string;
+  type: string;
+  created: number;
+};
+
+export type VendorEarnings = {
+  vendorId: string;
+  earnings: EarningsEntry[];
+  total: number;
+};
+
+export async function getVendorEarnings(): Promise<
+  PaymentActionResponse<VendorEarnings>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/earnings`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getVendorEarnings failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to fetch earnings",
+      };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getVendorEarnings error:", error);
+    return { success: false, error: "Failed to fetch earnings" };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Vendor Payouts
+// GET /api/v1/vendors/{vendorId}/payouts
+// ────────────────────────────────────────────────────────────
+
+export type PayoutEntry = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
+  arrival_date: number;
+};
+
+export type VendorPayouts = {
+  vendorId: string;
+  payouts: PayoutEntry[];
+};
+
+export async function getVendorPayouts(): Promise<
+  PaymentActionResponse<VendorPayouts>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/payouts`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getVendorPayouts failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to fetch payouts",
+      };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getVendorPayouts error:", error);
+    return { success: false, error: "Failed to fetch payouts" };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Vendor Payment Methods
+// GET /api/v1/vendors/{vendorId}/payment-methods
+// ────────────────────────────────────────────────────────────
+
+export type VendorPaymentMethod = {
+  id: string;
+  object: string;
+  bank_name: string;
+  last4: string;
+  routing_number: string;
+  status: string;
+  currency: string;
+  account_holder_name?: string;
+  account_holder_type?: string;
+};
+
+export type VendorPaymentMethodsResponse = {
+  vendorId: string;
+  stripeAccountId: string;
+  paymentMethods: VendorPaymentMethod[];
+};
+
+export async function getVendorPaymentMethods(): Promise<
+  PaymentActionResponse<VendorPaymentMethodsResponse>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/payment-methods`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getVendorPaymentMethods failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to fetch payment methods",
+      };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getVendorPaymentMethods error:", error);
+    return { success: false, error: "Failed to fetch payment methods" };
   }
 }

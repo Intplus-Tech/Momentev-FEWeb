@@ -22,6 +22,10 @@ export const queryKeys = {
     permissions: () => [...queryKeys.vendor.all, 'permissions'] as const,
     profile: (vendorId: string) => [...queryKeys.vendor.all, 'profile', vendorId] as const,
     stripeAccount: () => [...queryKeys.vendor.all, 'stripeAccount'] as const,
+    balance: () => [...queryKeys.vendor.all, 'balance'] as const,
+    earnings: () => [...queryKeys.vendor.all, 'earnings'] as const,
+    payouts: () => [...queryKeys.vendor.all, 'payouts'] as const,
+    paymentMethods: () => [...queryKeys.vendor.all, 'paymentMethods'] as const,
   },
   reviews: {
     all: ['reviews'] as const,
