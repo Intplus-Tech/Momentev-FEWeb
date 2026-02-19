@@ -16,7 +16,7 @@ export type PaymentActionResponse<T = undefined> = {
  * PUT /api/v1/vendors/{vendorId}/payment-model
  */
 export async function setPaymentModel(
-  paymentModel: "upfront_payout" | "split_payout"
+  paymentModel: "upfront_payout" | "split_payout",
 ): Promise<PaymentActionResponse> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
@@ -26,23 +26,32 @@ export async function setPaymentModel(
     if (!vendorId) return { success: false, error: "Vendor profile not found" };
 
     const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
 
-    console.log(`Setting payment model to ${paymentModel} for vendor ${vendorId}`);
+    console.log(
+      `Setting payment model to ${paymentModel} for vendor ${vendorId}`,
+    );
 
-    const res = await fetch(`${API_URL}/api/v1/vendors/${vendorId}/payment-model`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/payment-model`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ paymentModel }),
       },
-      body: JSON.stringify({ paymentModel }),
-    });
+    );
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("setPaymentModel failed:", err);
-      return { success: false, error: err.message || "Failed to set payment model" };
+      return {
+        success: false,
+        error: err.message || "Failed to set payment model",
+      };
     }
 
     return { success: true };
@@ -55,11 +64,13 @@ export async function setPaymentModel(
 /**
  * Create Stripe Connected Account
  * POST /api/v1/vendors/{vendorId}/stripe-account
- * 
+ *
  * TODO: Re-integrate with real Stripe API when keys are available
  * Currently mocked to allow completing the vendor setup flow
  */
-export async function createStripeAccount(): Promise<PaymentActionResponse<{ stripeAccountId: string }>> {
+export async function createStripeAccount(): Promise<
+  PaymentActionResponse<{ stripeAccountId: string }>
+> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
@@ -68,23 +79,30 @@ export async function createStripeAccount(): Promise<PaymentActionResponse<{ str
     if (!vendorId) return { success: false, error: "Vendor profile not found" };
 
     const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
 
     console.log(`Creating Stripe account for vendor ${vendorId}`);
 
-    const res = await fetch(`${API_URL}/api/v1/vendors/${vendorId}/stripe-account`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
       },
-      body: JSON.stringify({}),
-    });
+    );
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("createStripeAccount failed:", err);
-      return { success: false, error: err.message || "Failed to create Stripe account" };
+      return {
+        success: false,
+        error: err.message || "Failed to create Stripe account",
+      };
     }
 
     const data = await res.json();
@@ -96,7 +114,7 @@ export async function createStripeAccount(): Promise<PaymentActionResponse<{ str
 
     return {
       success: true,
-      data: { stripeAccountId: data.data?.stripeAccountId || "unknown_id" }
+      data: { stripeAccountId: data.data?.stripeAccountId || "unknown_id" },
     };
   } catch (error) {
     console.error("createStripeAccount error:", error);
@@ -117,7 +135,8 @@ export async function acceptCommission(): Promise<PaymentActionResponse> {
     if (!vendorId) return { success: false, error: "Vendor profile not found" };
 
     const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
 
     const payload = {
       version: "v1",
@@ -128,25 +147,195 @@ export async function acceptCommission(): Promise<PaymentActionResponse> {
 
     console.log(`Accepting commission for vendor ${vendorId}`);
 
-    const res = await fetch(`${API_URL}/api/v1/vendors/${vendorId}/commission-agreement/accept`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/commission-agreement/accept`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(payload),
       },
-      body: JSON.stringify(payload),
-    });
+    );
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("acceptCommission failed:", err);
-      return { success: false, error: err.message || "Failed to accept commission agreement" };
+      return {
+        success: false,
+        error: err.message || "Failed to accept commission agreement",
+      };
     }
 
     return { success: true };
-
   } catch (error) {
     console.error("acceptCommission error:", error);
     return { success: false, error: "Failed to accept commission agreement" };
+  }
+}
+
+/**
+ * Get Vendor Stripe Account Status
+ * GET /api/v1/vendors/{vendorId}/stripe-account
+ */
+export type StripeAccountStatus = {
+  vendorId: string;
+  stripeAccountId: string;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+};
+
+export async function getStripeAccount(): Promise<
+  PaymentActionResponse<StripeAccountStatus>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    console.log(`Fetching Stripe account status for vendor ${vendorId}`);
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getStripeAccount failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to fetch Stripe account status",
+      };
+    }
+
+    const data = await res.json();
+    console.log("Stripe account check response:", data);
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("getStripeAccount error:", error);
+    return { success: false, error: "Failed to fetch Stripe account status" };
+  }
+}
+
+/**
+ * Get Stripe Onboarding Link
+ * GET /api/v1/vendors/{vendorId}/stripe-onboarding
+ */
+export type StripeOnboardingLink = {
+  vendorId: string;
+  url: string;
+  expiresAt: string;
+};
+
+export async function getStripeOnboarding(): Promise<
+  PaymentActionResponse<StripeOnboardingLink>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    console.log(`Fetching Stripe onboarding link for vendor ${vendorId}`);
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/stripe-onboarding`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getStripeOnboarding failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to get onboarding link",
+      };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("getStripeOnboarding error:", error);
+    return { success: false, error: "Failed to get onboarding link" };
+  }
+}
+
+/**
+ * Get Stripe Dashboard Link
+ * GET /api/v1/vendors/{vendorId}/stripe-dashboard
+ */
+export async function getStripeDashboard(): Promise<
+  PaymentActionResponse<{ url: string }>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    console.log(`Fetching Stripe dashboard link for vendor ${vendorId}`);
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/stripe-dashboard`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getStripeDashboard failed:", err);
+      return {
+        success: false,
+        error: err.message || "Failed to get dashboard link",
+      };
+    }
+
+    const data = await res.json();
+    return {
+      success: true,
+      data: data.data,
+    };
+  } catch (error) {
+    console.error("getStripeDashboard error:", error);
+    return { success: false, error: "Failed to get dashboard link" };
   }
 }

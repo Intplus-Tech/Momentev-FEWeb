@@ -21,6 +21,7 @@ export const queryKeys = {
     staff: () => [...queryKeys.vendor.all, 'staff'] as const,
     permissions: () => [...queryKeys.vendor.all, 'permissions'] as const,
     profile: (vendorId: string) => [...queryKeys.vendor.all, 'profile', vendorId] as const,
+    stripeAccount: () => [...queryKeys.vendor.all, 'stripeAccount'] as const,
   },
   reviews: {
     all: ['reviews'] as const,

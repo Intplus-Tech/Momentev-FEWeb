@@ -14,6 +14,7 @@ import { SummaryMetricsGrid } from "./_components/summary-metrics-grid";
 import { TransactionHistoryTable } from "./_components/transaction-history-table";
 import { UpcomingPayoutsCard } from "./_components/upcoming-payouts-card";
 import { PayoutHistoryTable } from "./_components/payout-history-table";
+import { StripeConnectCard } from "./_components/stripe-connect-card";
 
 export default function VendorPaymentPage() {
   return (
@@ -25,6 +26,7 @@ export default function VendorPaymentPage() {
         </p>
       </div>
 
+      <StripeConnectCard />
       <SummaryMetricsGrid metrics={summaryMetrics} />
       <BankAccountCard details={bankAccountDetails} />
 
