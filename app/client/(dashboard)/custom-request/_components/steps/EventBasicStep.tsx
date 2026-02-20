@@ -3,7 +3,7 @@
 import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FloatingLabelTextarea } from "@/components/ui/floating-label-textarea";
 import { useCustomRequestStore } from "../../_store/customRequestStore";
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
@@ -13,9 +13,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { TimePicker } from "@/components/ui/time-picker";
+import { Input } from "@/components/ui/input";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import {
   eventBasicSchema,
   EventBasicFormData,
@@ -52,45 +54,6 @@ export function EventBasicStep({
     },
   });
 
-  const [startDateOpen, setStartDateOpen] = useState(false);
-  const [endDateOpen, setEndDateOpen] = useState(false);
-  const eventDateValue = watch("eventDate");
-  const endDateValue = watch("endDate");
-
-  const formatDateValue = (date: Date) => {
-    const year = date.getFullYear();
-    const month = `${date.getMonth() + 1}`.padStart(2, "0");
-    const day = `${date.getDate()}`.padStart(2, "0");
-    const hours = `${date.getHours()}`.padStart(2, "0");
-    const minutes = `${date.getMinutes()}`.padStart(2, "0");
-    const seconds = `${date.getSeconds()}`.padStart(2, "0");
-
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  };
-
-  const parseDateValue = (value?: string) => {
-    if (!value) return undefined;
-
-    const [datePart, timePart] = value.split("T");
-    const [yearStr, monthStr, dayStr] = (datePart ?? "").split("-");
-    const [hourStr = "0", minuteStr = "0", secondStr = "0"] = (
-      timePart ?? ""
-    ).split(":");
-
-    const year = Number(yearStr);
-    const month = Number(monthStr);
-    const day = Number(dayStr);
-    const hours = Number(hourStr);
-    const minutes = Number(minuteStr);
-    const seconds = Number(secondStr);
-
-    if (!year || !month || !day) return undefined;
-
-    return new Date(year, month - 1, day, hours, minutes, seconds);
-  };
-
-  const selectedStartDate = parseDateValue(eventDateValue);
-  const selectedEndDate = parseDateValue(endDateValue);
 
   // Update store validity when form validity changes
   useEffect(() => {
@@ -172,53 +135,53 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field className="w-full">
                 <FieldLabel htmlFor="event-start-date">
-                  Start Date & Time
+                  Start Date &amp; Time
                 </FieldLabel>
-                <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
+                <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       id="event-start-date"
                       variant="outline"
-                      className="w-full justify-between font-normal"
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground",
+                      )}
                     >
-                      {selectedStartDate
-                        ? selectedStartDate.toLocaleString("en-GB", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Select start date & time"}
-                      <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                      {field.value ? (
+                        format(new Date(field.value), "PPP p")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <div className="flex flex-col sm:flex-row">
-                      <Calendar
-                        mode="single"
-                        selected={selectedStartDate}
-                        defaultMonth={selectedStartDate}
-                        captionLayout="dropdown"
-                        onSelect={(date) => {
-                          if (!date) return;
-                          const newDate = new Date(date);
-                          if (selectedStartDate) {
-                            newDate.setHours(selectedStartDate.getHours());
-                            newDate.setMinutes(selectedStartDate.getMinutes());
-                          }
-                          field.onChange(formatDateValue(newDate));
-                        }}
-                      />
-                      <div className="border-t sm:border-t-0 sm:border-l">
-                        <TimePicker
-                          date={selectedStartDate}
-                          setDate={(date) => {
-                            field.onChange(formatDateValue(date));
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          date.setHours(12, 0, 0, 0);
+                          field.onChange(date.toISOString());
+                        }
+                      }}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                    />
+                    {field.value && (
+                      <div className="p-3 border-t">
+                        <Input
+                          type="time"
+                          defaultValue={format(new Date(field.value), "HH:mm")}
+                          onChange={(e) => {
+                            const date = new Date(field.value);
+                            const [hours, minutes] = e.target.value.split(":");
+                            date.setHours(parseInt(hours), parseInt(minutes));
+                            field.onChange(date.toISOString());
                           }}
                         />
                       </div>
-                    </div>
+                    )}
                   </PopoverContent>
                 </Popover>
                 {errors.eventDate && (
@@ -234,53 +197,63 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field className="w-full">
                 <FieldLabel htmlFor="event-end-date">
-                  End Date & Time (Optional)
+                  End Date &amp; Time (Optional)
                 </FieldLabel>
-                <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
+                <Popover>
                   <PopoverTrigger asChild>
                     <Button
                       id="event-end-date"
                       variant="outline"
-                      className="w-full justify-between font-normal"
+                      className={cn(
+                        "w-full pl-3 text-left font-normal",
+                        !field.value && "text-muted-foreground",
+                      )}
                     >
-                      {selectedEndDate
-                        ? selectedEndDate.toLocaleString("en-GB", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "Select end date & time"}
-                      <CalendarIcon className="w-4 h-4 text-muted-foreground" />
+                      {field.value ? (
+                        format(new Date(field.value), "PPP p")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
-                    <div className="flex flex-col sm:flex-row">
-                      <Calendar
-                        mode="single"
-                        selected={selectedEndDate}
-                        defaultMonth={selectedEndDate || selectedStartDate}
-                        captionLayout="dropdown"
-                        onSelect={(date) => {
-                          if (!date) return;
-                          const newDate = new Date(date);
-                          if (selectedEndDate) {
-                            newDate.setHours(selectedEndDate.getHours());
-                            newDate.setMinutes(selectedEndDate.getMinutes());
+                    <Calendar
+                      mode="single"
+                      selected={field.value ? new Date(field.value) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          const startDate = getValues("eventDate");
+                          if (startDate) {
+                            const start = new Date(startDate);
+                            date.setHours(start.getHours() + 2, start.getMinutes());
+                          } else {
+                            date.setHours(18, 0, 0, 0);
                           }
-                          field.onChange(formatDateValue(newDate));
-                        }}
-                      />
-                      <div className="border-t sm:border-t-0 sm:border-l">
-                        <TimePicker
-                          date={selectedEndDate}
-                          setDate={(date) => {
-                            field.onChange(formatDateValue(date));
+                          field.onChange(date.toISOString());
+                        }
+                      }}
+                      disabled={(date) => {
+                        const startDate = getValues("eventDate");
+                        if (startDate) return date < new Date(startDate);
+                        return date < new Date();
+                      }}
+                      initialFocus
+                    />
+                    {field.value && (
+                      <div className="p-3 border-t">
+                        <Input
+                          type="time"
+                          defaultValue={format(new Date(field.value), "HH:mm")}
+                          onChange={(e) => {
+                            const date = new Date(field.value!);
+                            const [hours, minutes] = e.target.value.split(":");
+                            date.setHours(parseInt(hours), parseInt(minutes));
+                            field.onChange(date.toISOString());
                           }}
                         />
                       </div>
-                    </div>
+                    )}
                   </PopoverContent>
                 </Popover>
                 {errors.endDate && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { Calendar, MapPin, Users, AlertCircle } from "lucide-react";
+import { Calendar, MapPin, Users, AlertCircle, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,6 +23,7 @@ import {
 
 import { getOrCreateConversation } from "@/lib/actions/chat";
 import { cancelBooking } from "@/lib/actions/booking";
+import { PaymentModal } from "./PaymentModal";
 import type {
   BookingResponse,
   PopulatedVendor,
@@ -70,6 +71,7 @@ export function BookingCard({
   const router = useRouter();
   const [isMessaging, setIsMessaging] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 
   const vendor = booking.vendorId as PopulatedVendor;
   const vendorId = typeof vendor === "string" ? vendor : vendor._id;
@@ -138,6 +140,7 @@ export function BookingCard({
   };
 
   const showCancelButton = booking.status === "pending_payment";
+  const showPayButton = booking.status === "pending_payment";
 
   return (
     <Card className="border border-border/70 hover:shadow-md transition-shadow">
@@ -292,16 +295,45 @@ export function BookingCard({
             >
               {isMessaging ? "Loading..." : "Message Vendor"}
             </Button>
+            {showPayButton && (
+              <Button
+                size="sm"
+                onClick={() => setIsPaymentOpen(true)}
+                disabled={isMessaging || isCancelling}
+              >
+                <CreditCard className="mr-2 h-4 w-4" />
+                Pay Now
+              </Button>
+            )}
           </div>
         </div>
 
         {booking.status === "pending_payment" && (
-          <div className="flex items-start gap-2 rounded-lg bg-orange-500/10 p-3 text-sm text-orange-700 dark:text-orange-400">
-            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
-            <p>Payment required to confirm this booking</p>
+          <div className="flex items-center justify-between gap-4 rounded-lg bg-orange-500/10 p-3 text-sm text-orange-700 dark:text-orange-400">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0" />
+              <p>Payment required to confirm this booking.</p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 border-orange-400 text-orange-700 hover:bg-orange-500/10 dark:text-orange-400"
+              onClick={() => setIsPaymentOpen(true)}
+            >
+              <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+              Pay Now
+            </Button>
           </div>
         )}
       </CardContent>
+
+      <PaymentModal
+        open={isPaymentOpen}
+        onClose={() => setIsPaymentOpen(false)}
+        bookingId={booking._id}
+        formattedTotal={formattedTotal}
+        eventTitle={booking.eventDetails.title}
+      />
     </Card>
   );
 }

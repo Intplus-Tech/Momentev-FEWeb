@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { useCustomerRequests } from "@/hooks/api/use-custom-requests";
@@ -9,25 +9,37 @@ import { RequestCard } from "./_components/RequestCard";
 import { EmptyState } from "./_components/EmptyState";
 import { RequestsSkeleton } from "./_components/RequestsSkeleton";
 import { RequestFilters } from "./_components/RequestFilters";
-import type { CustomerRequestFilters } from "@/types/custom-request";
+import type { CustomerRequestFilters, CustomerRequestStatus } from "@/types/custom-request";
+
+const VALID_STATUSES: CustomerRequestStatus[] = [
+  "draft",
+  "pending_approval",
+  "active",
+  "rejected",
+  "cancelled",
+];
 
 function ClientRequestsContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const page = Number(searchParams.get("page")) || 1;
   const limit = 10;
 
-  // Initialize filters from URL
-  const [filters, setFilters] = useState<CustomerRequestFilters>(() => ({
-    search: searchParams.get("search") || undefined,
-    status:
-      (searchParams.get("status") as CustomerRequestFilters["status"]) ||
-      undefined,
-    serviceCategoryId: searchParams.get("serviceCategoryId") || undefined,
-    dateFrom: searchParams.get("dateFrom") || undefined,
-    dateTo: searchParams.get("dateTo") || undefined,
-  }));
+  // Initialize filters from URL — validate status against the known union
+  const [filters, setFilters] = useState<CustomerRequestFilters>(() => {
+    const rawStatus = searchParams.get("status");
+    return {
+      search: searchParams.get("search") || undefined,
+      status: VALID_STATUSES.includes(rawStatus as CustomerRequestStatus)
+        ? (rawStatus as CustomerRequestStatus)
+        : undefined,
+      serviceCategoryId: searchParams.get("serviceCategoryId") || undefined,
+      dateFrom: searchParams.get("dateFrom") || undefined,
+      dateTo: searchParams.get("dateTo") || undefined,
+    };
+  });
 
-  const { data, isLoading, isError, isFetching } = useCustomerRequests(
+  const { data, isLoading, isError, isFetching, refetch } = useCustomerRequests(
     page,
     limit,
     filters,
@@ -40,8 +52,18 @@ function ClientRequestsContent() {
   const handleFiltersChange = useCallback(
     (newFilters: CustomerRequestFilters) => {
       setFilters(newFilters);
+      // Sync filters to URL and reset to page 1 so pagination is consistent
+      const params = new URLSearchParams();
+      if (newFilters.search) params.set("search", newFilters.search);
+      if (newFilters.status) params.set("status", newFilters.status);
+      if (newFilters.serviceCategoryId)
+        params.set("serviceCategoryId", newFilters.serviceCategoryId);
+      if (newFilters.dateFrom) params.set("dateFrom", newFilters.dateFrom);
+      if (newFilters.dateTo) params.set("dateTo", newFilters.dateTo);
+      const qs = params.toString();
+      router.replace(qs ? `/client/requests?${qs}` : "/client/requests");
     },
-    [],
+    [router],
   );
 
   // Check if any filters are active
@@ -79,6 +101,9 @@ function ClientRequestsContent() {
           <div className="py-10 text-center text-muted-foreground">
             <p className="text-lg font-medium">Failed to load requests</p>
             <p className="text-sm">Please try again later.</p>
+            <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+              Try Again
+            </Button>
           </div>
         ) : requests.length > 0 ? (
           <>
@@ -167,8 +192,8 @@ function ClientRequestsContent() {
               <Button
                 variant="outline"
                 onClick={() => {
-                  // Clear filters by navigating to page without params
-                  window.location.href = "/client/requests";
+                  setFilters({});
+                  router.replace("/client/requests");
                 }}
               >
                 Clear Filters

@@ -73,15 +73,15 @@ export default function VendorPage() {
   const vendorData = apiVendor?.data;
 
   // Debug: Log all fetched data
-  console.log("Vendor ID:", vendorId);
-  console.log("Services Data:", JSON.stringify(servicesData, null, 2));
-  console.log("Specialties Data:", JSON.stringify(specialtiesData, null, 2));
-  console.log("======================================");
+  // console.log("Vendor ID:", vendorId);
+  // console.log("Services Data:", JSON.stringify(servicesData, null, 2));
+  // console.log("Specialties Data:", JSON.stringify(specialtiesData, null, 2));
+  // console.log("======================================");
 
-  // If no API data and no mock data, show 404
-  if (!vendorData && !mockVendor) {
-    notFound();
-  }
+  // // If no API data and no mock data, show 404
+  // if (!vendorData && !mockVendor) {
+  //   notFound();
+  // }
 
   // Build services list from services and specialties
   const servicesList: {

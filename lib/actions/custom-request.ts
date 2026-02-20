@@ -25,9 +25,6 @@ async function makeAuthenticatedRequest<T>(
   url: string,
   options: RequestInit
 ): Promise<ActionResponse<T>> {
-  const startTime = Date.now();
-
-
   const token = await getAccessToken();
 
 
@@ -41,6 +38,7 @@ async function makeAuthenticatedRequest<T>(
 
     const response = await fetch(url, {
       ...options,
+      cache: "no-store",
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
@@ -51,9 +49,7 @@ async function makeAuthenticatedRequest<T>(
 
     clearTimeout(timeoutId);
 
-
     const text = await response.text();
-
 
     let data;
     try {
@@ -78,6 +74,7 @@ async function makeAuthenticatedRequest<T>(
 
           const retryResponse = await fetch(url, {
             ...options,
+            cache: "no-store",
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${refreshResult.token}`,
@@ -125,7 +122,7 @@ async function makeAuthenticatedRequest<T>(
  */
 export async function submitCustomRequest(
   payload: CustomRequestPayload
-): Promise<ActionResponse<any>> {
+): Promise<ActionResponse<CustomerRequest>> {
   if (!API_URL) {
     return { success: false, error: "Backend URL not configured" };
   }
@@ -162,7 +159,7 @@ export async function submitCustomRequest(
  */
 export async function saveAsDraft(
   payload: CustomRequestPayload
-): Promise<ActionResponse<any>> {
+): Promise<ActionResponse<CustomerRequest>> {
   if (!API_URL) {
     return { success: false, error: "Backend URL not configured" };
   }
@@ -224,7 +221,7 @@ export async function submitDraft(id: string): Promise<ActionResponse<any>> {
 export async function updateDraft(
   id: string,
   payload: DraftUpdatePayload
-): Promise<ActionResponse<any>> {
+): Promise<ActionResponse<CustomerRequest>> {
   if (!API_URL) {
     return { success: false, error: "Backend URL not configured" };
   }
@@ -261,10 +258,9 @@ export async function fetchCustomerRequestById(
 
 
     return await makeAuthenticatedRequest<CustomerRequest>(
-      `${API_URL}/api/v1/customer-requests/${id}?populate=serviceCategoryId,budgetAllocations.serviceSpecialtyId`,
+      `${API_URL}/api/v1/customer-requests/${id}`,
       {
         method: "GET",
-        cache: "no-store",
       }
     );
   } catch (error) {
@@ -319,7 +315,6 @@ export async function fetchCustomerRequests(
 
     const result = await makeAuthenticatedRequest<CustomerRequestListResponse>(url, {
       method: "GET",
-      cache: "no-store",
     });
 
 
@@ -372,7 +367,7 @@ export async function deleteCustomerRequest(
  */
 export async function cancelCustomerRequest(
   id: string
-): Promise<ActionResponse<any>> {
+): Promise<ActionResponse<CustomerRequest>> {
   if (!API_URL) {
     return { success: false, error: "Backend URL not configured" };
   }
@@ -380,7 +375,7 @@ export async function cancelCustomerRequest(
   try {
 
 
-    const result = await makeAuthenticatedRequest(
+    const result = await makeAuthenticatedRequest<CustomerRequest>(
       `${API_URL}/api/v1/customer-requests/${id}/cancel`,
       { method: "PATCH" }
     );

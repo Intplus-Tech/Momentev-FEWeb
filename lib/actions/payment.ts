@@ -564,3 +564,116 @@ export async function getVendorPaymentMethods(): Promise<
     return { success: false, error: "Failed to fetch payment methods" };
   }
 }
+
+// ────────────────────────────────────────────────────────────
+// Create Payment Intent
+// POST /api/v1/bookings/{bookingId}/payment-intent
+// ────────────────────────────────────────────────────────────
+
+export type PaymentIntentResult = {
+  clientSecret: string;
+  paymentIntentId: string;
+  bookingId: string;
+};
+
+export async function createPaymentIntent(
+  bookingId: string
+): Promise<PaymentActionResponse<PaymentIntentResult>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  console.log(`[PaymentAction] Creating payment intent for booking: ${bookingId}`);
+
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      console.warn("[PaymentAction] Authentication required for createPaymentIntent");
+      return { success: false, error: "Authentication required" };
+    }
+
+    const res = await fetch(
+      `${API_URL}/api/v1/bookings/${bookingId}/payment-intent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error(`[PaymentAction] createPaymentIntent failed (${res.status}):`, err);
+      return {
+        success: false,
+        error: err.message || "Failed to create payment intent",
+      };
+    }
+
+    const data = await res.json();
+    console.log("[PaymentAction] Payment intent created successfully:", {
+      bookingId: data.data?.bookingId,
+      intentId: data.data?.paymentIntentId
+    });
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("[PaymentAction] createPaymentIntent error:", error);
+    return { success: false, error: "Failed to create payment intent" };
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+// Confirm Payment
+// POST /api/v1/bookings/{bookingId}/confirm-payment
+// ────────────────────────────────────────────────────────────
+
+export type ConfirmPaymentResult = {
+  bookingId: string;
+  status: string;
+  paymentStatus: string;
+};
+
+export async function confirmBookingPayment(
+  bookingId: string
+): Promise<PaymentActionResponse<ConfirmPaymentResult>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  console.log(`[PaymentAction] Confirming payment for booking: ${bookingId}`);
+
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) {
+      console.warn("[PaymentAction] Authentication required for confirmBookingPayment");
+      return { success: false, error: "Authentication required" };
+    }
+
+    const res = await fetch(
+      `${API_URL}/api/v1/bookings/${bookingId}/confirm-payment`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error(`[PaymentAction] confirmBookingPayment failed (${res.status}):`, err);
+      return {
+        success: false,
+        error: err.message || "Failed to confirm payment",
+      };
+    }
+
+    const data = await res.json();
+    console.log("[PaymentAction] Payment confirmed successfully:", data.data);
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("[PaymentAction] confirmBookingPayment error:", error);
+    return { success: false, error: "Failed to confirm payment" };
+  }
+}
