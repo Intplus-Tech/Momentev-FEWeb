@@ -39,7 +39,7 @@ export default async function VendorBookingsPage() {
   ).length;
 
   const upcomingRevenue = bookings
-    .filter((b) => b.status === "confirmed" || b.status === "pending_payment")
+    .filter((b) => b.status === "confirmed" || b.status === "paid" || b.status === "pending_payment")
     .reduce((sum, b) => {
       const amt =
         b.amounts.total > 0
@@ -48,7 +48,7 @@ export default async function VendorBookingsPage() {
       return sum + amt;
     }, 0);
 
-  const confirmedCount = bookings.filter((b) => b.status === "confirmed").length;
+  const confirmedCount = bookings.filter((b) => b.status === "confirmed" || b.status === "paid").length;
   const responseRate =
     total > 0
       ? Math.round((confirmedCount / total) * 100)

@@ -24,6 +24,7 @@ import {
 import { getOrCreateConversation } from "@/lib/actions/chat";
 import { cancelBooking } from "@/lib/actions/booking";
 import { PaymentModal } from "./PaymentModal";
+import { BookingDetailsModal } from "./BookingDetailsModal";
 import type {
   BookingResponse,
   PopulatedVendor,
@@ -34,6 +35,7 @@ type BookingCardProps = {
   booking: BookingResponse;
   vendorBusinessName?: string;
   vendorRating?: number;
+  serviceNamesMap?: Record<string, string>;
 };
 
 const statusConfig = {
@@ -45,6 +47,10 @@ const statusConfig = {
     label: "Pending Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
+  paid: {
+    label: "Paid",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
   confirmed: {
     label: "Confirmed",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
@@ -55,7 +61,7 @@ const statusConfig = {
   },
   cancelled: {
     label: "Cancelled",
-    color: "bg-gray-500/10 text-gray-600 border-gray-500/20",
+    color: "bg-gray-500/10 text-gray-500 border-gray-500/20",
   },
   rejected: {
     label: "Rejected",
@@ -67,11 +73,13 @@ export function BookingCard({
   booking,
   vendorBusinessName,
   vendorRating,
+  serviceNamesMap = {},
 }: BookingCardProps) {
   const router = useRouter();
   const [isMessaging, setIsMessaging] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const vendor = booking.vendorId as PopulatedVendor;
   const vendorId = typeof vendor === "string" ? vendor : vendor._id;
@@ -142,67 +150,73 @@ export function BookingCard({
   const showCancelButton = booking.status === "pending_payment";
   const showPayButton = booking.status === "pending_payment";
 
+  console.log(booking.payment?.status);
+
   return (
-    <Card className="border border-border/70 hover:shadow-md transition-shadow">
-      <CardContent className="space-y-6 p-6">
+    <Card className="border bg-muted border-border/70 hover:shadow-md transition-shadow">
+      <CardContent className="space-y-6">
         <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
           <div className="space-y-4">
-            <div className="flex items-start justify-between gap-4">
-              <h3 className="text-lg font-semibold text-foreground">
-                {booking.eventDetails.title}
-              </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-base font-semibold text-foreground">
+                  {booking.eventDetails.title}
+                </h3>
+                <h3 className="text-base font-semibold text-foreground">
+                  {booking._id}
+                </h3>
+                {booking.payment?.status && (
+                  <Badge variant="secondary" className="font-medium bg-secondary/50 text-secondary-foreground">
+                    <span className="capitalize">{booking.payment.status.replace(/_/g, " ")}</span>
+                  </Badge>
+                )}
+              </div>
               <Badge
                 variant="outline"
-                className={cn("font-medium", status.color)}
+                className={cn("font-medium whitespace-nowrap", status.color)}
               >
                 {status.label}
               </Badge>
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-foreground mb-2">
-                Event Details
-              </p>
               <div className="space-y-1.5 text-sm text-muted-foreground">
-                {booking._id && (
-                  <p className="line-clamp-2 mt-2">
-                    <span className="font-medium text-foreground">
-                      Booking ID:
-                    </span>{" "}
-                    {booking._id}
-                  </p>
-                )}
                 {booking.budgetAllocations.map((allocation, idx) => {
                   const specialty =
                     allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
-                  const priceLabel =
-                    typeof specialty !== "string"
-                      ? `${specialty.priceCharge.replace(/_/g, " ")}: £${specialty.price}`
-                      : "Service";
+                  const rawId = specialty?.serviceSpecialty;
+                  const readableName =
+                    (rawId && serviceNamesMap[rawId]) || rawId || `Service ${idx + 1}`;
 
                   return (
-                    <p key={idx}>
-                      <span className="font-medium text-foreground">
-                        Service {idx + 1}:
-                      </span>{" "}
-                      {priceLabel} (Budget:{" "}
-                      {new Intl.NumberFormat("en-GB", {
-                        style: "currency",
-                        currency: booking.currency || "GBP",
-                      }).format(allocation.budgetedAmount)}
-                      )
-                    </p>
+                    <div key={idx} className="flex flex-col gap-1 col-span-2">
+                      <p>
+                        <span className="font-medium text-foreground">
+                          {readableName}
+                        </span>
+                        :{" "}
+                        {specialty?.priceCharge
+                          ? specialty.priceCharge.replace(/_/g, " ")
+                          : "TBD"}{" "}
+                        (Budget:{" "}
+                        {new Intl.NumberFormat("en-GB", {
+                          style: "currency",
+                          currency: booking.currency || "GBP",
+                        }).format(allocation.budgetedAmount)}
+                        )
+                      </p>
+                    </div>
                   );
                 })}
 
-                {booking.eventDetails.description && (
+                {/* {booking.eventDetails.description && (
                   <p className="line-clamp-2 mt-2">
                     <span className="font-medium text-foreground">
                       Description:
                     </span>{" "}
                     {booking.eventDetails.description}
                   </p>
-                )}
+                )} */}
               </div>
             </div>
           </div>
@@ -232,27 +246,17 @@ export function BookingCard({
         <div className="grid gap-4 md:grid-cols-[2fr_auto] md:items-end">
           <div className="space-y-1 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">
-              {vendorBusinessName || "Vendor"}
+             Vendor: {vendorBusinessName || "Vendor"}
             </p>
-            {vendorRating !== undefined && vendorRating > 0 && (
-              <p>Rating: {vendorRating.toFixed(1)} ⭐</p>
-            )}
             <p>
               Total:{" "}
               <span className="font-semibold text-foreground">
                 {formattedTotal}
               </span>
             </p>
-            <p>
-              Payment:{" "}
-              <span className="capitalize">
-                {booking.paymentModel.replace(/_/g, " ")}
-              </span>
-            </p>
-            <p>Services: {serviceCount} selected</p>
           </div>
 
-          <div className="flex flex-wrap gap-3 md:justify-end">
+          <div className="flex flex-wrap items-center gap-2 md:justify-end mt-4 md:mt-0 w-full md:w-auto">
             {showCancelButton && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -295,16 +299,14 @@ export function BookingCard({
             >
               {isMessaging ? "Loading..." : "Message Vendor"}
             </Button>
-            {showPayButton && (
-              <Button
-                size="sm"
-                onClick={() => setIsPaymentOpen(true)}
-                disabled={isMessaging || isCancelling}
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                Pay Now
-              </Button>
-            )}
+            <Button
+              variant="link"
+              size="sm"
+              className="px-0 sm:px-2 text-primary"
+              onClick={() => setIsDetailsOpen(true)}
+            >
+              View Details
+            </Button>
           </div>
         </div>
 
@@ -326,6 +328,16 @@ export function BookingCard({
           </div>
         )}
       </CardContent>
+
+      <BookingDetailsModal
+        open={isDetailsOpen}
+        onClose={() => setIsDetailsOpen(false)}
+        booking={booking}
+        vendorBusinessName={vendorBusinessName}
+        vendorRating={vendorRating}
+        serviceNamesMap={serviceNamesMap}
+        formattedTotal={formattedTotal}
+      />
 
       <PaymentModal
         open={isPaymentOpen}

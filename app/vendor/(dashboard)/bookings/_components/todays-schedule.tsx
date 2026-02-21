@@ -30,10 +30,14 @@ export function TodaysSchedule({ bookings }: { bookings: BookingResponse[] }) {
   const upcomingEntries = bookings
     .filter((b) => {
       const start = new Date(b.eventDetails.startDate);
-      return (
-        (b.status === "confirmed" || b.status === "pending_payment" || b.status === "pending") &&
-        (isToday(start) || isFuture(start))
-      );
+      const isTodayOrFuture = isToday(start) || isFuture(start);
+      const isAcceptedStatus =
+        b.status === "confirmed" ||
+        b.status === "paid" ||
+        b.status === "pending_payment" ||
+        b.status === "pending";
+
+      return isAcceptedStatus && isTodayOrFuture;
     })
     .sort(
       (a, b) =>

@@ -1,6 +1,7 @@
 import { BookingCard } from "./_components/BookingCard";
 import { fetchBookings } from "@/lib/actions/booking";
 import { getVendorPublicProfile } from "@/lib/actions/chat";
+import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -31,6 +32,11 @@ export default async function ClientBookingsPage() {
   const bookings = response.data.data;
   const totalBookings = response.data.total;
 
+  console.log(
+    "==== FETCHED CLIENT BOOKINGS ====\n",
+    JSON.stringify(bookings, null, 2)
+  );
+
   // Fetch vendor details for all bookings
   const vendorDetailsMap = new Map<
     string,
@@ -55,6 +61,29 @@ export default async function ClientBookingsPage() {
             vendorResult.data.businessProfile?.businessName || "Unknown Vendor",
           rating: vendorResult.data.rate || 0,
         });
+      }
+    }),
+  );
+
+  // Fetch service specialty names
+  const serviceNamesMap: Record<string, string> = {};
+  const uniqueSpecialtyIds = [
+    ...new Set(
+      bookings
+        .flatMap((b) =>
+          b.budgetAllocations.map((a) => (a.vendorSpecialtyId as any)?.serviceSpecialty)
+        )
+        .filter(Boolean)
+    ),
+  ];
+
+  await Promise.all(
+    uniqueSpecialtyIds.map(async (specialtyId) => {
+      if (typeof specialtyId === "string") {
+        const specResult = await fetchServiceSpecialtyById(specialtyId);
+        if (specResult.success && specResult.data) {
+          serviceNamesMap[specialtyId] = specResult.data.data.name;
+        }
       }
     }),
   );
@@ -97,6 +126,7 @@ export default async function ClientBookingsPage() {
                   booking={booking}
                   vendorBusinessName={vendorDetails?.businessName}
                   vendorRating={vendorDetails?.rating}
+                  serviceNamesMap={serviceNamesMap}
                 />
               );
             })}
@@ -122,6 +152,7 @@ export default async function ClientBookingsPage() {
                   booking={booking}
                   vendorBusinessName={vendorDetails?.businessName}
                   vendorRating={vendorDetails?.rating}
+                  serviceNamesMap={serviceNamesMap}
                 />
               );
             })}

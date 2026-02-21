@@ -139,6 +139,7 @@ export interface BookingResponse {
 export type BookingStatus =
   | "pending"
   | "pending_payment"
+  | "paid"
   | "confirmed"
   | "cancelled"
   | "completed"

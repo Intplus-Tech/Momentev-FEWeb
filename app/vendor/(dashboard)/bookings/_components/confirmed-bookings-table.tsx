@@ -40,6 +40,10 @@ const statusConfig: Record<
     label: "Pending Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
+  paid: {
+    label: "Paid",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
   confirmed: {
     label: "Confirmed",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
@@ -61,6 +65,7 @@ const statusConfig: Record<
 const filterOptions = [
   { label: "Pending", value: "pending" },
   { label: "Pending Payment", value: "pending_payment" },
+  { label: "Paid", value: "paid" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
@@ -122,7 +127,7 @@ export function ConfirmedBookingsTable({
     };
   }, [bookings, filter, page, query]);
 
-  const confirmedCount = bookings.filter((b) => b.status === "confirmed").length;
+  const confirmedCount = bookings.filter((b) => b.status === "confirmed" || b.status === "paid").length;
   const pendingCount = bookings.filter(
     (b) => b.status === "pending" || b.status === "pending_payment"
   ).length;

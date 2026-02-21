@@ -153,9 +153,7 @@ export function BookingModal({
   const onSubmit = async (values: CreateBookingFormValues) => {
     try {
       await createBookingMutation.mutateAsync(values);
-      toast.success("Booking request submitted successfully!", {
-        description: `Your booking request for "${values.eventDetails.title}" has been sent to ${vendorName}.`,
-      });
+      toast.success(`Booking request submitted successfully to ${vendorName}!`);
       onOpenChange(false);
     } catch (error) {
       toast.error("Failed to create booking", {
