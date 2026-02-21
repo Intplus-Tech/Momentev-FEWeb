@@ -1,5 +1,10 @@
-import { Badge } from "@/components/ui/badge";
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { CreditCard, Plus, Star, Loader2, AlertCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -7,113 +12,198 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  getCustomerPaymentMethods,
+  setDefaultPaymentMethod,
+  type CustomerPaymentMethod,
+} from "@/lib/actions/customer-payment";
+import { AddPaymentMethodModal } from "./_components/AddPaymentMethodModal";
 
-const invoices = [
-  {
-    vendor: "Golden Lens Studio",
-    amount: "$6,200",
-    due: "Mar 28, 2026",
-    status: "Processing",
-  },
-  {
-    vendor: "Velvet & Co.",
-    amount: "$12,450",
-    due: "Apr 02, 2026",
-    status: "Due soon",
-  },
-  {
-    vendor: "North Bloom",
-    amount: "$4,180",
-    due: "Apr 12, 2026",
-    status: "Paid",
-  },
-];
-
-const summaries = [
-  { label: "Paid this month", value: "$18.4k" },
-  { label: "Outstanding", value: "$12.4k" },
-  { label: "Available budget", value: "$21.6k" },
-];
+function getBrandIcon(brand: string) {
+  const b = brand.toLowerCase();
+  if (b === "visa") return "💳 Visa";
+  if (b === "mastercard") return "💳 Mastercard";
+  if (b === "amex") return "💳 Amex";
+  if (b === "discover") return "💳 Discover";
+  return `💳 ${brand.charAt(0).toUpperCase() + brand.slice(1)}`;
+}
 
 export default function ClientPaymentPage() {
+  const [paymentMethods, setPaymentMethods] = useState<CustomerPaymentMethod[]>(
+    []
+  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+
+  const fetchMethods = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await getCustomerPaymentMethods();
+      if (result.success && result.data) {
+        setPaymentMethods(result.data.paymentMethods || []);
+      } else {
+        setError(result.error || "Failed to load payment methods");
+      }
+    } catch {
+      setError("An unexpected error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMethods();
+  }, [fetchMethods]);
+
+  const handleSetDefault = async (paymentMethodId: string) => {
+    setSettingDefaultId(paymentMethodId);
+    try {
+      const result = await setDefaultPaymentMethod(paymentMethodId);
+      if (result.success) {
+        await fetchMethods();
+      } else {
+        setError(result.error || "Failed to set default");
+      }
+    } catch {
+      setError("Failed to set default payment method");
+    } finally {
+      setSettingDefaultId(null);
+    }
+  };
+
   return (
     <section className="space-y-6">
-      <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">
-            Track invoices, deposits, and remaining spend.
+            Manage your saved payment methods
           </p>
-          <h1 className="text-3xl font-semibold text-foreground">Payments</h1>
+          <h1 className="text-3xl font-semibold text-foreground">
+            Payment Methods
+          </h1>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Download report</Button>
-          <Button>Log manual payment</Button>
-        </div>
+        <Button onClick={() => setIsAddModalOpen(true)}>
+          <Plus className="mr-2 h-4 w-4" />
+          Add Payment Method
+        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        {summaries.map((summary) => (
-          <Card key={summary.label} className="border border-border">
-            <CardHeader>
-              <CardDescription>{summary.label}</CardDescription>
-              <CardTitle className="text-2xl font-semibold">
-                {summary.value}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        ))}
-      </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       <Card className="border border-border">
         <CardHeader>
-          <CardTitle>Invoices</CardTitle>
-          <CardDescription>Upcoming and processed payouts.</CardDescription>
+          <CardTitle className="text-xl">Saved Cards</CardTitle>
+          <CardDescription>
+            Cards saved for booking payments. Your default card will be used
+            automatically.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Amount</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoices.map((invoice) => (
-                <TableRow key={invoice.vendor}>
-                  <TableCell className="font-medium text-foreground">
-                    {invoice.vendor}
-                  </TableCell>
-                  <TableCell>{invoice.amount}</TableCell>
-                  <TableCell>{invoice.due}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        invoice.status === "Paid"
-                          ? "secondary"
-                          : invoice.status === "Due soon"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {invoice.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <span className="ml-2 text-sm text-muted-foreground">
+                Loading payment methods...
+              </span>
+            </div>
+          ) : paymentMethods.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CreditCard className="h-12 w-12 text-muted-foreground/50 mb-4" />
+              <p className="text-muted-foreground font-medium">
+                No payment methods saved
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Add a card to start making payments for your bookings.
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={() => setIsAddModalOpen(true)}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add your first card
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {paymentMethods.map((method, idx) => {
+                const isFirst = idx === 0; // First card is typically the default
+                const isSettingDefault = settingDefaultId === method.id;
+
+                return (
+                  <div
+                    key={method.id}
+                    className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-4 transition-colors hover:bg-muted/50"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <CreditCard className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-foreground">
+                            {method.card
+                              ? getBrandIcon(method.card.brand)
+                              : "Card"}{" "}
+                            •••• {method.card?.last4 || "????"}
+                          </p>
+                          {isFirst && (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs bg-primary/10 text-primary"
+                            >
+                              <Star className="mr-1 h-3 w-3" />
+                              Default
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                          {method.card
+                            ? `Expires ${String(method.card.exp_month).padStart(2, "0")}/${method.card.exp_year}`
+                            : "Unknown expiry"}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {!isFirst && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleSetDefault(method.id)}
+                          disabled={isSettingDefault}
+                        >
+                          {isSettingDefault ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            "Set as Default"
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      <AddPaymentMethodModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={fetchMethods}
+      />
     </section>
   );
 }

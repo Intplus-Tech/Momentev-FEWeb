@@ -4,6 +4,7 @@ import {
   Home,
   MessageCircle,
   Settings,
+  CreditCard,
 } from "lucide-react";
 
 export const clientNavItems = [
@@ -32,5 +33,10 @@ export const clientNavItems = [
     label: "Settings",
     href: "/client/settings",
     icon: Settings,
+  },
+  {
+    label: "Payment",
+    href: "/client/payment",
+    icon: CreditCard,
   },
 ];
