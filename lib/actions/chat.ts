@@ -175,9 +175,7 @@ export async function sendMessage(conversationId: string, payload: CreateMessage
  * POST /api/v1/chats/{conversationId}/read
  */
 export async function markAsRead(conversationId: string) {
-  console.log('[Chat Action] markAsRead: conversationId=', conversationId);
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/read`, { method: 'POST' });
-  console.log('[Chat Action] markAsRead:', result.success ? 'Success' : result.error);
   return result;
 }
 
@@ -187,8 +185,6 @@ export async function markAsRead(conversationId: string) {
  * Note: This is a public endpoint, no JWT required
  */
 export async function getVendorPublicProfile(vendorId: string) {
-
-  console.log("✅ [GetVendorPublicProfile] Vendor ID:", vendorId);
   try {
     if (!API_BASE) {
       return { success: false, error: 'Backend not configured' };
@@ -204,7 +200,6 @@ export async function getVendorPublicProfile(vendorId: string) {
     });
 
     const data = await response.json().catch(() => null);
-    console.log("✅ [GetVendorPublicProfile] Data:", data);
 
     if (!response.ok) {
       return { success: false, error: data?.message || `Request failed (${response.status})` };

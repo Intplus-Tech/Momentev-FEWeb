@@ -76,6 +76,7 @@ export function RequestCard({ request }: RequestCardProps) {
               {createdAt ? format(new Date(createdAt), "MMMM d, yyyy") : "N/A"}
             </p>
             <StatusBadge status={status} />
+            <p>Request ID: {_id}</p>
           </div>
           <RequestActions requestId={_id} status={status} />
         </div>

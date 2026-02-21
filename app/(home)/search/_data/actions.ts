@@ -389,8 +389,6 @@ export async function getVendorServicesAction(vendorId: string): Promise<VendorS
 
     const data: VendorServicesResponse = await res.json();
 
-    console.log("Vendor Services Data:", JSON.stringify(data, null, 2));
-
     return data;
 
   } catch (error) {
@@ -418,7 +416,6 @@ export async function getVendorSpecialtiesAction(vendorId: string): Promise<Vend
     }
 
     const data: VendorSpecialtiesResponse = await res.json();
-    console.log("Vendor Specialties Data:", JSON.stringify(data, null, 2));
     return data;
 
   } catch (error) {

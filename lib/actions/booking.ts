@@ -33,9 +33,6 @@ export async function createBooking(
       return { success: false, error: "Authentication required. Please log in." };
     }
 
-    console.log("📤 [Booking] Creating booking...");
-    console.log("📋 [Booking] Payload:", JSON.stringify(payload, null, 2));
-
     const response = await fetch(`${API_URL}/api/v1/bookings`, {
       method: "POST",
       headers: {
@@ -47,16 +44,12 @@ export async function createBooking(
 
     const data = await response.json();
 
-    console.log("📥 [Booking] Response:", response.status, JSON.stringify(data, null, 2));
-
     if (!response.ok) {
       // Handle token expiration with retry
       if (response.status === 401) {
-        console.log("🔄 [Booking] Token expired, attempting refresh...");
         const refreshResult = await tryRefreshToken();
 
         if (refreshResult.success && refreshResult.token) {
-          console.log("✅ [Booking] Token refreshed, retrying request...");
           const retryResponse = await fetch(`${API_URL}/api/v1/bookings`, {
             method: "POST",
             headers: {
@@ -69,7 +62,6 @@ export async function createBooking(
           const retryData = await retryResponse.json();
 
           if (retryResponse.ok) {
-            console.log("✅ [Booking] Booking created successfully after retry");
             return { success: true, data: retryData.data };
           }
 
@@ -95,7 +87,6 @@ export async function createBooking(
       };
     }
 
-    console.log("✅ [Booking] Booking created successfully");
     return { success: true, data: data.data };
   } catch (error) {
     console.error("❌ [Booking] Error creating booking:", error);
