@@ -1,18 +1,30 @@
-import type { ScheduleItem } from "../data";
+import type { BookingResponse, PopulatedCustomer } from "@/types/booking";
 
-import { ArrowRight, ArrowUpRight, MoreHorizontal } from "lucide-react";
+import { format, isToday } from "date-fns";
+import { ArrowRight, MoreHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 
-export function ScheduleCard({ schedule }: { schedule: ScheduleItem[] }) {
+function getCustomerName(customerId: BookingResponse["customerId"]) {
+  if (typeof customerId === "object" && customerId !== null) {
+    const c = customerId as PopulatedCustomer;
+    return `${c.firstName} ${c.lastName}`.trim();
+  }
+  return "Client";
+}
+
+export function ScheduleCard({ bookings }: { bookings: BookingResponse[] }) {
+  const todaysBookings = bookings.filter((b) =>
+    isToday(new Date(b.eventDetails.startDate))
+  );
+
   return (
     <Card className="border border-border">
       <CardHeader className="flex flex-row items-start justify-between">
@@ -24,20 +36,30 @@ export function ScheduleCard({ schedule }: { schedule: ScheduleItem[] }) {
         </Button>
       </CardHeader>
       <CardContent className="space-y-0 p-0">
-        {schedule.map((item, index) => (
-          <div
-            key={`${item.name}-${index}`}
-            className="px-4 py-3 border border-b-0 last:border-b flex items-center justify-between hover:bg-muted/50 transition-colors cursor-pointer"
-          >
-            <span>
-              <p className="text-sm font-semibold text-foreground">
-                {item.name}
+        {todaysBookings.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+            No bookings scheduled for today
+          </p>
+        ) : (
+          todaysBookings.map((booking, index) => (
+            <div
+              key={`${booking._id}-${index}`}
+              className="flex cursor-pointer items-center justify-between border border-b-0 px-4 py-3 transition-colors last:border-b hover:bg-muted/50"
+            >
+              <span>
+                <p className="text-sm font-semibold text-foreground">
+                  {getCustomerName(booking.customerId)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {booking.eventDetails.title}
+                </p>
+              </span>
+              <p className="mt-1 text-sm text-primary">
+                {format(new Date(booking.eventDetails.startDate), "h:mm a")}
               </p>
-              <p className="text-xs text-muted-foreground">{item.detail}</p>
-            </span>
-            <p className="mt-1 text-sm text-primary">{item.time}</p>
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </CardContent>
       <CardFooter className="mt-auto">
         <Button variant="outline" className="w-full justify-between">

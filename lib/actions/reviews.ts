@@ -87,3 +87,66 @@ export async function getClientReviews(customerId: string, page = 1, limit = 20)
     return { success: false, error: message };
   }
 }
+
+/**
+ * Get reviews for a vendor
+ * GET /api/v1/vendors/{vendorId}/reviews
+ */
+export type VendorReview = {
+  _id: string;
+  vendorId: string;
+  customerId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+  };
+  rating: number;
+  review: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GetVendorReviewsResponse = {
+  data: VendorReview[];
+  total: number;
+  page: number;
+  limit: number;
+};
+
+export async function fetchVendorReviews(vendorId: string, page = 1, limit = 10) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(
+      `${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/reviews?page=${page}&limit=${limit}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store',
+      }
+    );
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return { success: false, error: data?.message || `Failed to fetch vendor reviews (${response.status})` };
+    }
+
+    return { success: true, data: data?.data as GetVendorReviewsResponse };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+

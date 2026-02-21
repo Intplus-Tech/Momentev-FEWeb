@@ -9,7 +9,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ScheduleBlock } from "../data";
+
+type ScheduleBlock = {
+  id: string;
+  title: string;
+  detail: string;
+  category: "Consultation" | "Production" | "Delivery";
+  start: string;
+  end: string;
+};
+
 
 const categoryColors: Record<ScheduleBlock["category"], string> = {
   Consultation: "bg-sky-50 text-sky-700",

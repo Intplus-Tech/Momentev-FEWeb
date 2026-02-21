@@ -5,8 +5,21 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { MetricCardData } from "../data";
 import { cn } from "@/lib/utils";
+import type { LucideIcon } from "lucide-react";
+
+type MetricBreakdown = { label: string; value: string };
+type MetricCardData = {
+  id: string;
+  title: string;
+  value: string;
+  change: string;
+  trend: "up" | "down";
+  period: string;
+  icon: LucideIcon;
+  breakdown: MetricBreakdown[];
+};
+
 
 const trendClasses = {
   up: "text-emerald-600",
