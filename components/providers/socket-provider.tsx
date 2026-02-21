@@ -29,57 +29,72 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+
+    if (!backendUrl) {
+      console.error("SocketProvider: NEXT_PUBLIC_BACKEND_URL is not configured.");
+      return;
+    }
+
+    let socketInstance: Socket | null = null;
+    let isMounted = true;
+
     const initSocket = async () => {
-      const token = await getAccessToken(); // Get token from server action (client-side safe)
-      // Note: getAccessToken is a server action, so it returns a promise.
+      const token = await getAccessToken();
+
+      if (!isMounted) return; // Component unmounted before token resolved
 
       if (!token) {
-        console.warn("SocketProvider: No access token available");
+        console.warn("SocketProvider: No access token available, skipping socket init.");
         return;
       }
 
-      // Backend URL should be defined
-      const backendUrl =
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        "https://momentev-be.onrender.com";
-
-      const socketInstance = io(backendUrl, {
-        auth: {
-          token: token, // Pass token in auth object
-        },
+      socketInstance = io(backendUrl, {
+        auth: { token },
         path: "/socket.io",
-        // Recommended configurations
         reconnection: true,
-        reconnectionAttempts: 5,
+        reconnectionAttempts: 10,
         reconnectionDelay: 1000,
+        reconnectionDelayMax: 10000,
       });
 
       socketInstance.on("connect", () => {
-        setIsConnected(true);
+        if (isMounted) setIsConnected(true);
       });
 
       socketInstance.on("disconnect", () => {
-        setIsConnected(false);
+        if (isMounted) setIsConnected(false);
       });
 
       socketInstance.on("connect_error", (err) => {
-        console.error("Socket connection error:", err);
-        setIsConnected(false);
+        console.error("Socket connection error:", err.message);
+        if (isMounted) setIsConnected(false);
       });
 
-      setSocket(socketInstance);
+      // Re-fetch fresh token on reconnect attempts so expired tokens don't block reconnection
+      socketInstance.io.on("reconnect_attempt", async () => {
+        const freshToken = await getAccessToken();
+        if (freshToken && socketInstance) {
+          socketInstance.auth = { token: freshToken };
+        }
+      });
 
-      // Cleanup on unmount
-      return () => {
+      if (isMounted) {
+        setSocket(socketInstance);
+      } else {
+        // Already unmounted while connecting, clean up immediately
         socketInstance.disconnect();
-      };
+      }
     };
 
-    const cleanupPromise = initSocket();
+    initSocket();
 
     return () => {
-      cleanupPromise.then((cleanup) => cleanup && cleanup());
+      isMounted = false;
+      if (socketInstance) {
+        socketInstance.disconnect();
+        socketInstance = null;
+      }
     };
   }, []);
 

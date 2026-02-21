@@ -34,8 +34,6 @@ export async function uploadFile(formData: FormData) {
 
     const data = await response.json().catch(() => null);
 
-    console.log(data);
-
     if (!response.ok) {
       if (response.status === 413) {
         return { success: false, error: 'File too large (max 10MB)' };

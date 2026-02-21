@@ -79,30 +79,29 @@ const VendorThreadPage = () => {
     if (!threadId) return;
 
     if (pendingAttachment) {
-      console.log("[Vendor Chat] Starting file upload...", {
-        fileName: pendingAttachment.file.name,
-        fileSize: pendingAttachment.file.size,
-      });
-
       const isImage = pendingAttachment.file.type.startsWith("image/");
+      const capturedPreviewUrl = pendingAttachment.previewUrl;
+      const capturedFileName = pendingAttachment.file.name;
+      const capturedFileSize = pendingAttachment.file.size;
 
       setUploadingMessage({
         id: `uploading-${Date.now()}`,
-        previewUrl: pendingAttachment.previewUrl,
-        fileName: pendingAttachment.file.name,
-        fileSize: pendingAttachment.file.size,
+        previewUrl: capturedPreviewUrl,
+        fileName: capturedFileName,
+        fileSize: capturedFileSize,
         isImage,
         status: "uploading",
         text: trimmed || undefined,
       });
 
       setIsUploading(true);
+      // Clear the composer immediately so user can't double-send
+      setPendingAttachment(null);
+      setMessageText("");
 
       try {
         const formData = new FormData();
         formData.append("file", pendingAttachment.file);
-
-        console.log("[Vendor Chat] Uploading file to server...");
         const result = await uploadFile(formData);
 
         if (!result.success) {
@@ -115,26 +114,35 @@ const VendorThreadPage = () => {
           return;
         }
 
-        console.log("[Vendor Chat] Upload successful:", result.data);
+        const clientMessageId = `temp-${Date.now()}`;
 
-        sendMessage({
-          conversationId: threadId,
-          payload: {
-            type: "file", // Backend uses 'file' for all attachments (images + files)
-            text: trimmed || undefined,
-            clientMessageId: `temp-${Date.now()}`,
-            attachments: result.data
-              ? [{ fileId: result.data._id }]
-              : undefined,
+        sendMessage(
+          {
+            conversationId: threadId,
+            payload: {
+              type: "file",
+              text: trimmed || undefined,
+              clientMessageId,
+              attachments: result.data ? [{ fileId: result.data._id }] : undefined,
+            },
+            senderSide: "vendor",
+            previewUrl: isImage ? capturedPreviewUrl : undefined,
+            fileMetadata: !isImage ? {
+              name: capturedFileName,
+              size: capturedFileSize,
+              mimeType: pendingAttachment?.file.type || 'application/octet-stream',
+            } : undefined,
           },
-          senderSide: "vendor",
-        });
-
-        console.log("[Vendor Chat] Message sent successfully");
+          {
+            onSuccess: () => {
+              if (capturedPreviewUrl) {
+                URL.revokeObjectURL(capturedPreviewUrl);
+              }
+            },
+          }
+        );
 
         setUploadingMessage(null);
-        handleRemoveAttachment();
-        setMessageText("");
         toast.success("File sent successfully");
       } catch (error) {
         console.error("[Vendor Chat] Error during upload/send:", error);

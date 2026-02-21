@@ -65,31 +65,46 @@ export function useSendMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ conversationId, payload }: { conversationId: string, payload: CreateMessageRequest, senderSide?: ChatUserSide }) => {
+    mutationFn: async ({ conversationId, payload }: {
+      conversationId: string;
+      payload: CreateMessageRequest;
+      senderSide?: ChatUserSide;
+      previewUrl?: string;
+      fileMetadata?: { name: string; size: number; mimeType: string };
+    }) => {
       const result = await sendMessage(conversationId, payload);
       if (!result.success) {
         throw new Error(result.error || "Failed to send message");
       }
       return result.data;
     },
-    onMutate: async ({ conversationId, payload, senderSide = 'user' }) => {
+    onMutate: async ({ conversationId, payload, senderSide = 'user', previewUrl, fileMetadata }) => {
       // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: queryKeys.chat.messages(conversationId) });
 
       // Snapshot the previous value
       const previousMessages = queryClient.getQueryData<ChatMessage[]>(queryKeys.chat.messages(conversationId));
 
-      // Optimistically update to the new value
-      // Note: We don't include attachments in optimistic message because we only have IDs.
-      // The uploadingMessage preview handles attachment display during upload.
+      // Build optimistic attachment: image gets blob preview, non-image gets a typed file placeholder
+      let optimisticAttachments: any[] | undefined;
+      if (previewUrl) {
+        // Image with local blob URL
+        optimisticAttachments = [{ url: previewUrl, mimeType: 'image/jpeg', originalName: fileMetadata?.name || 'image' }];
+      } else if (fileMetadata) {
+        // Non-image file: no URL yet, but carry name/size/mimeType for a proper placeholder
+        optimisticAttachments = [{ mimeType: fileMetadata.mimeType, originalName: fileMetadata.name, size: fileMetadata.size }];
+      }
+
       const optimisticMessage: ChatMessage = {
-        _id: `temp-${Date.now()}`,
+        _id: payload.clientMessageId ? `temp-${payload.clientMessageId}` : `temp-${Date.now()}`,
         conversationId,
         vendorId: 'optimistic-vendor',
-        senderUserId: 'me', // placeholder
-        senderSide, // 'user' or 'vendor' passed from component
+        senderUserId: 'me',
+        senderSide,
         type: payload.type,
         text: payload.text,
+        clientMessageId: payload.clientMessageId,
+        attachments: optimisticAttachments,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -103,15 +118,18 @@ export function useSendMessage() {
       // Return a context object with the snapshotted value
       return { previousMessages };
     },
-    onError: (err, newTodo, context) => {
-      // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, variables, context) => {
+      // Roll back optimistic update on error
       if (context?.previousMessages) {
-        queryClient.setQueryData(queryKeys.chat.messages(newTodo.conversationId), context.previousMessages);
+        queryClient.setQueryData(queryKeys.chat.messages(variables.conversationId), context.previousMessages);
       }
-    },
-    onSettled: (data, error, variables) => {
-      // Always refetch after error or success:
+      // Only invalidate on failure so the socket happy-path doesn't cause a redundant refetch
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.messages(variables.conversationId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
+    },
+    onSuccess: (_data, variables) => {
+      // On success the socket will deliver the real message and update cache —
+      // we only need to refresh the conversations list for the last-message preview.
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
     },
   });
@@ -158,8 +176,24 @@ export function useChatRealtime(conversationId: string | undefined) {
         queryKeys.chat.messages(conversationId),
         (old) => {
           const existing = old ? [...old] : [];
-          // Avoid duplicates
+
+          // Avoid exact duplicates by _id
           if (existing.some((m) => m._id === newMessage._id)) return existing;
+
+          // Replace an optimistic message that shares the same clientMessageId
+          // This is what eliminates the sent-message duplicate flash
+          if (newMessage.clientMessageId) {
+            const optimisticIdx = existing.findIndex(
+              (m) => m.clientMessageId === newMessage.clientMessageId && m._id.startsWith('temp-')
+            );
+            if (optimisticIdx !== -1) {
+              const updated = [...existing];
+              updated[optimisticIdx] = newMessage;
+              return updated.sort(
+                (a: ChatMessage, b: ChatMessage) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+              );
+            }
+          }
 
           existing.push(newMessage);
           return existing.sort(
@@ -177,13 +211,20 @@ export function useChatRealtime(conversationId: string | undefined) {
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
     };
 
+    // On reconnect, re-fetch messages to catch anything missed during the disconnection window
+    const handleReconnect = () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.chat.messages(conversationId) });
+    };
+
     socket.on("chat:message", handleMessage);
     socket.on("chat:read", handleRead);
+    socket.io.on("reconnect", handleReconnect);
 
     return () => {
       socket.emit("chat:leave", { conversationId });
       socket.off("chat:message", handleMessage);
       socket.off("chat:read", handleRead);
+      socket.io.off("reconnect", handleReconnect);
     };
   }, [socket, isConnected, conversationId, queryClient]);
 }

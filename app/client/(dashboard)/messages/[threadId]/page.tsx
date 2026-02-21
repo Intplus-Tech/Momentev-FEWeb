@@ -86,31 +86,31 @@ const ClientThreadPage = () => {
 
     // If there's a pending attachment, upload it first
     if (pendingAttachment) {
-      console.log("[Chat] Starting file upload...", {
-        fileName: pendingAttachment.file.name,
-        fileSize: pendingAttachment.file.size,
-      });
-
       const isImage = pendingAttachment.file.type.startsWith("image/");
+      // Capture the previewUrl before we potentially clear pendingAttachment
+      const capturedPreviewUrl = pendingAttachment.previewUrl;
+      const capturedFileName = pendingAttachment.file.name;
+      const capturedFileSize = pendingAttachment.file.size;
 
       // Show uploading preview in message history
       setUploadingMessage({
         id: `uploading-${Date.now()}`,
-        previewUrl: pendingAttachment.previewUrl,
-        fileName: pendingAttachment.file.name,
-        fileSize: pendingAttachment.file.size,
+        previewUrl: capturedPreviewUrl,
+        fileName: capturedFileName,
+        fileSize: capturedFileSize,
         isImage,
         status: "uploading",
         text: trimmed || undefined,
       });
 
       setIsUploading(true);
+      // Clear the composer immediately so user can't double-send
+      setPendingAttachment(null);
+      setMessageText("");
 
       try {
         const formData = new FormData();
         formData.append("file", pendingAttachment.file);
-
-        console.log("[Chat] Uploading file to server...");
         const result = await uploadFile(formData);
 
         if (!result.success) {
@@ -123,34 +123,38 @@ const ClientThreadPage = () => {
           return;
         }
 
-        console.log("[Chat] Upload successful:", result.data);
+        const clientMessageId = `temp-${Date.now()}`;
 
-        // Send message with attachment
-        console.log("[Chat] Sending message with attachment...", {
-          conversationId: threadId,
-          type: isImage ? "image" : "file",
-          hasText: !!trimmed,
-        });
-
-        sendMessage({
-          conversationId: threadId,
-          payload: {
-            type: "file", // Backend uses 'file' for all attachments (images + files)
-            text: trimmed || undefined,
-            clientMessageId: `temp-${Date.now()}`,
-            attachments: result.data
-              ? [{ fileId: result.data._id }]
-              : undefined,
+        sendMessage(
+          {
+            conversationId: threadId,
+            payload: {
+              type: "file",
+              text: trimmed || undefined,
+              clientMessageId,
+              attachments: result.data ? [{ fileId: result.data._id }] : undefined,
+            },
+            senderSide: "user",
+            // Image: pass blob URL for live preview; non-image: pass metadata for a file card placeholder
+            previewUrl: isImage ? capturedPreviewUrl : undefined,
+            fileMetadata: !isImage ? {
+              name: capturedFileName,
+              size: capturedFileSize,
+              mimeType: pendingAttachment?.file.type || 'application/octet-stream',
+            } : undefined,
           },
-          senderSide: "user",
-        });
+          {
+            onSuccess: () => {
+              // Safe to revoke blob now — the optimistic message has been replaced by the real
+              // message which uses the CDN URL instead of the blob URL
+              if (capturedPreviewUrl) {
+                URL.revokeObjectURL(capturedPreviewUrl);
+              }
+            },
+          }
+        );
 
-        console.log("[Chat] Message sent successfully");
-
-        // Clear uploading state
         setUploadingMessage(null);
-        handleRemoveAttachment();
-        setMessageText("");
         toast.success("File sent successfully");
       } catch (error) {
         console.error("[Chat] Error during upload/send:", error);

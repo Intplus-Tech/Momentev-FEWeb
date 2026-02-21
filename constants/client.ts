@@ -30,13 +30,13 @@ export const clientNavItems = [
     badge: "4",
   },
   {
-    label: "Settings",
-    href: "/client/settings",
-    icon: Settings,
-  },
-  {
     label: "Payment",
     href: "/client/payment",
     icon: CreditCard,
+  },
+  {
+    label: "Settings",
+    href: "/client/settings",
+    icon: Settings,
   },
 ];

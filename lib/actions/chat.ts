@@ -99,59 +99,7 @@ export async function getMessages(conversationId: string, limit: number = 30, be
 
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages?${query.toString()}`);
 
-  // Resolve attachment fileIds to full file details
-  if (result.success && result.data) {
-    const messages = result.data as any[];
-
-    // Collect all unique fileIds that need resolving
-    const fileIdsToResolve = new Set<string>();
-    messages.forEach(msg => {
-      if (msg.attachments?.length > 0) {
-        msg.attachments.forEach((att: any) => {
-          if (att.fileId && !att.url) {
-            fileIdsToResolve.add(att.fileId);
-          }
-        });
-      }
-    });
-
-    // Fetch all file details in parallel
-    if (fileIdsToResolve.size > 0) {
-      const { getFileById } = await import('./upload');
-      const fileDetailsMap = new Map<string, any>();
-
-      const filePromises = Array.from(fileIdsToResolve).map(async (fileId) => {
-        const fileResult = await getFileById(fileId);
-        if (fileResult.success && fileResult.data) {
-          fileDetailsMap.set(fileId, fileResult.data);
-        }
-      });
-
-      await Promise.all(filePromises);
-
-      // Update message attachments with resolved file details
-      messages.forEach(msg => {
-        if (msg.attachments?.length > 0) {
-          msg.attachments = msg.attachments.map((att: any) => {
-            if (att.fileId && !att.url) {
-              const fileDetails = fileDetailsMap.get(att.fileId);
-              if (fileDetails) {
-                return {
-                  ...att,
-                  url: fileDetails.url,
-                  originalName: fileDetails.originalName,
-                  mimeType: fileDetails.mimeType,
-                  size: fileDetails.size,
-                };
-              }
-            }
-            return att;
-          });
-        }
-      });
-    }
-  }
-
+  // The backend now populates attachment fileIds natively. No extra fetching needed!
   return result;
 }
 

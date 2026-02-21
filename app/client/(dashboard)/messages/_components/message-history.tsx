@@ -58,6 +58,11 @@ export const MessageHistory = ({
     if (!attachments || attachments.length === 0) return null;
 
     return attachments.map((attachment, idx) => {
+      // Support backend populated fileId object OR flat structure (for optimistic UI/legacy)
+      const fileData = attachment.fileId && typeof attachment.fileId === 'object' 
+        ? attachment.fileId 
+        : attachment;
+
       // Check mimeType or URL extension for image detection
       const imageExtensions = [
         ".png",
@@ -68,19 +73,19 @@ export const MessageHistory = ({
         ".svg",
         ".bmp",
       ];
-      const url = attachment.url || "";
+      const url = fileData.url || "";
       const hasImageExtension = imageExtensions.some((ext) =>
         url.toLowerCase().includes(ext),
       );
       const isImage =
-        attachment.mimeType?.startsWith("image/") || hasImageExtension;
+        fileData.mimeType?.startsWith("image/") || hasImageExtension;
 
       if (isImage) {
         return (
           <div key={idx} className="mt-2 overflow-hidden rounded-xl">
             <img
-              src={attachment.url}
-              alt={attachment.originalName || "Image"}
+              src={fileData.url}
+              alt={fileData.originalName || "Image"}
               className="max-h-64 w-auto max-w-full rounded-xl object-cover"
             />
           </div>
@@ -91,7 +96,7 @@ export const MessageHistory = ({
       return (
         <a
           key={idx}
-          href={attachment.url}
+          href={fileData.url}
           target="_blank"
           rel="noopener noreferrer"
           className={cn(
@@ -111,11 +116,11 @@ export const MessageHistory = ({
           </div>
           <div className="flex-1 min-w-0">
             <p className="truncate text-sm font-medium">
-              {attachment.originalName || "File"}
+              {fileData.originalName || "File"}
             </p>
             <p className="text-xs opacity-70">
-              {attachment.size
-                ? `${(attachment.size / 1024).toFixed(1)} KB`
+              {fileData.size
+                ? `${(fileData.size / 1024).toFixed(1)} KB`
                 : "Download"}
             </p>
           </div>
