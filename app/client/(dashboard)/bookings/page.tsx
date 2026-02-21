@@ -32,11 +32,6 @@ export default async function ClientBookingsPage() {
   const bookings = response.data.data;
   const totalBookings = response.data.total;
 
-  console.log(
-    "==== FETCHED CLIENT BOOKINGS ====\n",
-    JSON.stringify(bookings, null, 2)
-  );
-
   // Fetch vendor details for all bookings
   const vendorDetailsMap = new Map<
     string,
