@@ -150,7 +150,7 @@ export function BookingCard({
   const showCancelButton = booking.status === "pending_payment";
   const showPayButton = booking.status === "pending_payment";
 
-  console.log(booking.payment?.status);
+  // console.log(booking.payment?.status);
 
   return (
     <Card className="border bg-muted border-border/70 hover:shadow-md transition-shadow">
@@ -162,14 +162,14 @@ export function BookingCard({
                 <h3 className="text-base font-semibold text-foreground">
                   {booking.eventDetails.title}
                 </h3>
-                <h3 className="text-base font-semibold text-foreground">
+                {/* <h3 className="text-base font-semibold text-foreground">
                   {booking._id}
-                </h3>
-                {booking.payment?.status && (
+                </h3> */}
+                {/* {booking.payment?.status && (
                   <Badge variant="secondary" className="font-medium bg-secondary/50 text-secondary-foreground">
                     <span className="capitalize">{booking.payment.status.replace(/_/g, " ")}</span>
                   </Badge>
-                )}
+                )} */}
               </div>
               <Badge
                 variant="outline"
