@@ -123,11 +123,15 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ### Vendor Services & Specialties
 
-| Method | Endpoint              | Description                            | Auth Required | Source File                         |
-| ------ | --------------------- | -------------------------------------- | ------------- | ----------------------------------- |
-| `POST` | `/vendor-services`    | Create vendor service                  | ✅            | `lib/actions/service.ts`            |
-| `POST` | `/vendor-specialties` | Create vendor specialty                | ✅            | `lib/actions/service.ts`            |
-| `GET`  | `/vendor-specialties` | Get vendor specialties with pagination | ✅            | `lib/actions/vendor-specialties.ts` |
+| Method   | Endpoint                   | Description                            | Auth Required | Source File                         |
+| -------- | -------------------------- | -------------------------------------- | ------------- | ----------------------------------- |
+| `POST`   | `/vendor-services`         | Create vendor service                  | ✅            | `lib/actions/service.ts`            |
+| `PUT`    | `/vendor-services/{id}`    | Update vendor service (tags, fees)     | ✅            | `lib/actions/vendor-services.ts`    |
+| `DELETE` | `/vendor-services/{id}`    | Delete vendor service                  | ✅            | `lib/actions/vendor-services.ts`    |
+| `POST`   | `/vendor-specialties`      | Create vendor specialty                | ✅            | `lib/actions/vendor-specialties.ts` |
+| `GET`    | `/vendor-specialties`      | Get vendor specialties with pagination | ✅            | `lib/actions/vendor-specialties.ts` |
+| `PUT`    | `/vendor-specialties/{id}` | Update vendor specialty pricing        | ✅            | `lib/actions/vendor-specialties.ts` |
+| `DELETE` | `/vendor-specialties/{id}` | Delete vendor specialty                | ✅            | `lib/actions/vendor-specialties.ts` |
 
 ---
 
@@ -159,10 +163,10 @@ This document lists all the backend API endpoints consumed by the Momentev front
 | Payment & Stripe      | 3               |
 | Chat & Messaging      | 5               |
 | Reviews               | 1               |
-| Services & Categories | 6               |
+| Services & Categories | 10              |
 | File Upload           | 1               |
 | Support               | 1               |
-| **Total**             | **39**          |
+| **Total**             | **43**          |
 
 ---
 

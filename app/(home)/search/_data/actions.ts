@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { unstable_noStore as noStore } from "next/cache";
 import { VendorResponse, SearchFilters, NearbyFilters, Vendor, VendorDetailsResponse } from "./types";
 import { VendorServicesResponse, VendorSpecialtiesResponse, VendorReviewsResponse } from "@/types/vendor-services";
 
@@ -373,13 +374,20 @@ export async function getVendorDetailsAction(vendorId: string): Promise<VendorDe
 // --- Vendor Services Action ---
 
 export async function getVendorServicesAction(vendorId: string): Promise<VendorServicesResponse | null> {
+  noStore();
   try {
-    const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}/services`;
+    const requestUrl = `${BACKEND_URL}/api/v1/vendors/${vendorId}/services?_ts=${Date.now()}`;
 
-    const res = await fetch(url, {
+    const res = await fetch(requestUrl, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store"
+      headers: {
+        "Content-Type": "application/json",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+      cache: "no-store",
+      next: { revalidate: 0 },
     });
 
     if (!res.ok) {
@@ -400,13 +408,15 @@ export async function getVendorServicesAction(vendorId: string): Promise<VendorS
 // --- Vendor Specialties Action ---
 
 export async function getVendorSpecialtiesAction(vendorId: string): Promise<VendorSpecialtiesResponse | null> {
+  noStore();
   try {
     const url = `${BACKEND_URL}/api/v1/vendors/${vendorId}/specialties`;
 
     const res = await fetch(url, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
-      cache: "no-store"
+      cache: "no-store",
+      next: { revalidate: 0 },
     });
 
 
