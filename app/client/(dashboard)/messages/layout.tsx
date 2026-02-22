@@ -39,6 +39,14 @@ export default function MessagesLayout({
           (isLoading ? undefined : "Vendor");
         const vendorAvatar = profile?.profilePhoto?.url;
 
+        const unreadCount = (() => {
+          if (!c.lastMessageAt) return 0;
+          const lastMsgTime = new Date(c.lastMessageAt).getTime();
+          if (!c.userLastReadAt) return 1;
+          const lastReadTime = new Date(c.userLastReadAt).getTime();
+          return lastMsgTime > lastReadTime ? 1 : 0;
+        })();
+
         return {
           id: c._id,
           vendorName,
@@ -48,7 +56,7 @@ export default function MessagesLayout({
             : "",
           time: c.lastMessageAt ? format(new Date(c.lastMessageAt), "p") : "",
           avatar: vendorAvatar,
-          unreadCount: 0,
+          unreadCount,
           isActive: c._id === activeThreadId,
         };
       })

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import {
   useSendMessage,
   useChatRealtime,
   useVendorProfile,
+  useMarkConversationRead,
 } from "@/hooks/api/use-chat";
 import type { ChatConversation } from "@/types/chat";
 import { uploadFile } from "@/lib/actions/upload";
@@ -47,8 +48,15 @@ const ClientThreadPage = () => {
   const { data: conversations = [] } = useConversations();
   const { data: messages = [] } = useChatMessages(threadId);
   const { mutate: sendMessage } = useSendMessage();
+  const { mutate: markAsRead } = useMarkConversationRead();
 
   useChatRealtime(threadId);
+
+  useEffect(() => {
+    if (threadId) {
+      markAsRead(threadId);
+    }
+  }, [threadId, markAsRead]);
 
   const conversation = conversations.find(
     (c: ChatConversation) => c._id === threadId,

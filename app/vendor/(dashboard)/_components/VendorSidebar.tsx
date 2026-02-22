@@ -24,11 +24,12 @@ import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const VendorSidebar = () => {
   const pathname = usePathname();
   const { isLoading, data } = useUserProfile();
-  console.log(JSON.stringify(data?.vendor?.id, null, 2));
+  const { unreadCount } = useUnreadBadgeCount("vendor");
 
   return (
     <Sidebar
@@ -80,11 +81,15 @@ export const VendorSidebar = () => {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {item.badge ? (
+                    {(item.label === "Messages" && unreadCount > 0) ? (
+                      <SidebarMenuBadge className="bg-primary text-primary-foreground">
+                        {unreadCount}
+                      </SidebarMenuBadge>
+                    ) : ("badge" in item && item.badge) ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {item.badge}
                       </SidebarMenuBadge>
-                    ) : null}
+                    ) : undefined}
                   </SidebarMenuItem>
                 );
               })}

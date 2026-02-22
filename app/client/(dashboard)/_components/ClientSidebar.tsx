@@ -25,10 +25,12 @@ import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
+  const { unreadCount } = useUnreadBadgeCount("user");
 
   const initials = (() => {
     const first = user?.firstName?.trim();
@@ -118,11 +120,15 @@ export const ClientSidebar = () => {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {item.badge ? (
+                    {(item.label === "Messages" && unreadCount > 0) ? (
+                      <SidebarMenuBadge className="bg-primary text-primary-foreground">
+                        {unreadCount}
+                      </SidebarMenuBadge>
+                    ) : ("badge" in item && item.badge) ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {item.badge}
                       </SidebarMenuBadge>
-                    ) : null}
+                    ) : undefined}
                   </SidebarMenuItem>
                 );
               })}

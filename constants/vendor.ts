@@ -38,7 +38,6 @@ export const navItems = [
     label: "Messages",
     href: "/vendor/messages",
     icon: MessageSquare,
-    badge: "23",
   },
   {
     label: "Settings",

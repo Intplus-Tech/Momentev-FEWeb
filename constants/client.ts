@@ -27,7 +27,6 @@ export const clientNavItems = [
     label: "Messages",
     href: "/client/messages",
     icon: MessageCircle,
-    badge: "4",
   },
   {
     label: "Payment",

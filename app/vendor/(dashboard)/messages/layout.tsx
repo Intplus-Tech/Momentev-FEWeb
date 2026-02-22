@@ -20,6 +20,14 @@ const mapConversationToThread = (
     ? `${conv.user.firstName} ${conv.user.lastName}`.trim()
     : "Customer";
 
+  const unreadCount = (() => {
+    if (!conv.lastMessageAt) return 0;
+    const lastMsgTime = new Date(conv.lastMessageAt).getTime();
+    if (!conv.vendorLastReadAt) return 1;
+    const lastReadTime = new Date(conv.vendorLastReadAt).getTime();
+    return lastMsgTime > lastReadTime ? 1 : 0;
+  })();
+
   return {
     id: conv._id,
     vendorName: displayName,
@@ -29,7 +37,7 @@ const mapConversationToThread = (
       : "",
     time: conv.lastMessageAt ? format(new Date(conv.lastMessageAt), "p") : "",
     avatar: conv.user?.avatar,
-    unreadCount: 0,
+    unreadCount,
     isActive: conv._id === activeId,
   };
 };

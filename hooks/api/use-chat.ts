@@ -12,7 +12,7 @@ import {
   getOrCreateConversation,
 } from "@/lib/actions/chat";
 import { queryKeys } from "@/lib/react-query/keys";
-import type { CreateMessageRequest, ChatMessage, ChatUserSide } from "@/types/chat";
+import type { CreateMessageRequest, ChatMessage, ChatUserSide, ChatConversation } from "@/types/chat";
 import type { VendorPublicProfile } from "@/types/vendor";
 
 /**
@@ -306,4 +306,30 @@ export function useStartVendorConversation() {
       queryClient.invalidateQueries({ queryKey: queryKeys.chat.conversations() });
     },
   });
+}
+
+/**
+ * Hook to calculate unread message badges dynamically
+ * based on the user's role and conversation timestamps.
+ */
+export function useUnreadBadgeCount(userSide: ChatUserSide) {
+  const { data: conversations, isLoading } = useConversations();
+
+  const unreadCount = conversations?.reduce((count: number, conv: ChatConversation) => {
+    // A conversation must have at least one message to be unread
+    if (!conv.lastMessageAt) return count;
+
+    const lastMsgTime = new Date(conv.lastMessageAt).getTime();
+
+    // Check against the role's last read timestamp
+    const lastReadTimeStr = userSide === "vendor" ? conv.vendorLastReadAt : conv.userLastReadAt;
+    
+    // If they've never read it, or their last read time is before the last message time, it's unread
+    if (!lastReadTimeStr) return count + 1;
+    
+    const lastReadTime = new Date(lastReadTimeStr).getTime();
+    return lastMsgTime > lastReadTime ? count + 1 : count;
+  }, 0) || 0;
+
+  return { unreadCount, isLoading };
 }
