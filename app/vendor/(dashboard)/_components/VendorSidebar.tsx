@@ -85,9 +85,9 @@ export const VendorSidebar = () => {
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {unreadCount}
                       </SidebarMenuBadge>
-                    ) : ("badge" in item && item.badge) ? (
+                    ) : ("badge" in item && (item as any).badge) ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
-                        {item.badge}
+                        {(item as any).badge as React.ReactNode}
                       </SidebarMenuBadge>
                     ) : undefined}
                   </SidebarMenuItem>
