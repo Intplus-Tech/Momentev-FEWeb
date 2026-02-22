@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 import type { BookingResponse, BookingStatus, PopulatedCustomer } from "@/types/booking";
 
@@ -24,7 +26,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown, Search, MoreHorizontal, Loader2 } from "lucide-react";
+import { decideVendorBooking } from "@/lib/actions/booking";
 
 const PAGE_SIZE = 5;
 
@@ -46,7 +49,7 @@ const statusConfig: Record<
   },
   confirmed: {
     label: "Confirmed",
-    color: "bg-green-500/10 text-green-600 border-green-500/20",
+    color: "bg-purple-500/10 text-purple-600 border-purple-500/20",
   },
   completed: {
     label: "Completed",
@@ -96,6 +99,7 @@ export function ConfirmedBookingsTable({
 }: {
   bookings: BookingResponse[];
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<FilterValue>("all");
@@ -209,18 +213,19 @@ export function ConfirmedBookingsTable({
               <TableHead>Date</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="">
             {data.pageItems.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="py-10 text-center text-muted-foreground"
+                  className="py-40 text-center text-muted-foreground"
                 >
                   No bookings found
                 </TableCell>
-              </TableRow>
+              </TableRow> 
             ) : (
               data.pageItems.map((booking) => {
                 const sc = statusConfig[booking.status] ?? statusConfig.pending;
@@ -231,7 +236,7 @@ export function ConfirmedBookingsTable({
                 return (
                   <TableRow key={booking._id}>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      #{booking._id.slice(-8).toUpperCase()}
+                      {booking._id}
                     </TableCell>
                     <TableCell className="font-medium text-foreground">
                       {getClientName(booking)}
@@ -250,6 +255,9 @@ export function ConfirmedBookingsTable({
                       >
                         {sc.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <BookingActions booking={booking} router={router} />
                     </TableCell>
                   </TableRow>
                 );
@@ -291,5 +299,51 @@ export function ConfirmedBookingsTable({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function BookingActions({ booking, router }: { booking: BookingResponse, router: any }) {
+  const [isPending, startTransition] = useTransition();
+
+  const handleDecision = (decision: "confirmed" | "rejected") => {
+    startTransition(async () => {
+      const result = await decideVendorBooking(booking._id, decision);
+      if (result.success) {
+        toast.success(`Booking ${decision} successfully`);
+        router.refresh();
+      } else {
+        toast.error(result.error || `Failed to ${decision} booking`);
+      }
+    });
+  };
+
+  if (booking.status !== "paid") {
+    return null;
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
+          <span className="sr-only">Open menu</span>
+          {isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          ) : (
+            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => handleDecision("confirmed")} className="cursor-pointer whitespace-nowrap">
+          Confirm Booking
+        </DropdownMenuItem>
+        <DropdownMenuItem 
+          onClick={() => handleDecision("rejected")}
+          className="text-red-600 focus:text-red-50 focus:bg-red-600 cursor-pointer whitespace-nowrap"
+        >
+          Reject Booking
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

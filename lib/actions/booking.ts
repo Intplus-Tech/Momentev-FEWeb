@@ -308,3 +308,55 @@ export async function fetchVendorBookings(
     };
   }
 }
+
+/**
+ * Vendor confirm or reject a booking
+ * POST /api/v1/bookings/:id/vendor/decision
+ */
+export async function decideVendorBooking(
+  bookingId: string,
+  decision: "confirmed" | "rejected"
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    const response = await fetch(
+      `${API_URL}/api/v1/bookings/${bookingId}/vendor/decision`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ decision }),
+      }
+    );
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      // Need to handle error response safely
+      const errorMsg = data.message || (data.errors?.body?.fieldErrors?.decision?.[0]) || `Failed to process decision (${response.status})`;
+      return {
+        success: false,
+        error: errorMsg,
+      };
+    }
+
+    const data = await response.json();
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("Error processing booking decision:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
