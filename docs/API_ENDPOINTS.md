@@ -1,6 +1,6 @@
 # Momentev Frontend - Consumed API Endpoints
 
-> **Last Updated:** 2026-02-14
+> **Last Updated:** 2026-02-22
 
 This document lists all the backend API endpoints consumed by the Momentev frontend application, organized by module.
 
@@ -8,25 +8,29 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ---
 
-## Changelog (2026-02-14)
+## Changelog (2026-02-22)
 
 ### Missing Endpoints Added
 
-- **Bookings** — 4 endpoints (`POST /bookings`, `GET /bookings`, `GET /bookings/{bookingId}`, `POST /bookings/{bookingId}/cancel`) were implemented in `lib/actions/booking.ts` but completely absent from docs.
-- **Custom Requests** — 8 endpoints for the customer-request lifecycle (`submit`, `drafts`, `submit draft`, `update draft`, `get by ID`, `list mine`, `delete`, `cancel`) were implemented in `lib/actions/custom-request.ts` but completely absent from docs.
-- **Vendor Profile Update** — `PATCH /vendors/{vendorId}` for vendor media/profile updates was implemented in `lib/actions/vendor-profile.ts` but missing from docs.
-- **Service Category by ID** — `GET /service-categories/{id}` was implemented in `lib/actions/service-category-by-id.ts` but missing from docs.
+- **Bookings** — 2 endpoints (`GET /bookings/vendor/me`, `POST /bookings/{bookingId}/vendor/decision`) were implemented in `lib/actions/booking.ts` but absent from docs.
+- **Payment & Stripe** — 9 endpoints added: Stripe account status (`GET`), Stripe onboarding link (`GET`), Stripe dashboard link (`GET`), vendor balance (`GET`), vendor earnings (`GET`), vendor payouts (`GET`), vendor payment methods (`GET`), create payment intent (`POST`), confirm payment (`POST`) — all implemented in `lib/actions/payment.ts` but absent from docs.
+- **Customer Payments** — 3 endpoints (`GET /customers/{customerId}/payment-methods`, `POST …/payment-methods`, `PUT …/payment-methods/{id}/default`) were implemented in `lib/actions/customer-payment.ts` but completely absent from docs.
 
 ### Discrepancies Fixed
 
-- **`GET /service-categories`** — Doc previously listed Auth Required ✅. Code sends **no** `Authorization` header. Fixed to ❌.
-- **`GET /chats/{conversationId}/messages`** — Query params `limit` (default 30) and `before` (cursor-based pagination) were undocumented. Added.
-- **`GET /vendors/{vendorId}/reviews`** — Query params `page` and `limit` were undocumented. Added.
-- **`GET /vendors/search`** — Query params `search`, `service`, `specialty`, `sort`, `page`, `limit` were undocumented. Added.
-- **`GET /vendors/nearby`** — Query params `lat`, `long`, `maxDistanceKm`, `search`, `service`, `specialty`, `page`, `limit` were undocumented. Added.
-- **`GET /vendor-specialties`** — Query params `page`, `limit`, `vendorId` were undocumented. Added.
-- **`GET /customer-profile-management/{customerId}/reviews`** — Query params `page` and `limit` were undocumented. Added.
+- **`GET /customer-requests/{id}`** — Doc previously listed a `populate` query param. Code sends **no** query params. Removed.
+- **`GET /vendors/{vendorId}/reviews`** — Also called with auth from `lib/actions/reviews.ts`. Added separate authenticated entry in Reviews section.
+- **File Upload** — Summary count was 1, but 2 endpoints exist (`POST /uploads`, `GET /uploads/{id}`). Fixed to 2.
 - **Summary table counts** were incorrect across multiple categories. All corrected.
+
+### Previous Changelog (2026-02-14)
+
+- **Bookings** — 4 endpoints (`POST /bookings`, `GET /bookings`, `GET /bookings/{bookingId}`, `POST /bookings/{bookingId}/cancel`) added.
+- **Custom Requests** — 8 endpoints for the customer-request lifecycle added.
+- **Vendor Profile Update** — `PATCH /vendors/{vendorId}` added.
+- **Service Category by ID** — `GET /service-categories/{id}` added.
+- **`GET /service-categories`** — Auth fixed from ✅ to ❌.
+- Various missing query params documented across multiple endpoints.
 
 ---
 
@@ -100,12 +104,14 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ## 📅 Bookings
 
-| Method | Endpoint                       | Description                         | Auth | Params / Body                                                                                                                                                                                   | Source File              |
-| ------ | ------------------------------ | ----------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `POST` | `/bookings`                    | Create a booking                    | ✅   | **Body:** `{ vendorId, eventDetails: { title, startDate, endDate, guestCount, description }, budgetAllocations: [{ vendorSpecialtyId, budgetedAmount }], location: { addressText }, currency }` | `lib/actions/booking.ts` |
-| `GET`  | `/bookings`                    | Fetch bookings for the current user | ✅   | **Query:** `page` (default 1), `limit` (default 10)                                                                                                                                             | `lib/actions/booking.ts` |
-| `GET`  | `/bookings/{bookingId}`        | Fetch a single booking by ID        | ✅   | **Path:** `bookingId`                                                                                                                                                                           | `lib/actions/booking.ts` |
-| `POST` | `/bookings/{bookingId}/cancel` | Cancel a booking                    | ✅   | **Path:** `bookingId`                                                                                                                                                                           | `lib/actions/booking.ts` |
+| Method | Endpoint                                | Description                         | Auth | Params / Body                                                                                                                                                                                   | Source File              |
+| ------ | --------------------------------------- | ----------------------------------- | ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `POST` | `/bookings`                             | Create a booking                    | ✅   | **Body:** `{ vendorId, eventDetails: { title, startDate, endDate, guestCount, description }, budgetAllocations: [{ vendorSpecialtyId, budgetedAmount }], location: { addressText }, currency }` | `lib/actions/booking.ts` |
+| `GET`  | `/bookings`                             | Fetch bookings for the current user | ✅   | **Query:** `page` (default 1), `limit` (default 10)                                                                                                                                             | `lib/actions/booking.ts` |
+| `GET`  | `/bookings/{bookingId}`                 | Fetch a single booking by ID        | ✅   | **Path:** `bookingId`                                                                                                                                                                           | `lib/actions/booking.ts` |
+| `POST` | `/bookings/{bookingId}/cancel`          | Cancel a booking                    | ✅   | **Path:** `bookingId`                                                                                                                                                                           | `lib/actions/booking.ts` |
+| `GET`  | `/bookings/vendor/me`                   | Fetch bookings for the vendor       | ✅   | **Query:** `page` (default 1), `limit` (default 10)                                                                                                                                             | `lib/actions/booking.ts` |
+| `POST` | `/bookings/{bookingId}/vendor/decision` | Vendor confirm or reject a booking  | ✅   | **Path:** `bookingId` · **Body:** `{ decision }` (`"confirmed"` \| `"rejected"`)                                                                                                                | `lib/actions/booking.ts` |
 
 ---
 
@@ -117,7 +123,7 @@ This document lists all the backend API endpoints consumed by the Momentev front
 | `POST`   | `/customer-requests/drafts`      | Save a custom request as draft       | ✅   | **Body:** same as submit                                                                                                                                                                                                 | `lib/actions/custom-request.ts` |
 | `POST`   | `/customer-requests/submit/{id}` | Submit an existing draft             | ✅   | **Path:** `id`                                                                                                                                                                                                           | `lib/actions/custom-request.ts` |
 | `PATCH`  | `/customer-requests/drafts/{id}` | Update an existing draft (partial)   | ✅   | **Path:** `id` · **Body:** `Partial<CustomRequestPayload>`                                                                                                                                                               | `lib/actions/custom-request.ts` |
-| `GET`    | `/customer-requests/{id}`        | Fetch a single custom request by ID  | ✅   | **Path:** `id` · **Query:** `populate=serviceCategoryId,budgetAllocations.serviceSpecialtyId`                                                                                                                            | `lib/actions/custom-request.ts` |
+| `GET`    | `/customer-requests/{id}`        | Fetch a single custom request by ID  | ✅   | **Path:** `id`                                                                                                                                                                                                           | `lib/actions/custom-request.ts` |
 | `GET`    | `/customer-requests/me`          | Fetch current user's custom requests | ✅   | **Query:** `page`, `limit`, `serviceCategoryId?`, `status?`, `dateFrom?`, `dateTo?`, `search?`                                                                                                                           | `lib/actions/custom-request.ts` |
 | `DELETE` | `/customer-requests/{id}`        | Delete a custom request              | ✅   | **Path:** `id`                                                                                                                                                                                                           | `lib/actions/custom-request.ts` |
 | `PATCH`  | `/customer-requests/{id}/cancel` | Cancel a custom request              | ✅   | **Path:** `id`                                                                                                                                                                                                           | `lib/actions/custom-request.ts` |
@@ -126,11 +132,40 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ## 💳 Payment & Stripe
 
+### Vendor Payment Setup
+
 | Method | Endpoint                                          | Description                     | Auth | Params / Body                                                                                | Source File              |
 | ------ | ------------------------------------------------- | ------------------------------- | ---- | -------------------------------------------------------------------------------------------- | ------------------------ |
 | `PUT`  | `/vendors/{vendorId}/payment-model`               | Set vendor payment model        | ✅   | **Path:** `vendorId` · **Body:** `{ paymentModel }` (`"upfront_payout"` \| `"split_payout"`) | `lib/actions/payment.ts` |
 | `POST` | `/vendors/{vendorId}/stripe-account`              | Create Stripe connected account | ✅   | **Path:** `vendorId` · **Body:** `{}`                                                        | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/stripe-account`              | Get Stripe account status       | ✅   | **Path:** `vendorId`                                                                         | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/stripe-onboarding`           | Get Stripe onboarding link      | ✅   | **Path:** `vendorId`                                                                         | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/stripe-dashboard`            | Get Stripe dashboard link       | ✅   | **Path:** `vendorId`                                                                         | `lib/actions/payment.ts` |
 | `POST` | `/vendors/{vendorId}/commission-agreement/accept` | Accept commission agreement     | ✅   | **Path:** `vendorId` · **Body:** `{ version, commissionType, commissionAmount, currency }`   | `lib/actions/payment.ts` |
+
+### Vendor Financial Data
+
+| Method | Endpoint                              | Description                | Auth | Params / Body        | Source File              |
+| ------ | ------------------------------------- | -------------------------- | ---- | -------------------- | ------------------------ |
+| `GET`  | `/vendors/{vendorId}/balance`         | Get vendor balance         | ✅   | **Path:** `vendorId` | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/earnings`        | Get vendor earnings        | ✅   | **Path:** `vendorId` | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/payouts`         | Get vendor payouts         | ✅   | **Path:** `vendorId` | `lib/actions/payment.ts` |
+| `GET`  | `/vendors/{vendorId}/payment-methods` | Get vendor payment methods | ✅   | **Path:** `vendorId` | `lib/actions/payment.ts` |
+
+### Booking Payments
+
+| Method | Endpoint                                | Description             | Auth | Params / Body                          | Source File              |
+| ------ | --------------------------------------- | ----------------------- | ---- | -------------------------------------- | ------------------------ |
+| `POST` | `/bookings/{bookingId}/payment-intent`  | Create payment intent   | ✅   | **Path:** `bookingId` · **Body:** `{}` | `lib/actions/payment.ts` |
+| `POST` | `/bookings/{bookingId}/confirm-payment` | Confirm booking payment | ✅   | **Path:** `bookingId` · **Body:** `{}` | `lib/actions/payment.ts` |
+
+### Customer Payment Methods
+
+| Method | Endpoint                                                            | Description                  | Auth | Params / Body                                              | Source File                       |
+| ------ | ------------------------------------------------------------------- | ---------------------------- | ---- | ---------------------------------------------------------- | --------------------------------- |
+| `GET`  | `/customers/{customerId}/payment-methods`                           | Get customer payment methods | ✅   | **Path:** `customerId`                                     | `lib/actions/customer-payment.ts` |
+| `POST` | `/customers/{customerId}/payment-methods`                           | Add customer payment method  | ✅   | **Path:** `customerId` · **Body:** `{ paymentMethodId }`   | `lib/actions/customer-payment.ts` |
+| `PUT`  | `/customers/{customerId}/payment-methods/{paymentMethodId}/default` | Set default payment method   | ✅   | **Path:** `customerId`, `paymentMethodId` · **Body:** `{}` | `lib/actions/customer-payment.ts` |
 
 ---
 
@@ -146,11 +181,12 @@ This document lists all the backend API endpoints consumed by the Momentev front
 
 ---
 
-## ⭐ Reviews (Customer)
+## ⭐ Reviews
 
-| Method | Endpoint                                            | Description          | Auth | Params / Body                                       | Source File              |
-| ------ | --------------------------------------------------- | -------------------- | ---- | --------------------------------------------------- | ------------------------ |
-| `GET`  | `/customer-profile-management/{customerId}/reviews` | Get customer reviews | ✅   | **Path:** `customerId` · **Query:** `page`, `limit` | `lib/actions/reviews.ts` |
+| Method | Endpoint                                            | Description                        | Auth | Params / Body                                       | Source File              |
+| ------ | --------------------------------------------------- | ---------------------------------- | ---- | --------------------------------------------------- | ------------------------ |
+| `GET`  | `/customer-profile-management/{customerId}/reviews` | Get customer reviews               | ✅   | **Path:** `customerId` · **Query:** `page`, `limit` | `lib/actions/reviews.ts` |
+| `GET`  | `/vendors/{vendorId}/reviews`                       | Get vendor reviews (authenticated) | ✅   | **Path:** `vendorId` · **Query:** `page`, `limit`   | `lib/actions/reviews.ts` |
 
 ---
 
@@ -210,15 +246,15 @@ This document lists all the backend API endpoints consumed by the Momentev front
 | User Profile          | 3               |
 | Address               | 3               |
 | Vendor Management     | 15              |
-| Bookings              | 4               |
+| Bookings              | 6               |
 | Custom Requests       | 8               |
-| Payment & Stripe      | 3               |
+| Payment & Stripe      | 15              |
 | Chat & Messaging      | 5               |
-| Reviews               | 1               |
+| Reviews               | 2               |
 | Services & Categories | 10              |
-| File Upload           | 1               |
+| File Upload           | 2               |
 | Support               | 1               |
-| **Total**             | **43**          |
+| **Total**             | **79**          |
 
 ---
 
@@ -235,6 +271,7 @@ This document lists all the backend API endpoints consumed by the Momentev front
 All server actions are located in:
 
 - `lib/actions/` - Main server actions directory
+- `lib/actions/customer-payment.ts` - Customer payment method management
 - `app/(home)/search/_data/actions.ts` - Search-specific actions (public vendor endpoints)
 
 Related files:

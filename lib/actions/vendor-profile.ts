@@ -97,8 +97,8 @@ export async function submitVendorProfile(
       coverPhoto: data.coverPhoto,
       portfolioGallery: data.portfolioGallery,
       socialMediaLinks: data.socialMediaLinks,
-      // Set vendor as active and mark onboarding as complete
-      isActive: true,
+      // Set vendor as pending approval and mark onboarding as complete
+      isActive: false,
       onBoardingStage: 4,
       onBoarded: true,
     };
