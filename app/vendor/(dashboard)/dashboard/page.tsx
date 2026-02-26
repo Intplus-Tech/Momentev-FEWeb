@@ -16,6 +16,7 @@ import { HeroSection } from "./_components/hero-section";
 import { ReviewsPanel } from "./_components/reviews-panel";
 import { ScheduleCard } from "./_components/schedule-card";
 import { StatsGrid } from "./_components/stats-grid";
+import { StripeConnectBanner } from "./_components/stripe-connect-banner";
 import type { DashboardStat } from "./data";
 
 const DashboardPage = async () => {
@@ -113,6 +114,7 @@ const DashboardPage = async () => {
 
   return (
     <section className="space-y-6">
+      <StripeConnectBanner />
       <HeroSection
         name={firstName}
         location={businessCity}

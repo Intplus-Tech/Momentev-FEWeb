@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getUserProfile } from "@/lib/actions/user";
 import { Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ export function VendorOnboardingGuard({
   children,
 }: VendorOnboardingGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isActive, setIsActive] = useState<boolean | null>(null);
@@ -38,6 +39,18 @@ export function VendorOnboardingGuard({
 
         const { vendor } = result.data;
         setUserProfile(result.data);
+
+        console.log("[VendorGuard] User profile:", {
+          firstName: result.data.firstName,
+          lastName: result.data.lastName,
+          email: result.data.email,
+          hasVendor: !!vendor,
+          vendorId: vendor?.id,
+          onBoarded: vendor?.onBoarded,
+          onBoardingStage: vendor?.onBoardingStage,
+          isActive: vendor?.isActive,
+          businessName: vendor?.businessProfile?.businessName,
+        });
 
         // Check if user is a vendor
         if (!vendor) {
@@ -81,7 +94,7 @@ export function VendorOnboardingGuard({
     }
 
     checkOnboardingStatus();
-  }, [router]);
+  }, [router, pathname]);
 
   // Show loading while checking
   if (isChecking) {
@@ -102,14 +115,16 @@ export function VendorOnboardingGuard({
 
   // If onboarded but not active, show under review screen
   if (isActive === false) {
-    const businessName = userProfile?.vendor?.businessProfile?.businessName || userProfile?.firstName + "'s Business";
+    const businessName =
+      userProfile?.vendor?.businessProfile?.businessName ||
+      userProfile?.firstName + "'s Business";
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-background">
         <div className="max-w-md w-full space-y-6 bg-card p-8 rounded-xl shadow-sm border border-border text-center">
           <div className="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-2">
             <Loader2 className="w-8 h-8 animate-spin text-yellow-600" />
           </div>
-          
+
           <div className="space-y-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               Account Under Review
@@ -117,22 +132,28 @@ export function VendorOnboardingGuard({
             <p className="text-lg font-medium text-foreground">
               {businessName}
             </p>
-            
+
             <div className="inline-block px-4 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 font-semibold text-sm border border-yellow-500/20 my-4 shadow-sm">
               Status: Pending Approval
             </div>
-            
+
             <p className="text-muted-foreground pt-2">
-              Your onboarding information has been submitted successfully and is currently under review by our team.
+              Your onboarding information has been submitted successfully and is
+              currently under review by our team.
             </p>
             <p className="text-muted-foreground font-medium pt-2">
-              Please check back in 24 hours if you have not received an email notification.
+              Please check back in 24 hours if you have not received an email
+              notification.
             </p>
           </div>
-          
+
           <div className="pt-2 w-full">
             <form action={() => logout("/")} className="w-full">
-              <Button type="submit" variant="outline" className="w-full flex items-center justify-center gap-2">
+              <Button
+                type="submit"
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2"
+              >
                 <Home className="w-4 h-4" />
                 Return to Home
               </Button>

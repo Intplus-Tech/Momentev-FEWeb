@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LogOut, Search } from "lucide-react";
 import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
@@ -28,8 +30,17 @@ import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const VendorSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { isLoading, data } = useUserProfile();
   const { unreadCount } = useUnreadBadgeCount("vendor");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    router.push(`/search?q=${encodeURIComponent(q)}&page=1`);
+  };
+
 
   return (
     <Sidebar
@@ -39,17 +50,46 @@ export const VendorSidebar = () => {
       <SidebarHeader className="gap-4 px-4 py-5 bg-white">
         <Logo className="h-7 w-auto" />
         <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src="https://github.com/shadcn.png" />
-            <AvatarFallback>CN</AvatarFallback>
-          </Avatar>
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <SidebarInput
-              placeholder="Find vendor"
-              className="rounded-full border border-border bg-background/80 pl-9 text-sm placeholder:text-muted-foreground"
-            />
-          </div>
+          {isLoading ? (
+            <>
+              <Skeleton className="h-9 w-9 rounded-full" />
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+            </>
+          ) : (
+            <>
+              <Avatar className="h-9 w-9">
+                <AvatarImage 
+                  src={data?.avatar?.url} 
+                  alt={data?.firstName ? `${data.firstName} ${data.lastName}` : "Vendor avatar"} 
+                />
+                <AvatarFallback>
+                  {data?.firstName ? `${data.firstName.charAt(0)}${data.lastName?.charAt(0) || ""}`.toUpperCase() : "VN"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <p className="text-sm font-semibold text-foreground">
+                  {data?.vendor?.businessProfile?.businessName || 
+                   `${data?.firstName || ''} ${data?.lastName || ''}`.trim() || 'Vendor'}
+                </p>
+                <p className="text-xs text-muted-foreground">momentev vendor</p>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <SidebarInput
+            placeholder="Find vendor"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
+            className="rounded-full border border-border bg-background/80 pl-9 text-sm placeholder:text-muted-foreground"
+          />
         </div>
       </SidebarHeader>
 
@@ -81,11 +121,11 @@ export const VendorSidebar = () => {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {(item.label === "Messages" && unreadCount > 0) ? (
+                    {item.label === "Messages" && unreadCount > 0 ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {unreadCount}
                       </SidebarMenuBadge>
-                    ) : ("badge" in item && (item as any).badge) ? (
+                    ) : "badge" in item && (item as any).badge ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {(item as any).badge as React.ReactNode}
                       </SidebarMenuBadge>
@@ -97,7 +137,7 @@ export const VendorSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  className="py-3 px-0 text-sm font-medium hover:bg-destructive/10 hover:text-destructive"
+                  className="py-3 pr-0 text-sm font-medium hover:bg-destructive/10 hover:text-destructive"
                 >
                   <form action={() => logout("/vendor/auth/log-in")}>
                     <Button

@@ -41,6 +41,11 @@ export async function setPaymentModel(
       },
     );
 
+
+    console.log(`[PaymentAction] setPaymentModel response status: ${res.status}`);
+    const responseData = await res.json();
+    console.log("[PaymentAction] setPaymentModel response:", responseData);
+
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("setPaymentModel failed:", err);
@@ -232,7 +237,7 @@ export type StripeOnboardingLink = {
   vendorId: string;
   url: string;
   expiresAt: string;
-  };
+};
 
 export async function getStripeOnboarding(): Promise<
   PaymentActionResponse<StripeOnboardingLink>
