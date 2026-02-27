@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
+
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { LogOut, Search } from "lucide-react";
 
 import Logo from "@/components/brand/logo";
@@ -29,8 +31,16 @@ import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { unreadCount } = useUnreadBadgeCount("user");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) return;
+    router.push(`/search?q=${encodeURIComponent(q)}&page=1`);
+  };
 
   const initials = (() => {
     const first = user?.firstName?.trim();
@@ -86,7 +96,12 @@ export const ClientSidebar = () => {
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <SidebarInput
-            placeholder="Find a vendor or city"
+            placeholder="Find a vendor"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSearch();
+            }}
             className="rounded-full border border-border bg-background/80 pl-9 text-sm placeholder:text-muted-foreground"
           />
         </div>
@@ -136,7 +151,7 @@ export const ClientSidebar = () => {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  className="px-0 py-3 text-sm font-medium hover:bg-muted cursor-pointer"
+                  className="px-0 pl-2 text-sm font-medium hover:bg-muted cursor-pointer"
                 >
                   <form action={() => logout("/client/auth/log-in")}>
                     <Button

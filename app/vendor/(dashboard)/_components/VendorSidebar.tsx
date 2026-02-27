@@ -41,7 +41,6 @@ export const VendorSidebar = () => {
     router.push(`/search?q=${encodeURIComponent(q)}&page=1`);
   };
 
-
   return (
     <Sidebar
       collapsible="icon"
@@ -61,25 +60,32 @@ export const VendorSidebar = () => {
           ) : (
             <>
               <Avatar className="h-9 w-9">
-                <AvatarImage 
-                  src={data?.avatar?.url} 
-                  alt={data?.firstName ? `${data.firstName} ${data.lastName}` : "Vendor avatar"} 
+                <AvatarImage
+                  src={data?.avatar?.url}
+                  alt={
+                    data?.firstName
+                      ? `${data.firstName} ${data.lastName}`
+                      : "Vendor avatar"
+                  }
                 />
                 <AvatarFallback>
-                  {data?.firstName ? `${data.firstName.charAt(0)}${data.lastName?.charAt(0) || ""}`.toUpperCase() : "VN"}
+                  {data?.firstName
+                    ? `${data.firstName.charAt(0)}${data.lastName?.charAt(0) || ""}`.toUpperCase()
+                    : "VN"}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col">
                 <p className="text-sm font-semibold text-foreground">
-                  {data?.vendor?.businessProfile?.businessName || 
-                   `${data?.firstName || ''} ${data?.lastName || ''}`.trim() || 'Vendor'}
+                  {data?.vendor?.businessProfile?.businessName ||
+                    `${data?.firstName || ""} ${data?.lastName || ""}`.trim() ||
+                    "Vendor"}
                 </p>
                 <p className="text-xs text-muted-foreground">momentev vendor</p>
               </div>
             </>
           )}
         </div>
-        <div className="relative">
+        {/* <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <SidebarInput
             placeholder="Find vendor"
@@ -90,7 +96,7 @@ export const VendorSidebar = () => {
             }}
             className="rounded-full border border-border bg-background/80 pl-9 text-sm placeholder:text-muted-foreground"
           />
-        </div>
+        </div> */}
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4 bg-white">
