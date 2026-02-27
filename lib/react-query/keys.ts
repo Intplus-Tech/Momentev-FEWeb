@@ -41,4 +41,14 @@ export const queryKeys = {
     list: (page?: number, limit?: number) => [...queryKeys.bookings.all, 'list', page, limit] as const,
     detail: (bookingId: string) => [...queryKeys.bookings.all, 'detail', bookingId] as const,
   },
+  quotes: {
+    all: ['quotes'] as const,
+    vendorList: (page: number, limit: number, filters?: Record<string, unknown>) => 
+      [...queryKeys.quotes.all, 'vendorList', page, limit, filters] as const,
+  },
+  quoteRequests: {
+    all: ['quoteRequests'] as const,
+    vendorList: (page?: number, limit?: number, filters?: Record<string, unknown>) =>
+      [...queryKeys.quoteRequests.all, 'vendorList', page, limit, filters] as const,
+  },
 };

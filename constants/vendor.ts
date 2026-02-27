@@ -25,6 +25,11 @@ export const navItems = [
     icon: ClipboardList,
   },
   {
+    label: "My Quotes",
+    href: "/vendor/quotes",
+    icon: Briefcase,
+  },
+  {
     label: "Services",
     href: "/vendor/services",
     icon: Briefcase,
