@@ -45,6 +45,8 @@ export const queryKeys = {
     all: ['quotes'] as const,
     vendorList: (page: number, limit: number, filters?: Record<string, unknown>) => 
       [...queryKeys.quotes.all, 'vendorList', page, limit, filters] as const,
+    customerList: (page?: number, limit?: number, filters?: Record<string, unknown>) =>
+      [...queryKeys.quotes.all, 'customerList', page, limit, filters] as const,
   },
   quoteRequests: {
     all: ['quoteRequests'] as const,

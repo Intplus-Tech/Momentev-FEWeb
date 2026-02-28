@@ -107,3 +107,20 @@ export interface VendorQuoteFilters {
   page?: number;
   limit?: number;
 }
+
+// ── Client-side (customer) aliases ──────────────────────────────────────────
+
+/** Identical shape to VendorQuoteResponse — the GET /quotes/me response */
+export type CustomerQuote = VendorQuoteResponse;
+
+export interface CustomerQuoteListResponse {
+  data: CustomerQuote[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CustomerQuoteFilters {
+  status?: QuoteStatus | "";
+  quoteRequestId?: string;
+}
