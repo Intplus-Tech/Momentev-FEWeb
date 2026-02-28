@@ -56,6 +56,7 @@ export interface VendorQuoteRequest {
   expiresAt: string;
   createdAt: string;
   updatedAt: string;
+  respondedAt?: string;
   __v: number;
 }
 
@@ -71,4 +72,20 @@ export interface VendorQuoteRequestFilters {
   dateFrom?: string;
   dateTo?: string;
   search?: string;
+}
+
+// ── Client-side (customer) aliases ──────────────────────────────────────────
+
+/** Identical shape to VendorQuoteRequest — the GET /quote-requests/me response */
+export type CustomerQuoteRequest = VendorQuoteRequest;
+
+export interface CustomerQuoteRequestListResponse {
+  data: CustomerQuoteRequest[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+export interface CustomerQuoteRequestFilters {
+  status?: QuoteRequestStatus | "";
 }

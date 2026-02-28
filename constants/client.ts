@@ -1,6 +1,7 @@
 import {
   CalendarClock,
   ClipboardList,
+  FileText,
   Home,
   MessageCircle,
   Settings,
@@ -22,6 +23,11 @@ export const clientNavItems = [
     label: "My Requests",
     href: "/client/requests",
     icon: ClipboardList,
+  },
+  {
+    label: "My Quotes",
+    href: "/client/quote-requests",
+    icon: FileText,
   },
   {
     label: "Messages",
