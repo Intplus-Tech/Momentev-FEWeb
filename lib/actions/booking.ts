@@ -123,7 +123,6 @@ export async function createBookingFromQuote(
     });
 
     const data = await response.json().catch(() => ({}));
-    console.log("CREATE BOOKING FROM QUOTE RESPONSE:", JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };

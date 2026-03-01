@@ -4,6 +4,7 @@ import { Calendar, MapPin, Users, AlertCircle, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -136,13 +137,13 @@ export function BookingCard({
       const result = await cancelBooking(booking._id);
 
       if (result.success) {
+        toast.success("Booking cancelled successfully.");
         router.refresh();
       } else {
-        console.error("Failed to cancel booking:", result.error);
-        alert(result.error || "Failed to cancel booking");
+        toast.error(result.error || "Failed to cancel booking");
       }
     } catch (error) {
-      console.error("Error cancelling booking:", error);
+      toast.error(error instanceof Error ? error.message : "An unexpected error occurred while cancelling.");
     } finally {
       setIsCancelling(false);
     }
