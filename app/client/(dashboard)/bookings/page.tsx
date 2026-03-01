@@ -66,7 +66,7 @@ export default async function ClientBookingsPage() {
     ...new Set(
       bookings
         .flatMap((b) =>
-          b.budgetAllocations.map((a) => (a.vendorSpecialtyId as any)?.serviceSpecialty)
+          b.budgetAllocations?.map((a) => (a.vendorSpecialtyId as any)?.serviceSpecialty) || []
         )
         .filter(Boolean)
     ),
@@ -85,12 +85,12 @@ export default async function ClientBookingsPage() {
 
   // Separate upcoming and past bookings
   const now = new Date();
-  const upcomingBookings = bookings.filter(
-    (booking) => new Date(booking.eventDetails.startDate) > now,
-  );
   const completedBookings = bookings.filter(
     (booking) =>
-      booking.status === "completed" || booking.status === "cancelled",
+      booking.status === "completed" || booking.status === "cancelled" || booking.status === "rejected",
+  );
+  const upcomingBookings = bookings.filter(
+    (booking) => !completedBookings.includes(booking)
   );
 
   return (

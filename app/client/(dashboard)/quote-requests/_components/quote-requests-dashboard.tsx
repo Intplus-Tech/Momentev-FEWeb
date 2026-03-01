@@ -15,7 +15,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { fetchCustomerQuoteRequests, closeQuoteRequest } from "@/lib/actions/client-quote-requests";
+import {
+  fetchCustomerQuoteRequests,
+  closeQuoteRequest,
+} from "@/lib/actions/client-quote-requests";
 import { queryKeys } from "@/lib/react-query/keys";
 import type {
   CustomerQuoteRequest,
@@ -63,16 +66,36 @@ const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
 ];
 
 const statusStyles: Record<string, { label: string; className: string }> = {
-  new: { label: "NEW", className: "bg-blue-50 text-blue-700 border border-blue-200" },
-  responded: { label: "RESPONDED", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  accepted: { label: "ACCEPTED", className: "bg-violet-50 text-violet-700 border border-violet-200" },
-  completed: { label: "COMPLETED", className: "bg-gray-100 text-gray-600 border border-gray-200" },
-  expired: { label: "EXPIRED", className: "bg-red-50 text-red-600 border border-red-200" },
-  closed: { label: "CLOSED", className: "bg-amber-50 text-amber-700 border border-amber-200" },
+  new: {
+    label: "NEW",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
+  responded: {
+    label: "RESPONDED",
+    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  },
+  accepted: {
+    label: "ACCEPTED",
+    className: "bg-violet-50 text-violet-700 border border-violet-200",
+  },
+  completed: {
+    label: "COMPLETED",
+    className: "bg-gray-100 text-gray-600 border border-gray-200",
+  },
+  expired: {
+    label: "EXPIRED",
+    className: "bg-red-50 text-red-600 border border-red-200",
+  },
+  closed: {
+    label: "CLOSED",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
 };
 
 const formatGBP = (val: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(val);
+  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(
+    val,
+  );
 
 function formatRelativeExpiry(dateString?: string) {
   if (!dateString) return null;
@@ -106,10 +129,11 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
 
   const budget = cr?.budgetAllocations?.reduce(
     (sum, b) => sum + (b.budgetedAmount ?? 0),
-    0
+    0,
   );
 
-  const isExpired = request.expiresAt && new Date(request.expiresAt) <= new Date();
+  const isExpired =
+    request.expiresAt && new Date(request.expiresAt) <= new Date();
   const isUrgent =
     request.expiresAt &&
     new Date(request.expiresAt) > new Date() &&
@@ -134,7 +158,7 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
         <span
           className={cn(
             "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
-            statusDef.className
+            statusDef.className,
           )}
         >
           {statusDef.label}
@@ -161,7 +185,8 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="h-4 w-4 text-primary" />
                   {format(new Date(event.startDate), "MMM d, yyyy")}
-                  {event.endDate && ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
+                  {event.endDate &&
+                    ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
                 </span>
               )}
               {event?.guestCount != null && (
@@ -192,7 +217,12 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
           {request.expiresAt ? (
             <>
               <p className="text-sm font-medium text-foreground flex items-center gap-1.5">
-                <Clock className={cn("h-4 w-4", isUrgent ? "text-red-500" : "text-muted-foreground")} />
+                <Clock
+                  className={cn(
+                    "h-4 w-4",
+                    isUrgent ? "text-red-500" : "text-muted-foreground",
+                  )}
+                />
                 {formatRelativeExpiry(request.expiresAt)}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -208,7 +238,10 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
                 Responded
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {format(new Date(request.respondedAt), "MMM d, yyyy 'at' h:mm a")}
+                {format(
+                  new Date(request.respondedAt),
+                  "MMM d, yyyy 'at' h:mm a",
+                )}
               </p>
             </div>
           )}
@@ -218,10 +251,7 @@ function QuoteRequestCard({ request, onClose }: QuoteRequestCardProps) {
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         {canClose && (
-          <Button
-            variant="destructive"
-            onClick={() => onClose(request._id)}
-          >
+          <Button variant="destructive" onClick={() => onClose(request._id)}>
             Close Request
           </Button>
         )}
@@ -236,7 +266,8 @@ export function QuoteRequestsDashboard() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
   const [page, setPage] = useState(1);
   const [, startTransition] = useTransition();
-  const [appliedFilters, setAppliedFilters] = useState<CustomerQuoteRequestFilters>({});
+  const [appliedFilters, setAppliedFilters] =
+    useState<CustomerQuoteRequestFilters>({});
 
   const [closeRequestId, setCloseRequestId] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
@@ -250,10 +281,19 @@ export function QuoteRequestsDashboard() {
   };
 
   const { data, isLoading, isFetching, isError, error } = useQuery({
-    queryKey: queryKeys.quoteRequests.customerList(page, PAGE_SIZE, appliedFilters as Record<string, unknown>),
+    queryKey: queryKeys.quoteRequests.customerList(
+      page,
+      PAGE_SIZE,
+      appliedFilters as Record<string, unknown>,
+    ),
     queryFn: async () => {
-      const result = await fetchCustomerQuoteRequests(page, PAGE_SIZE, appliedFilters);
-      if (!result.success) throw new Error(result.error ?? "Failed to fetch quote requests");
+      const result = await fetchCustomerQuoteRequests(
+        page,
+        PAGE_SIZE,
+        appliedFilters,
+      );
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to fetch quote requests");
       return result.data!;
     },
     refetchOnWindowFocus: false,
@@ -312,7 +352,11 @@ export function QuoteRequestsDashboard() {
             </SelectTrigger>
             <SelectContent className="rounded-xl shadow-lg">
               {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-sm py-2">
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-sm py-2"
+                >
                   {opt.label}
                 </SelectItem>
               ))}
@@ -326,7 +370,9 @@ export function QuoteRequestsDashboard() {
         {isError ? (
           <Card className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-red-100 bg-red-50/50 p-6 text-center">
             <p className="text-sm font-medium text-red-600">
-              {error instanceof Error ? error.message : "Error loading quote requests"}
+              {error instanceof Error
+                ? error.message
+                : "Error loading quote requests"}
             </p>
           </Card>
         ) : isLoading ? (
@@ -346,7 +392,9 @@ export function QuoteRequestsDashboard() {
             <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <Search className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">No quote requests found</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              No quote requests found
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
               Try adjusting your filters or create a new request to get started.
             </p>
@@ -366,7 +414,8 @@ export function QuoteRequestsDashboard() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t pt-6">
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} results
+            Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
+            {Math.min(page * PAGE_SIZE, total)} of {total} results
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -401,20 +450,25 @@ export function QuoteRequestsDashboard() {
       )}
 
       {/* Close Confirmation */}
-      <AlertDialog open={!!closeRequestId} onOpenChange={(open) => !open && setCloseRequestId(null)}>
+      <AlertDialog
+        open={!!closeRequestId}
+        onOpenChange={(open) => !open && setCloseRequestId(null)}
+      >
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Close Quote Request?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently close the quote request. Vendors will no longer be able to respond to it.
+              This will permanently close the quote request. Vendors will no
+              longer be able to respond to it.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isClosing}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={isClosing}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={(e) => { e.preventDefault(); handleClose(); }}
+              onClick={(e) => {
+                e.preventDefault();
+                handleClose();
+              }}
               disabled={isClosing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >

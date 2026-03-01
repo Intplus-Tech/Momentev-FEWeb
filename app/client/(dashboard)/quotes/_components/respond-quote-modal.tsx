@@ -88,7 +88,7 @@ export function RespondQuoteModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isSubmitting && onOpenChange(val)}>
-      <DialogContent className="sm:max-w-md rounded-2xl">
+      <DialogContent className="sm:max-w-md rounded-2xl shadow-none border">
         <DialogHeader>
           <DialogTitle>{titles[decision]}</DialogTitle>
           <DialogDescription className="pt-2">
@@ -116,12 +116,11 @@ export function RespondQuoteModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 flex flex-row">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="rounded-full"
           >
             Cancel
           </Button>
@@ -129,7 +128,6 @@ export function RespondQuoteModal({
             variant={actionVariant[decision]}
             onClick={handleSubmit}
             disabled={isSubmitting || (decision === "request_changes" && !note.trim())}
-            className="rounded-full"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {actionText[decision]}

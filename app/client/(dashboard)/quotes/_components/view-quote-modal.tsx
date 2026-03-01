@@ -81,7 +81,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote }: ViewQuoteModalProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92vh] w-full p-0 overflow-hidden sm:max-w-3xl rounded-2xl">
+      <DialogContent className="max-h-[92vh] w-full p-0 overflow-hidden sm:max-w-3xl rounded-2xl shadow-none">
         
         {/* Header - Fixed */}
         <div className="bg-card px-6 py-5 border-b">

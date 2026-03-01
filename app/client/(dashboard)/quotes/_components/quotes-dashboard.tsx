@@ -26,6 +26,7 @@ import type {
 import { useVendorDetails } from "@/hooks/api/use-vendors";
 import { ViewQuoteModal } from "./view-quote-modal";
 import { RespondQuoteModal } from "./respond-quote-modal";
+import { ConvertQuoteModal } from "./convert-quote-modal";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -57,13 +58,34 @@ const STATUS_OPTIONS: { value: StatusFilterValue; label: string }[] = [
 ];
 
 const statusStyles: Record<string, { label: string; className: string }> = {
-  sent: { label: "RECEIVED", className: "bg-blue-50 text-blue-700 border border-blue-200" },
-  accepted: { label: "ACCEPTED", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  declined: { label: "DECLINED", className: "bg-red-50 text-red-700 border border-red-200" },
-  changes_requested: { label: "CHANGES REQ", className: "bg-amber-50 text-amber-700 border border-amber-200" },
-  revised: { label: "REVISED", className: "bg-indigo-50 text-indigo-700 border border-indigo-200" },
-  expired: { label: "EXPIRED", className: "bg-gray-100 text-gray-500 border border-gray-200" },
-  withdrawn: { label: "WITHDRAWN", className: "bg-slate-100 text-slate-500 border border-slate-200" },
+  sent: {
+    label: "RECEIVED",
+    className: "bg-blue-50 text-blue-700 border border-blue-200",
+  },
+  accepted: {
+    label: "ACCEPTED",
+    className: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  },
+  declined: {
+    label: "DECLINED",
+    className: "bg-red-50 text-red-700 border border-red-200",
+  },
+  changes_requested: {
+    label: "CHANGES REQ",
+    className: "bg-amber-50 text-amber-700 border border-amber-200",
+  },
+  revised: {
+    label: "REVISED",
+    className: "bg-indigo-50 text-indigo-700 border border-indigo-200",
+  },
+  expired: {
+    label: "EXPIRED",
+    className: "bg-gray-100 text-gray-500 border border-gray-200",
+  },
+  withdrawn: {
+    label: "WITHDRAWN",
+    className: "bg-slate-100 text-slate-500 border border-slate-200",
+  },
 };
 
 const formatCurrency = (val: number, currency = "GBP") =>
@@ -93,9 +115,10 @@ interface QuoteCardProps {
   quote: CustomerQuote;
   onViewDetails: () => void;
   onRespond: (decision: QuoteDecision) => void;
+  onBook: () => void;
 }
 
-function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
+function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) {
   const cr = quote.quoteRequestId.customerRequestId;
   const event = cr?.eventDetails;
   // If the status is unrecognized (e.g., 'converted'), fallback to a default styling.
@@ -110,11 +133,13 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
     new Date(quote.expiresAt) > new Date() &&
     differenceInHours(new Date(quote.expiresAt), new Date()) < 48; // Consider quotes urgent within 48h
 
-  const { data: vendorRes, isLoading: isLoadingVendor } = useVendorDetails(quote.vendorId?._id ?? null);
+  const { data: vendorRes, isLoading: isLoadingVendor } = useVendorDetails(
+    quote.vendorId?._id ?? null,
+  );
   const vendor = vendorRes?.data;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md">
+    <Card className="overflow-hidden rounded-2xl border bg-card p-6">
       {/* Header: Status & Vendor info */}
       <div className="mb-4 flex flex-wrap items-center gap-2">
         {isUrgent && !isExpired && (
@@ -127,10 +152,11 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
             Expired
           </span>
         )}
+        <span>{quote._id}</span>
         <span
           className={cn(
             "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
-            statusDef.className
+            statusDef.className,
           )}
         >
           {statusDef.label}
@@ -152,9 +178,15 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
             <h3 className="text-xl font-semibold text-foreground">
               {formatCurrency(quote.total, quote.currency)}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              From {isLoadingVendor ? <Skeleton className="inline-block h-4 w-24" /> : (vendor?.businessProfile?.businessName ?? `Vendor #${quote.vendorId?._id?.slice(-6)}`)}
-            </p>
+            <div className="mt-1 text-sm text-muted-foreground">
+              From{" "}
+              {isLoadingVendor ? (
+                <Skeleton className="inline-block h-4 w-24" />
+              ) : (
+                (vendor?.businessProfile?.businessName ??
+                `Vendor #${quote.vendorId?._id?.slice(-6)}`)
+              )}
+            </div>
           </div>
 
           <div>
@@ -166,7 +198,8 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="h-3.5 w-3.5" />
                   {format(new Date(event.startDate), "MMM d, yyyy")}
-                  {event.endDate && ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
+                  {event.endDate &&
+                    ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
                 </span>
               )}
               {event?.guestCount != null && (
@@ -181,7 +214,9 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
           {quote.personalMessage && (
             <div className="rounded-xl bg-primary/5 p-3 flex gap-3 text-sm text-foreground">
               <MessageCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <p className="italic leading-relaxed">"{quote.personalMessage}"</p>
+              <p className="italic leading-relaxed">
+                "{quote.personalMessage}"
+              </p>
             </div>
           )}
         </div>
@@ -195,11 +230,17 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
             {quote.expiresAt ? (
               <>
                 <p className="text-sm font-medium text-foreground flex items-center gap-1.5 mt-1">
-                  <Clock className={cn("h-3.5 w-3.5", isUrgent ? "text-red-500" : "text-muted-foreground")} />
+                  <Clock
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      isUrgent ? "text-red-500" : "text-muted-foreground",
+                    )}
+                  />
                   {formatRelativeExpiry(quote.expiresAt)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Until {format(new Date(quote.expiresAt), "MMM d, yyyy h:mm a")}
+                  Until{" "}
+                  {format(new Date(quote.expiresAt), "MMM d, yyyy h:mm a")}
                 </p>
               </>
             ) : (
@@ -223,8 +264,8 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button 
-          className="rounded-full px-6 py-2 shadow-none"
+        <Button
+          variant="outline"
           onClick={onViewDetails}
         >
           View Full Details
@@ -233,26 +274,31 @@ function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
           <>
             <Button
               variant="default"
-              className="rounded-full px-6 py-2 shadow-none"
-              onClick={() => onRespond("accept")}
+              onClick={onBook}
             >
-              Accept
+              Accept & Book
             </Button>
             <Button
               variant="secondary"
-              className="rounded-full px-6 py-2 shadow-none"
               onClick={() => onRespond("request_changes")}
             >
               Request Changes
             </Button>
             <Button
               variant="destructive"
-              className="rounded-full px-6 py-2 shadow-none"
               onClick={() => onRespond("decline")}
             >
               Decline
             </Button>
           </>
+        )}
+        {quote.status === "accepted" && (
+          <Button
+            variant="default"
+            onClick={onBook}
+          >
+            Book Vendor
+          </Button>
         )}
       </div>
     </Card>
@@ -265,15 +311,24 @@ export function QuotesDashboard() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
   const [page, setPage] = useState(1);
   const [, startTransition] = useTransition();
-  const [appliedFilters, setAppliedFilters] = useState<CustomerQuoteFilters>({});
-  
-  const [selectedQuote, setSelectedQuote] = useState<CustomerQuote | null>(null);
-  
+  const [appliedFilters, setAppliedFilters] = useState<CustomerQuoteFilters>(
+    {},
+  );
+
+  const [selectedQuote, setSelectedQuote] = useState<CustomerQuote | null>(
+    null,
+  );
+
   const [respondModal, setRespondModal] = useState<{
     quote: CustomerQuote | null;
     decision: QuoteDecision | null;
     open: boolean;
   }>({ quote: null, decision: null, open: false });
+
+  const [convertModal, setConvertModal] = useState<{
+    quote: CustomerQuote | null;
+    open: boolean;
+  }>({ quote: null, open: false });
 
   const handleApplyFilters = (newStatus: StatusFilterValue) => {
     setAppliedFilters({
@@ -283,10 +338,15 @@ export function QuotesDashboard() {
   };
 
   const { data, isLoading, isFetching, isError, error } = useQuery({
-    queryKey: queryKeys.quotes.customerList(page, PAGE_SIZE, appliedFilters as Record<string, unknown>),
+    queryKey: queryKeys.quotes.customerList(
+      page,
+      PAGE_SIZE,
+      appliedFilters as Record<string, unknown>,
+    ),
     queryFn: async () => {
       const result = await fetchCustomerQuotes(page, PAGE_SIZE, appliedFilters);
-      if (!result.success) throw new Error(result.error ?? "Failed to fetch quotes");
+      if (!result.success)
+        throw new Error(result.error ?? "Failed to fetch quotes");
       return result.data!;
     },
     refetchOnWindowFocus: false,
@@ -313,7 +373,7 @@ export function QuotesDashboard() {
       </div>
 
       {/* Filter Bar */}
-      <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-3 shadow-sm md:flex-row">
+      <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-3 md:flex-row">
         <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
           <Select
             value={statusFilter}
@@ -326,9 +386,13 @@ export function QuotesDashboard() {
             <SelectTrigger className="h-10 w-full md:w-[200px] rounded-xl text-sm">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
-            <SelectContent className="rounded-xl shadow-lg">
+            <SelectContent className="rounded-xl">
               {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value} className="text-sm py-2">
+                <SelectItem
+                  key={opt.value}
+                  value={opt.value}
+                  className="text-sm py-2"
+                >
                   {opt.label}
                 </SelectItem>
               ))}
@@ -362,18 +426,24 @@ export function QuotesDashboard() {
             <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <Search className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground">No quotes found</h3>
+            <h3 className="text-lg font-semibold text-foreground">
+              No quotes found
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Try adjusting your filters or wait for vendors to respond to your requests.
+              Try adjusting your filters or wait for vendors to respond to your
+              requests.
             </p>
           </Card>
         ) : (
           quotes.map((quote) => (
-            <QuoteCard 
-              key={quote._id} 
-              quote={quote} 
-              onViewDetails={() => setSelectedQuote(quote)} 
-              onRespond={(decision) => setRespondModal({ quote, decision, open: true })}
+            <QuoteCard
+              key={quote._id}
+              quote={quote}
+              onViewDetails={() => setSelectedQuote(quote)}
+              onRespond={(decision) =>
+                setRespondModal({ quote, decision, open: true })
+              }
+              onBook={() => setConvertModal({ quote, open: true })}
             />
           ))
         )}
@@ -383,7 +453,8 @@ export function QuotesDashboard() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t pt-6">
           <p className="text-sm text-muted-foreground">
-            Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, total)} of {total} results
+            Showing {(page - 1) * PAGE_SIZE + 1} to{" "}
+            {Math.min(page * PAGE_SIZE, total)} of {total} results
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -418,10 +489,10 @@ export function QuotesDashboard() {
       )}
 
       {/* View Modal */}
-      <ViewQuoteModal 
-        open={!!selectedQuote} 
-        onOpenChange={(open) => !open && setSelectedQuote(null)} 
-        quote={selectedQuote} 
+      <ViewQuoteModal
+        open={!!selectedQuote}
+        onOpenChange={(open) => !open && setSelectedQuote(null)}
+        quote={selectedQuote}
       />
 
       {/* Respond Modal */}
@@ -429,7 +500,14 @@ export function QuotesDashboard() {
         quote={respondModal.quote}
         decision={respondModal.decision}
         open={respondModal.open}
-        onOpenChange={(open) => setRespondModal(prev => ({ ...prev, open }))}
+        onOpenChange={(open) => setRespondModal((prev) => ({ ...prev, open }))}
+      />
+
+      {/* Convert to Booking Modal */}
+      <ConvertQuoteModal
+        quote={convertModal.quote}
+        open={convertModal.open}
+        onOpenChange={(open) => setConvertModal(prev => ({ ...prev, open }))}
       />
     </section>
   );

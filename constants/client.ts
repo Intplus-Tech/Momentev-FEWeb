@@ -29,11 +29,11 @@ export const clientNavItems = [
     href: "/client/quotes",
     icon: FileText,
   },
-  // {
-  //   label: "Quote Requests",
-  //   href: "/client/quote-requests",
-  //   icon: FileText,
-  // },
+  {
+    label: "Quote Requests",
+    href: "/client/quote-requests",
+    icon: FileText,
+  },
   {
     label: "Messages",
     href: "/client/messages",

@@ -94,8 +94,9 @@ export function BookingCard({
   const status = statusConfig[booking.status] || statusConfig.pending;
 
   // Get service count and budget total
-  const serviceCount = booking.budgetAllocations.length;
-  const totalBudget = booking.budgetAllocations.reduce(
+  const allocations = booking.budgetAllocations || [];
+  const serviceCount = allocations.length;
+  const totalBudget = allocations.reduce(
     (sum, allocation) => sum + allocation.budgetedAmount,
     0,
   );
@@ -181,7 +182,7 @@ export function BookingCard({
 
             <div>
               <div className="space-y-1.5 text-sm text-muted-foreground">
-                {booking.budgetAllocations.map((allocation, idx) => {
+                {allocations.map((allocation, idx) => {
                   const specialty =
                     allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
                   const rawId = specialty?.serviceSpecialty;

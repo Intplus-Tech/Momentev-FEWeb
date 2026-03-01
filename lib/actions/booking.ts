@@ -98,6 +98,52 @@ export async function createBooking(
 }
 
 /**
+ * Create a booking from an accepted quote
+ * POST /api/v1/bookings/from-quote/{quoteId}
+ */
+export async function createBookingFromQuote(
+  quoteId: string,
+  location?: string
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken) return { success: false, error: "Authentication required" };
+
+    const body = location ? JSON.stringify({ location }) : undefined;
+
+    const response = await fetch(`${API_URL}/api/v1/bookings/from-quote/${quoteId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body,
+    });
+
+    const data = await response.json().catch(() => ({}));
+    console.log("CREATE BOOKING FROM QUOTE RESPONSE:", JSON.stringify(data, null, 2));
+
+    if (!response.ok) {
+      if (response.status === 401) return { success: false, error: "Session expired" };
+      return { 
+        success: false, 
+        error: data.message || `Failed to create booking from quote (${response.status})` 
+      };
+    }
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("❌ Error creating booking from quote:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
  * Fetch bookings for the current user (as customer)
  * GET /api/v1/bookings
  */

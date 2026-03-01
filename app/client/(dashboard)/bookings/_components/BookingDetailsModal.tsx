@@ -144,7 +144,7 @@ export function BookingDetailsModal({
             <section className="space-y-3">
               <h4 className="font-semibold text-foreground border-b pb-2">Services & Budget</h4>
               <div className="space-y-3 text-sm">
-                {booking.budgetAllocations.map((allocation, idx) => {
+                {(booking.budgetAllocations || []).map((allocation, idx) => {
                   const specialty = allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
                   const rawId = specialty?.serviceSpecialty;
                   const readableName = (rawId && serviceNamesMap[rawId]) || rawId || `Service ${idx + 1}`;
