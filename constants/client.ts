@@ -6,6 +6,7 @@ import {
   MessageCircle,
   Settings,
   CreditCard,
+  Scale,
 } from "lucide-react";
 
 export const clientNavItems = [
@@ -43,6 +44,11 @@ export const clientNavItems = [
     label: "Payment",
     href: "/client/payment",
     icon: CreditCard,
+  },
+  {
+    label: "My Disputes",
+    href: "/client/disputes",
+    icon: Scale,
   },
   {
     label: "Settings",

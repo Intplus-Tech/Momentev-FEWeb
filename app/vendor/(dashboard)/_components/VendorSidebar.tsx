@@ -80,7 +80,7 @@ export const VendorSidebar = () => {
                     `${data?.firstName || ""} ${data?.lastName || ""}`.trim() ||
                     "Vendor"}
                 </p>
-                <p className="text-xs text-muted-foreground">momentev vendor</p>
+                <p className="text-xs text-muted-foreground">{data?.vendor?.id}</p>
               </div>
             </>
           )}

@@ -26,6 +26,7 @@ import { getOrCreateConversation } from "@/lib/actions/chat";
 import { cancelBooking } from "@/lib/actions/booking";
 import { PaymentModal } from "./PaymentModal";
 import { BookingDetailsModal } from "./BookingDetailsModal";
+import { CreateDisputeModal } from "./CreateDisputeModal";
 import type {
   BookingResponse,
   PopulatedVendor,
@@ -81,6 +82,7 @@ export function BookingCard({
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDisputeOpen, setIsDisputeOpen] = useState(false);
 
   const vendor = booking.vendorId as PopulatedVendor;
   const vendorId = typeof vendor === "string" ? vendor : vendor._id;
@@ -151,6 +153,7 @@ export function BookingCard({
 
   const showCancelButton = booking.status === "pending_payment";
   const showPayButton = booking.status === "pending_payment";
+  const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);
 
   // console.log(booking.payment?.status);
 
@@ -179,6 +182,7 @@ export function BookingCard({
               >
                 {status.label}
               </Badge>
+              <span>{booking._id}</span>
             </div>
 
             <div>
@@ -309,6 +313,16 @@ export function BookingCard({
             >
               View Details
             </Button>
+            {showDisputeButton && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 focus:ring-red-500"
+                onClick={() => setIsDisputeOpen(true)}
+              >
+                Dispute Booking
+              </Button>
+            )}
           </div>
         </div>
 
@@ -332,13 +346,19 @@ export function BookingCard({
       </CardContent>
 
       <BookingDetailsModal
+        booking={booking}
         open={isDetailsOpen}
         onClose={() => setIsDetailsOpen(false)}
-        booking={booking}
         vendorBusinessName={vendorBusinessName}
         vendorRating={vendorRating}
         serviceNamesMap={serviceNamesMap}
         formattedTotal={formattedTotal}
+      />
+
+      <CreateDisputeModal
+        booking={booking}
+        open={isDisputeOpen}
+        onOpenChange={setIsDisputeOpen}
       />
 
       <PaymentModal
