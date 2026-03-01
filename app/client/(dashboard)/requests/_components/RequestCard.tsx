@@ -67,7 +67,7 @@ export function RequestCard({ request }: RequestCardProps) {
   );
 
   return (
-    <Card className="border border-border/50">
+    <Card className="border">
       <CardContent className="space-y-4 p-6">
         <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-3">

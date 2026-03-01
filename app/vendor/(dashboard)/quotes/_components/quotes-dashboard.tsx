@@ -109,6 +109,8 @@ interface QuoteCardProps {
 }
 
 function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: QuoteCardProps) {
+  console.log("Quote data:", JSON.stringify(quote, null, 2));
+  
   const customerReq = quote.quoteRequestId?.customerRequestId;
   const event = customerReq?.eventDetails;
   const statusDef = statusStyles[quote.status] ?? statusStyles.draft;
@@ -145,6 +147,11 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
         
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-2">
+            {quote.revision > 0 && (
+              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">
+                Rev {quote.revision}
+              </span>
+            )}
             {isUrgent && !isExpired && (
               <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-red-600">
                 <Clock className="size-3" />

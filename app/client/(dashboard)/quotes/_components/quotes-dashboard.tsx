@@ -20,10 +20,12 @@ import type {
   CustomerQuote,
   CustomerQuoteFilters,
   QuoteStatus,
+  QuoteDecision,
 } from "@/types/quote";
 
 import { useVendorDetails } from "@/hooks/api/use-vendors";
 import { ViewQuoteModal } from "./view-quote-modal";
+import { RespondQuoteModal } from "./respond-quote-modal";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -90,9 +92,10 @@ function formatRelativeExpiry(dateString?: string) {
 interface QuoteCardProps {
   quote: CustomerQuote;
   onViewDetails: () => void;
+  onRespond: (decision: QuoteDecision) => void;
 }
 
-function QuoteCard({ quote, onViewDetails }: QuoteCardProps) {
+function QuoteCard({ quote, onViewDetails, onRespond }: QuoteCardProps) {
   const cr = quote.quoteRequestId.customerRequestId;
   const event = cr?.eventDetails;
   // If the status is unrecognized (e.g., 'converted'), fallback to a default styling.
@@ -226,6 +229,31 @@ function QuoteCard({ quote, onViewDetails }: QuoteCardProps) {
         >
           View Full Details
         </Button>
+        {quote.status === "sent" && (
+          <>
+            <Button
+              variant="default"
+              className="rounded-full px-6 py-2 shadow-none"
+              onClick={() => onRespond("accept")}
+            >
+              Accept
+            </Button>
+            <Button
+              variant="secondary"
+              className="rounded-full px-6 py-2 shadow-none"
+              onClick={() => onRespond("request_changes")}
+            >
+              Request Changes
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-full px-6 py-2 shadow-none"
+              onClick={() => onRespond("decline")}
+            >
+              Decline
+            </Button>
+          </>
+        )}
       </div>
     </Card>
   );
@@ -240,6 +268,12 @@ export function QuotesDashboard() {
   const [appliedFilters, setAppliedFilters] = useState<CustomerQuoteFilters>({});
   
   const [selectedQuote, setSelectedQuote] = useState<CustomerQuote | null>(null);
+  
+  const [respondModal, setRespondModal] = useState<{
+    quote: CustomerQuote | null;
+    decision: QuoteDecision | null;
+    open: boolean;
+  }>({ quote: null, decision: null, open: false });
 
   const handleApplyFilters = (newStatus: StatusFilterValue) => {
     setAppliedFilters({
@@ -339,6 +373,7 @@ export function QuotesDashboard() {
               key={quote._id} 
               quote={quote} 
               onViewDetails={() => setSelectedQuote(quote)} 
+              onRespond={(decision) => setRespondModal({ quote, decision, open: true })}
             />
           ))
         )}
@@ -387,6 +422,14 @@ export function QuotesDashboard() {
         open={!!selectedQuote} 
         onOpenChange={(open) => !open && setSelectedQuote(null)} 
         quote={selectedQuote} 
+      />
+
+      {/* Respond Modal */}
+      <RespondQuoteModal
+        quote={respondModal.quote}
+        decision={respondModal.decision}
+        open={respondModal.open}
+        onOpenChange={(open) => setRespondModal(prev => ({ ...prev, open }))}
       />
     </section>
   );

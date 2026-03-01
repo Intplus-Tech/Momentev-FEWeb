@@ -4,6 +4,7 @@ import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import type {
   CustomerQuoteListResponse,
   CustomerQuoteFilters,
+  QuoteResponsePayload,
 } from "@/types/quote";
 
 const API_URL = process.env.BACKEND_URL;
@@ -95,5 +96,24 @@ export async function fetchCustomerQuotes(
   return makeAuthenticatedRequest<CustomerQuoteListResponse>(
     `${API_URL}/api/v1/quotes/me?${params.toString()}`,
     { method: "GET" }
+  );
+}
+
+/**
+ * Respond to a quote (accept, decline, request changes)
+ * POST /api/v1/quotes/{quoteId}/respond
+ */
+export async function respondToQuote(
+  quoteId: string,
+  payload: QuoteResponsePayload
+): Promise<ActionResponse<void>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  return makeAuthenticatedRequest<void>(
+    `${API_URL}/api/v1/quotes/${quoteId}/respond`,
+    { 
+      method: "POST",
+      body: JSON.stringify(payload)
+    }
   );
 }

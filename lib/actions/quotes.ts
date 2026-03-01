@@ -141,10 +141,12 @@ export async function fetchVendorQuotes(
     queryParams.append("quoteRequestId", filters.quoteRequestId);
   }
 
-  return makeAuthenticatedRequest<VendorQuoteListResponse>(
+  const result = await makeAuthenticatedRequest<VendorQuoteListResponse>(
     `${API_URL}/api/v1/quotes/vendor/me?${queryParams.toString()}`,
     { method: "GET" }
   );
+  
+  return result;
 }
 
 /**
