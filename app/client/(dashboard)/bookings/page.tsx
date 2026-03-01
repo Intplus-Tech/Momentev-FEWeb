@@ -1,11 +1,19 @@
 import { BookingCard } from "./_components/BookingCard";
+import { BookingsFilter } from "./_components/bookings-filter";
 import { fetchBookings } from "@/lib/actions/booking";
 import { getVendorPublicProfile } from "@/lib/actions/chat";
 import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default async function ClientBookingsPage() {
+export default async function ClientBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const params = await searchParams;
+  const statusFilter = params.status || "all";
+
   const response = await fetchBookings(1, 50);
 
   if (!response.success || !response.data) {
@@ -29,7 +37,11 @@ export default async function ClientBookingsPage() {
     );
   }
 
-  const bookings = response.data.data;
+  let bookings = response.data.data;
+  
+  if (statusFilter !== "all") {
+    bookings = bookings.filter((booking) => booking.status === statusFilter);
+  }
   const totalBookings = response.data.total;
 
   // Fetch vendor details for all bookings
@@ -102,6 +114,8 @@ export default async function ClientBookingsPage() {
           Completed
         </p>
       </div>
+      
+      <BookingsFilter />
 
       {upcomingBookings.length > 0 && (
         <div className="space-y-4">
