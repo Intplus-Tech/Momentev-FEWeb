@@ -40,25 +40,21 @@ export function RespondQuoteModal({
   if (!quote || !decision) return null;
 
   const titles: Record<QuoteDecision, string> = {
-    accept: "Accept Quote",
     decline: "Decline Quote",
     request_changes: "Request Changes",
   };
 
   const descriptions: Record<QuoteDecision, string> = {
-    accept: "Are you sure you want to accept this quote? This will confirm the pricing and terms with the vendor.",
     decline: "Are you sure you want to decline this quote? The vendor will be notified and this request will be closed.",
     request_changes: "What changes would you like to request? Please provide details so the vendor can revise their quote.",
   };
 
   const actionText: Record<QuoteDecision, string> = {
-    accept: "Accept Quote",
     decline: "Decline Quote",
     request_changes: "Send Request",
   };
 
   const actionVariant: Record<QuoteDecision, "default" | "destructive" | "secondary"> = {
-    accept: "default",
     decline: "destructive",
     request_changes: "secondary",
   };
@@ -76,7 +72,7 @@ export function RespondQuoteModal({
         return;
       }
 
-      toast.success(`Quote successfully ${decision === "accept" ? "accepted" : decision === "decline" ? "declined" : "sent back for changes"}`);
+      toast.success(`Quote successfully ${decision === "decline" ? "declined" : "sent back for changes"}`);
       queryClient.invalidateQueries({ queryKey: queryKeys.quotes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quoteRequests.all });
       onOpenChange(false);

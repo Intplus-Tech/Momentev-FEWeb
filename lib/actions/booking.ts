@@ -111,7 +111,7 @@ export async function createBookingFromQuote(
     const accessToken = await getAccessToken();
     if (!accessToken) return { success: false, error: "Authentication required" };
 
-    const body = location ? JSON.stringify({ location }) : undefined;
+    const body = location ? JSON.stringify({ location: { addressText: location } }) : undefined;
 
     const response = await fetch(`${API_URL}/api/v1/bookings/from-quote/${quoteId}`, {
       method: "POST",

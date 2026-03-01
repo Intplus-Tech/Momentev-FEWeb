@@ -105,7 +105,7 @@ export async function fetchCustomerQuotes(
  */
 export async function respondToQuote(
   quoteId: string,
-  payload: QuoteResponsePayload
+  payload: QuoteResponsePayload | { decision: "accept" }
 ): Promise<ActionResponse<void>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 

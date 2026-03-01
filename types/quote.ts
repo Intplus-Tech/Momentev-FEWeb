@@ -113,7 +113,7 @@ export interface VendorQuoteFilters {
 /** Identical shape to VendorQuoteResponse — the GET /quotes/me response */
 export type CustomerQuote = VendorQuoteResponse;
 
-export type QuoteDecision = "accept" | "decline" | "request_changes";
+export type QuoteDecision = "decline" | "request_changes";
 
 export interface QuoteResponsePayload {
   decision: QuoteDecision;

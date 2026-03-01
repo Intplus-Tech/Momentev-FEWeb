@@ -114,19 +114,17 @@ export function ConvertQuoteModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="rounded-full"
           >
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-none"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {quote.status === "sent" ? "Accept & Book" : "Confirm & Book Vendor"}
