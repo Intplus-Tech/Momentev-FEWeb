@@ -42,7 +42,7 @@ export default function BookedServices() {
             className="relative z-10"
           />
 
-          <div className="absolute -bottom-20 -right-1/2 w-full h-3/5 bg-[#F5F7FF]" />
+          <div className="absolute -bottom-20 -right-1/2 w-full h-3/5 bg-white" />
         </div>
       </div>
     </section>
