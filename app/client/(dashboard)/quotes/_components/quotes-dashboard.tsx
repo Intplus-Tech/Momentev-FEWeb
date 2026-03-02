@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
+  Filter,
 } from "lucide-react";
 
 import { fetchCustomerQuotes } from "@/lib/actions/client-quotes";
@@ -30,6 +31,14 @@ import { ConvertQuoteModal } from "./convert-quote-modal";
 
 import { Button } from "@/components/ui/button";
 import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,6 +48,7 @@ import {
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -118,7 +128,12 @@ interface QuoteCardProps {
   onBook: () => void;
 }
 
-function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) {
+function QuoteCard({
+  quote,
+  onViewDetails,
+  onRespond,
+  onBook,
+}: QuoteCardProps) {
   const cr = quote.quoteRequestId.customerRequestId;
   const event = cr?.eventDetails;
   // If the status is unrecognized (e.g., 'converted'), fallback to a default styling.
@@ -152,7 +167,7 @@ function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) 
             Expired
           </span>
         )}
-        <span>{quote._id}</span>
+        {/* <span>{quote._id}</span>   */}
         <span
           className={cn(
             "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
@@ -264,18 +279,12 @@ function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) 
 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
-        <Button
-          variant="outline"
-          onClick={onViewDetails}
-        >
+        <Button variant="outline" onClick={onViewDetails}>
           View Full Details
         </Button>
         {quote.status === "sent" && (
           <>
-            <Button
-              variant="default"
-              onClick={onBook}
-            >
+            <Button variant="default" onClick={onBook}>
               Accept & Book
             </Button>
             <Button
@@ -284,19 +293,13 @@ function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) 
             >
               Request Changes
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => onRespond("decline")}
-            >
+            <Button variant="destructive" onClick={() => onRespond("decline")}>
               Decline
             </Button>
           </>
         )}
         {quote.status === "accepted" && (
-          <Button
-            variant="default"
-            onClick={onBook}
-          >
+          <Button variant="default" onClick={onBook}>
             Book Vendor
           </Button>
         )}
@@ -311,6 +314,8 @@ export function QuotesDashboard() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
   const [page, setPage] = useState(1);
   const [, startTransition] = useTransition();
+  const isMobile = useIsMobile();
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<CustomerQuoteFilters>(
     {},
   );
@@ -330,11 +335,24 @@ export function QuotesDashboard() {
     open: boolean;
   }>({ quote: null, open: false });
 
+  const currentStatusLabel =
+    STATUS_OPTIONS.find((opt) => opt.value === statusFilter)?.label ||
+    "All Statuses";
+
   const handleApplyFilters = (newStatus: StatusFilterValue) => {
     setAppliedFilters({
       ...(newStatus !== "all" && { status: newStatus as QuoteStatus }),
     });
     setPage(1);
+  };
+
+  const handleStatusSelect = (newStatus: StatusFilterValue) => {
+    setStatusFilter(newStatus);
+    startTransition(() => handleApplyFilters(newStatus));
+
+    if (isMobile) {
+      setDrawerOpen(false);
+    }
   };
 
   const { data, isLoading, isFetching, isError, error } = useQuery({
@@ -375,29 +393,80 @@ export function QuotesDashboard() {
       {/* Filter Bar */}
       <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-3 md:flex-row">
         <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
-          <Select
-            value={statusFilter}
-            onValueChange={(val) => {
-              const newStatus = val as StatusFilterValue;
-              setStatusFilter(newStatus);
-              startTransition(() => handleApplyFilters(newStatus));
-            }}
-          >
-            <SelectTrigger className="h-10 w-full md:w-[200px] rounded-xl text-sm">
-              <SelectValue placeholder="All Statuses" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl">
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem
-                  key={opt.value}
-                  value={opt.value}
-                  className="text-sm py-2"
-                >
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {isMobile ? (
+            <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+              <div className="flex w-full items-center justify-between gap-3">
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted-foreground">Status</span>
+                  <span className="text-sm font-medium text-foreground">
+                    {currentStatusLabel}
+                  </span>
+                </div>
+                <DrawerTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                    aria-label="Open filters"
+                  >
+                    <Filter className="h-4 w-4" />
+                    <span>Filters</span>
+                  </Button>
+                </DrawerTrigger>
+              </div>
+              <DrawerContent className="p-0">
+                <DrawerHeader className="text-left">
+                  <DrawerTitle>Filter quotes</DrawerTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Choose a status to refine your quotes.
+                  </p>
+                </DrawerHeader>
+                <div className="px-4 pb-5 space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {STATUS_OPTIONS.map((opt) => (
+                      <Button
+                        key={opt.value}
+                        variant={
+                          statusFilter === opt.value ? "default" : "outline"
+                        }
+                        onClick={() => handleStatusSelect(opt.value)}
+                        className="w-full justify-center"
+                      >
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
+                  <DrawerClose asChild>
+                    <Button variant="secondary" className="w-full">
+                      Done
+                    </Button>
+                  </DrawerClose>
+                </div>
+              </DrawerContent>
+            </Drawer>
+          ) : (
+            <Select
+              value={statusFilter}
+              onValueChange={(val) =>
+                handleStatusSelect(val as StatusFilterValue)
+              }
+            >
+              <SelectTrigger className="h-10 w-full md:w-[200px] rounded-xl text-sm">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem
+                    key={opt.value}
+                    value={opt.value}
+                    className="text-sm py-2"
+                  >
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
 
@@ -507,7 +576,7 @@ export function QuotesDashboard() {
       <ConvertQuoteModal
         quote={convertModal.quote}
         open={convertModal.open}
-        onOpenChange={(open) => setConvertModal(prev => ({ ...prev, open }))}
+        onOpenChange={(open) => setConvertModal((prev) => ({ ...prev, open }))}
       />
     </section>
   );

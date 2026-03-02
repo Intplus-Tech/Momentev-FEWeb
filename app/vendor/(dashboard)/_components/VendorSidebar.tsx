@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 import Logo from "@/components/brand/logo";
+import LogoSmall from "@/components/brand/LogoSmall";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -48,8 +49,12 @@ export const VendorSidebar = () => {
       collapsible="icon"
       className="border-border bg-white text-foreground"
     >
-      <SidebarHeader className="gap-4 px-4 py-5 bg-white">
-        <Logo className="h-7 w-auto" />
+      <SidebarHeader className="gap-4 px-4 py-5 bg-white group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:py-4 group-data-[collapsible=icon]:gap-3">
+        <Logo className="h-7 w-auto group-data-[collapsible=icon]:hidden" />
+        <LogoSmall
+          className="hidden group-data-[collapsible=icon]:block mx-auto"
+          size={32}
+        />
         <div className="flex items-center gap-3">
           {isLoading ? (
             <>
@@ -76,7 +81,7 @@ export const VendorSidebar = () => {
                     : "VN"}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
+              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
                 <p className="text-sm font-semibold text-foreground">
                   {data?.vendor?.businessProfile?.businessName ||
                     `${data?.firstName || ""} ${data?.lastName || ""}`.trim() ||
@@ -119,15 +124,18 @@ export const VendorSidebar = () => {
                         "before:absolute before:left-1 before:top-1 before:bottom-1 before:w-0.5 before:rounded-full before:bg-transparent",
                         "data-[active=true]:bg-transparent data-[active=true]:text-primary data-[active=true]:shadow-none",
                         "data-[active=true]:before:bg-primary",
+                        "group-data-[collapsible=icon]:px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0",
                       )}
                     >
                       <Link
                         href={item.href}
                         onClick={() => setOpenMobile(false)}
-                        className="flex w-full items-center gap-3 text-current"
+                        className="flex w-full items-center gap-3 text-current group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0"
                       >
-                        <item.icon className="size-4 text-current" />
-                        <span>{item.label}</span>
+                        <item.icon className="size-5 text-current" />
+                        <span className="group-data-[collapsible=icon]:hidden">
+                          {item.label}
+                        </span>
                       </Link>
                     </SidebarMenuButton>
                     {item.label === "Messages" && unreadCount > 0 ? (
