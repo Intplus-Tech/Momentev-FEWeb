@@ -1,11 +1,12 @@
-import type { BookingResponse, PopulatedCustomer, PopulatedVendor } from "@/types/booking";
+import type {
+  BookingResponse,
+  PopulatedCustomer,
+  PopulatedVendor,
+} from "@/types/booking";
 
-import {
-  CalendarDays,
-  Coins,
-  Star,
-  UsersRound,
-} from "lucide-react";
+export const dynamic = "force-dynamic";
+
+import { CalendarDays, Coins, Star, UsersRound } from "lucide-react";
 
 import { fetchVendorBookings } from "@/lib/actions/booking";
 import { fetchVendorReviews } from "@/lib/actions/reviews";
@@ -47,7 +48,7 @@ const DashboardPage = async () => {
         return (b.customerId as PopulatedCustomer)._id;
       }
       return b.customerId as string;
-    })
+    }),
   );
 
   // Total revenue from paid/confirmed/completed bookings
@@ -57,7 +58,7 @@ const DashboardPage = async () => {
 
   // Pending bookings count
   const pendingCount = bookings.filter(
-    (b) => b.status === "pending" || b.status === "pending_payment"
+    (b) => b.status === "pending" || b.status === "pending_payment",
   ).length;
 
   // Rating from vendor profile (populated via getUserProfile)
@@ -108,7 +109,7 @@ const DashboardPage = async () => {
     .sort(
       (a, b) =>
         new Date(a.eventDetails.startDate).getTime() -
-        new Date(b.eventDetails.startDate).getTime()
+        new Date(b.eventDetails.startDate).getTime(),
     )
     .slice(0, 4);
 
