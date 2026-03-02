@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,7 @@ import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
   const router = useRouter();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { unreadCount } = useUnreadBadgeCount("user");
@@ -129,17 +131,18 @@ export const ClientSidebar = () => {
                     >
                       <Link
                         href={item.href}
+                        onClick={() => setOpenMobile(false)}
                         className="flex w-full items-center gap-3 text-current"
                       >
                         <item.icon className="size-4 text-current" />
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
-                    {(item.label === "Messages" && unreadCount > 0) ? (
+                    {item.label === "Messages" && unreadCount > 0 ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {unreadCount}
                       </SidebarMenuBadge>
-                    ) : ("badge" in item && (item as any).badge) ? (
+                    ) : "badge" in item && (item as any).badge ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {(item as any).badge as React.ReactNode}
                       </SidebarMenuBadge>

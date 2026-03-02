@@ -2,12 +2,7 @@
 
 import { useState, useEffect, Suspense, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  useMotionValueEvent,
-} from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
 import Logo from "@/components/brand/logo";
 import {
   Search,
@@ -17,9 +12,15 @@ import {
   ChevronDown,
   Loader2,
   Navigation,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  LogOut,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
@@ -27,12 +28,10 @@ import { UserDropdown } from "./UserDropdown";
 import { useLocation } from "@/hooks/use-location";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import {
   DropdownMenu,
@@ -43,10 +42,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ServiceCategory } from "@/types/service";
-import { toast } from "sonner";
+import { logout } from "@/lib/actions/auth";
 
 // Radius options in km
 const radiusOptions = [
@@ -61,7 +59,6 @@ function HomeHeaderContent() {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isSearchPage = pathname === "/search";
   const isSearchRoute = pathname.startsWith("/search");
   const isHome = pathname === "/";
 
@@ -77,6 +74,7 @@ function HomeHeaderContent() {
 
   const [selectedRadius, setSelectedRadius] = useState(50);
   const [locationLabel, setLocationLabel] = useState("Set location");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleGetLocation = () => {
     requestLocationInternal();
@@ -141,7 +139,7 @@ function HomeHeaderContent() {
   // State for simple/complex toggle on homepage
   const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
   const [isScrolledSlightly, setIsScrolledSlightly] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const showSimpleHeader = isHome && !isScrolledPastHero;
 
   useEffect(() => {
     if (!isHome) {
@@ -173,19 +171,12 @@ function HomeHeaderContent() {
       const offsetWidth = slideContainerRef.current.offsetWidth;
       setWidth(scrollWidth - offsetWidth);
     }
-  }, [categoriesData, menuOpen]); // Recalculate when data loads or layout changes
+  }, [categoriesData]);
 
-  // Lock body scroll when mobile menu is open
+  // Close mobile menu on route change
   useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [menuOpen]);
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Clear location
   const handleClearLocation = () => {
@@ -237,6 +228,17 @@ function HomeHeaderContent() {
     params.set("page", "1");
 
     router.push(`/search?${params.toString()}`);
+  };
+
+  // Auth helpers for mobile menu inline navigation
+  const isVendor = user?.role === "VENDOR";
+  const dashboardLink = isVendor ? "/vendor/dashboard" : "/client/dashboard";
+  const settingsLink = isVendor ? "/vendor/settings" : "/client/settings";
+  const messagesLink = isVendor ? "/vendor/messages" : "/client/messages";
+
+  const handleLogout = async () => {
+    setMobileMenuOpen(false);
+    await logout();
   };
 
   // Location dropdown content
@@ -310,16 +312,18 @@ function HomeHeaderContent() {
     </DropdownMenu>
   );
 
-  // --- SIMPLE HEADER (Transparent) ---
-  if (isHome && !isScrolledPastHero) {
-    return (
-      <>
+  // --- RENDER ---
+  return (
+    <>
+      {showSimpleHeader ? (
+        /* ---- SIMPLE HEADER (Transparent, Home Hero) ---- */
         <nav
-          className={`fixed top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4 lg:py-6 z-50 transition-all duration-300 ${
+          className={`fixed top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4 lg:py-6 z-50 transition-colors duration-300 ${
             isScrolledSlightly
-              ? "bg-black/20 backdrop-blur-md shadow-sm"
+              ? "bg-black/20 backdrop-blur-md"
               : "bg-transparent"
           }`}
+          style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
         >
           <Logo variant="mixed" className="text-white" />
 
@@ -334,12 +338,15 @@ function HomeHeaderContent() {
               <>
                 {(!user || user.role === "CUSTOMER") && (
                   <li>
-                    <button className="relative px-3 py-2 font-medium group">
+                    <Link
+                      href="/client/custom-request"
+                      className="relative inline-flex px-3 py-2 font-medium group"
+                    >
                       <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
                         Post A Request
                       </span>
                       <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
-                    </button>
+                    </Link>
                   </li>
                 )}
 
@@ -350,7 +357,7 @@ function HomeHeaderContent() {
                 ) : (
                   <li>
                     <Button
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:scale-105"
+                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:shadow-lg"
                       asChild
                     >
                       <Link href="/client/auth/log-in">
@@ -368,7 +375,7 @@ function HomeHeaderContent() {
                   <li>
                     <Button
                       asChild
-                      className="transition-all duration-200 hover:scale-105 hover:shadow-lg"
+                      className="transition-all duration-200 hover:shadow-lg"
                     >
                       <Link href="/vendor/auth/sign-up">
                         List your Business
@@ -382,340 +389,344 @@ function HomeHeaderContent() {
 
           {/* Mobile Hamburger */}
           <button
-            className="lg:hidden relative w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
-            onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
+            className="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
+            onClick={() => setMobileMenuOpen(true)}
+            aria-label="Open menu"
           >
-            <div className="w-6 h-5 relative flex flex-col justify-between">
-              <span
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "rotate-45 translate-y-2.25" : ""
-                }`}
-              />
-              <span
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 ${
-                  menuOpen ? "opacity-0 scale-0" : ""
-                }`}
-              />
-              <span
-                className={`w-full h-0.5 bg-white rounded-full transition-all duration-300 origin-center ${
-                  menuOpen ? "-rotate-45 -translate-y-2.25" : ""
-                }`}
-              />
-            </div>
+            <Menu className="w-6 h-6 text-white" />
           </button>
         </nav>
-
-        {/* Mobile Menu Overlay */}
-        <div
-          className={`fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${
-            menuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-          }`}
-          onClick={() => setMenuOpen(false)}
-        />
-
-        {/* Mobile Menu Content */}
-        <div
-          className={`fixed top-0 left-0 right-0 bg-white lg:hidden z-40 shadow-2xl transition-all duration-500 ease-out ${
-            menuOpen
-              ? "translate-y-0 opacity-100"
-              : "-translate-y-full opacity-0"
-          }`}
+      ) : (
+        /* ---- COMPLEX HEADER (Search & Filters) ---- */
+        <header
+          className="bg-background fixed top-0 left-0 right-0 w-full shadow-sm z-50 border-b animate-in fade-in slide-in-from-top-5 duration-300"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
         >
-          <div className="pt-20 pb-8 px-6">
-            <ul className="flex flex-col items-center gap-4">
-              {isUserLoading ? (
-                <>
-                  <Skeleton className="h-12 w-full max-w-xs" />
-                  <Skeleton className="h-12 w-full max-w-xs" />
-                </>
-              ) : (
-                <>
-                  {(!user || user.role === "CUSTOMER") && (
-                    <li className="w-full max-w-xs">
-                      <button className="w-full py-3 font-medium text-foreground hover:text-primary transition-colors text-center">
-                        Post A Request
-                      </button>
-                    </li>
-                  )}
+          {/* Main Header Row */}
+          <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 gap-4">
+            {/* Logo */}
+            <Logo />
 
-                  {user ? (
-                    <li className="w-full max-w-xs flex justify-center">
-                      <UserDropdown user={user} />
-                    </li>
-                  ) : (
-                    <li className="w-full max-w-xs">
-                      <Button
-                        className="w-full"
-                        variant="outline"
-                        asChild
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <Link href="/client/auth/log-in">
-                          <CircleUserIcon className="w-4 h-4" />
-                          Sign in/Sign up
-                        </Link>
-                      </Button>
-                    </li>
-                  )}
-
-                  {!user && (
-                    <li className="w-full max-w-xs">
-                      <Button
-                        className="w-full"
-                        asChild
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <Link href="/vendor/auth/sign-up">
-                          List your Business
-                        </Link>
-                      </Button>
-                    </li>
-                  )}
-                </>
-              )}
-            </ul>
-          </div>
-        </div>
-      </>
-    );
-  }
-
-  // --- COMPLEX HEADER (Search & Filters) ---
-  return (
-    <header className="bg-background fixed top-0 left-0 right-0 w-full shadow-sm z-50 border-b animate-in fade-in slide-in-from-top-5 duration-300">
-      {/* Main Header Row */}
-      <div className="container mx-auto flex items-center justify-between px-4 sm:px-6 lg:px-8 py-3 gap-4">
-        {/* Logo */}
-        <Logo />
-
-        {/* Desktop Search Bar */}
-        <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
-          <div className="flex items-center h-12 p-0 w-full rounded-md overflow-hidden">
-            {/* Search Input */}
-            <div className="flex items-center gap-2 flex-1 px-4 py-2 focus-within:border-b border-primary">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search vendors..."
-                className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent placeholder:text-muted-foreground"
-              />
-            </div>
-
-            {/* Divider */}
-            <div className="w-px h-6 bg-border" />
-
-            {/* Location Selector */}
-            <LocationSelector />
-
-            {/* Find Button */}
-            <Button
-              onClick={handleSearch}
-              className="ml-4 rounded-r-md px-6 min-w-40 border-none"
-            >
-              {userLat && userLong ? "Apply" : "Find"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Desktop Auth Buttons */}
-        <div className="hidden md:flex items-center gap-3 shrink-0">
-          {isUserLoading ? (
-            <>
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-36" />
-            </>
-          ) : user ? (
-            <UserDropdown user={user} />
-          ) : (
-            <>
-              <Button variant="ghost" className="gap-2" asChild>
-                <Link href="/client/auth/log-in">
-                  <CircleUserIcon className="w-4 h-4" />
-                  Sign in
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link href="/vendor/auth/sign-up">List your Business</Link>
-              </Button>
-            </>
-          )}
-        </div>
-
-        {/* Mobile Menu - Sheet */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              aria-label="Open menu"
-            >
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="min-w-full px-6">
-            <SheetHeader className="border-b pb-4">
-              <SheetTitle asChild>
-                <div>
-                  <Logo />
-                </div>
-              </SheetTitle>
-              <SheetDescription className="sr-only">
-                Navigation menu
-              </SheetDescription>
-            </SheetHeader>
-
-            <div className="flex flex-col gap-6 py-6 h-full">
-              {/* Mobile Search */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Search
-                </p>
-                <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/50 rounded-lg border border-border">
+            {/* Desktop Search Bar */}
+            <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
+              <div className="flex items-center h-12 w-full rounded-lg border border-border focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+                {/* Search Input */}
+                <div className="flex items-center gap-2 flex-1 px-4 py-2">
                   <Search className="w-4 h-4 text-muted-foreground shrink-0" />
                   <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Find a vendor..."
-                    className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent"
+                    onKeyDown={handleKeyDown}
+                    placeholder="Search vendors..."
+                    className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent placeholder:text-muted-foreground"
                   />
                 </div>
-              </div>
 
-              {/* Mobile Location */}
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Location
-                </p>
-                <LocationSelector isMobile />
+                {/* Divider */}
+                <div className="w-px h-6 bg-border" />
 
-                {userLat && userLong && (
-                  <div className="text-xs text-muted-foreground">
-                    Searching within {selectedRadius} km
-                  </div>
-                )}
-              </div>
+                {/* Location Selector */}
+                <LocationSelector />
 
-              <SheetClose asChild>
-                <Button className="w-full" onClick={handleSearch}>
-                  <Search className="w-4 h-4 mr-2" />
-                  Find Vendors
+                {/* Find Button */}
+                <Button
+                  onClick={handleSearch}
+                  className="rounded-l-none rounded-r-lg px-6 min-w-40 border-none h-full"
+                >
+                  {userLat && userLong ? "Apply" : "Find"}
                 </Button>
-              </SheetClose>
+              </div>
+            </div>
 
-              <nav className="space-y-2 mt-auto">
-                <Separator />
-                <p className="text-sm font-medium text-muted-foreground mb-3">
-                  Account
-                </p>
-                {isUserLoading ? (
-                  <div className="space-y-3">
-                    <Skeleton className="h-10 w-full" />
-                    <Skeleton className="h-10 w-full" />
-                  </div>
-                ) : user ? (
-                  <div className="flex justify-start">
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex items-center gap-3 shrink-0">
+              {isUserLoading ? (
+                <>
+                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-36" />
+                </>
+              ) : (
+                <>
+                  {(!user || user.role === "CUSTOMER") && (
+                    <Button variant="ghost" className="gap-2" asChild>
+                      <Link href="/client/custom-request">
+                        <FileText className="w-4 h-4" />
+                        Post A Request
+                      </Link>
+                    </Button>
+                  )}
+                  {user ? (
                     <UserDropdown user={user} />
-                  </div>
-                ) : (
-                  <>
-                    <SheetClose asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full gap-2"
-                        asChild
-                      >
+                  ) : (
+                    <>
+                      <Button variant="ghost" className="gap-2" asChild>
                         <Link href="/client/auth/log-in">
                           <CircleUserIcon className="w-4 h-4" />
-                          Sign in / Sign up
+                          Sign in
                         </Link>
                       </Button>
-                    </SheetClose>
-                    <SheetClose asChild>
-                      <Button className="w-full" asChild>
+                      <Button asChild>
                         <Link href="/vendor/auth/sign-up">
                           List your Business
                         </Link>
                       </Button>
-                    </SheetClose>
-                  </>
-                )}
-              </nav>
+                    </>
+                  )}
+                </>
+              )}
             </div>
-          </SheetContent>
-        </Sheet>
-      </div>
 
-      {/* Category Filter Bar - Only on Search Page */}
-      {isSearchRoute && (
-        <div className="backdrop-blur-sm border-t">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="w-full max-w-300 mx-auto">
-              <div
-                className="flex items-center justify-center gap-2 py-3"
-                suppressHydrationWarning
-              >
-                {isCategoriesLoading ? (
-                  Array.from({ length: 9 }).map((_, i) => (
-                    <Skeleton
-                      key={i}
-                      className="h-8 w-24 rounded-full shrink-0"
-                    />
-                  ))
-                ) : (
-                  /* Scrollable Container */
+            {/* Mobile Menu Trigger */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden min-w-11 min-h-11"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+          </div>
+
+          {/* Category Filter Bar - Only on Search Route */}
+          {isSearchRoute && (
+            <div className="backdrop-blur-sm border-t">
+              <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="w-full max-w-300 mx-auto">
                   <div
-                    ref={slideContainerRef}
-                    className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
+                    className="flex items-center justify-center gap-2 py-3"
+                    suppressHydrationWarning
                   >
-                    {/* Left Gradient Indicator */}
-                    <motion.div
-                      className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
-                      style={{ opacity: leftOpacity }}
-                    />
+                    {isCategoriesLoading ? (
+                      Array.from({ length: 9 }).map((_, i) => (
+                        <Skeleton
+                          key={i}
+                          className="h-8 w-24 rounded-full shrink-0"
+                        />
+                      ))
+                    ) : (
+                      /* Scrollable Container */
+                      <div
+                        ref={slideContainerRef}
+                        className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
+                      >
+                        {/* Left Gradient Indicator */}
+                        <motion.div
+                          className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
+                          style={{ opacity: leftOpacity }}
+                        />
 
-                    {/* Right Gradient Indicator */}
-                    <motion.div
-                      className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background  via to-transparent z-10 pointer-events-none"
-                      style={{ opacity: rightOpacity }}
-                    />
+                        {/* Right Gradient Indicator */}
+                        <motion.div
+                          className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background via-background/50 to-transparent z-10 pointer-events-none"
+                          style={{ opacity: rightOpacity }}
+                        />
 
-                    <motion.div
-                      drag="x"
-                      dragConstraints={{ right: 0, left: -width }}
-                      style={{ x }}
-                      className="flex gap-2 w-fit"
-                    >
-                      {categories.map((category: ServiceCategory) => {
-                        const isActive = selectedCategory === category._id;
-                        return (
-                          <button
-                            key={category._id}
-                            onClick={() => handleCategoryClick(category._id)}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${
-                              isActive
-                                ? "bg-primary/10 text-primary border-primary/20 font-medium"
-                                : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                            }`}
-                          >
-                            {category.name}
-                          </button>
-                        );
-                      })}
-                    </motion.div>
+                        <motion.div
+                          drag="x"
+                          dragConstraints={{ right: 0, left: -width }}
+                          style={{ x }}
+                          className="flex gap-2 w-fit"
+                        >
+                          {categories.map((category: ServiceCategory) => {
+                            const isActive = selectedCategory === category._id;
+                            return (
+                              <button
+                                key={category._id}
+                                onClick={() =>
+                                  handleCategoryClick(category._id)
+                                }
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${
+                                  isActive
+                                    ? "bg-primary/10 text-primary border-primary/20 font-medium"
+                                    : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                                }`}
+                              >
+                                {category.name}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </header>
       )}
-    </header>
+
+      {/* ---- Unified Mobile Menu Sheet ---- */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent
+          side="right"
+          className="w-full sm:max-w-sm p-0 flex flex-col"
+        >
+          <SheetHeader className="border-b px-6 py-4">
+            <SheetTitle asChild>
+              <div>
+                <Logo />
+              </div>
+            </SheetTitle>
+            <SheetDescription className="sr-only">
+              Navigation menu
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex flex-col flex-1 overflow-y-auto">
+            {/* Mobile Search */}
+            <div className="p-6 space-y-4 border-b">
+              <div className="flex items-center gap-2 px-3 py-2.5 bg-muted/50 rounded-lg border border-border focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                      setMobileMenuOpen(false);
+                    }
+                  }}
+                  placeholder="Find a vendor..."
+                  className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent"
+                />
+              </div>
+
+              <LocationSelector isMobile />
+
+              {userLat && userLong && (
+                <p className="text-xs text-muted-foreground">
+                  Searching within {selectedRadius} km
+                </p>
+              )}
+
+              <Button
+                className="w-full"
+                onClick={() => {
+                  handleSearch();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <Search className="w-4 h-4 mr-2" />
+                Find Vendors
+              </Button>
+            </div>
+
+            {/* Navigation Links */}
+            <nav className="flex-1 p-4 space-y-1">
+              {(!user || user?.role === "CUSTOMER") && (
+                <Link
+                  href="/client/custom-request"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors"
+                >
+                  <FileText className="w-5 h-5 text-muted-foreground" />
+                  Post A Request
+                </Link>
+              )}
+            </nav>
+
+            {/* Account Section */}
+            <div className="border-t p-4 space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-3 mb-2">
+                Account
+              </p>
+              {isUserLoading ? (
+                <div className="space-y-3 px-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : user ? (
+                <>
+                  {/* User info card */}
+                  <div className="flex items-center gap-3 px-3 py-3 mb-1">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage
+                        src={user.avatar?.url}
+                        alt={user.firstName}
+                      />
+                      <AvatarFallback className="bg-muted text-primary text-sm font-semibold">
+                        {user.firstName?.[0]}
+                        {user.lastName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Separator className="my-2" />
+
+                  <Link
+                    href={dashboardLink}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href={messagesLink}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted transition-colors"
+                  >
+                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                    Messages
+                  </Link>
+                  <Link
+                    href={settingsLink}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-muted transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-muted-foreground" />
+                    Settings
+                  </Link>
+
+                  <Separator className="my-2" />
+
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors w-full"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign out
+                  </button>
+                </>
+              ) : (
+                <div className="space-y-2 px-3">
+                  <Button
+                    variant="outline"
+                    className="w-full gap-2"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link href="/client/auth/log-in">
+                      <CircleUserIcon className="w-4 h-4" />
+                      Sign in / Sign up
+                    </Link>
+                  </Button>
+                  <Button
+                    className="w-full"
+                    asChild
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Link href="/vendor/auth/sign-up">List your Business</Link>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 

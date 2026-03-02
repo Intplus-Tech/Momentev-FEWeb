@@ -46,7 +46,7 @@ export const clientNavItems = [
     icon: CreditCard,
   },
   {
-    label: "My Disputes",
+    label: "Disputes",
     href: "/client/disputes",
     icon: Scale,
   },

@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -31,6 +32,7 @@ import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 export const VendorSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
+  const { setOpenMobile } = useSidebar();
   const { isLoading, data } = useUserProfile();
   const { unreadCount } = useUnreadBadgeCount("vendor");
   const [searchQuery, setSearchQuery] = useState("");
@@ -80,7 +82,7 @@ export const VendorSidebar = () => {
                     `${data?.firstName || ""} ${data?.lastName || ""}`.trim() ||
                     "Vendor"}
                 </p>
-                <p className="text-xs text-muted-foreground">{data?.vendor?.id}</p>
+                <p className="text-xs text-muted-foreground">momentev vendor</p>
               </div>
             </>
           )}
@@ -121,6 +123,7 @@ export const VendorSidebar = () => {
                     >
                       <Link
                         href={item.href}
+                        onClick={() => setOpenMobile(false)}
                         className="flex w-full items-center gap-3 text-current"
                       >
                         <item.icon className="size-4 text-current" />
