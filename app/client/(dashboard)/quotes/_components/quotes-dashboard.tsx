@@ -6,7 +6,6 @@ import { format, differenceInHours, differenceInDays } from "date-fns";
 import {
   Search,
   Clock,
-  MapPin,
   Users,
   CalendarDays,
   ChevronLeft,
@@ -49,8 +48,6 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-// ─── Constants ──────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 10;
 
@@ -119,8 +116,6 @@ function formatRelativeExpiry(dateString?: string) {
   return `Expires in ${diffDays} day${diffDays === 1 ? "" : "s"}`;
 }
 
-// ─── Quote Card ─────────────────────────────────────────────────────────────
-
 interface QuoteCardProps {
   quote: CustomerQuote;
   onViewDetails: () => void;
@@ -136,7 +131,6 @@ function QuoteCard({
 }: QuoteCardProps) {
   const cr = quote.quoteRequestId.customerRequestId;
   const event = cr?.eventDetails;
-  // If the status is unrecognized (e.g., 'converted'), fallback to a default styling.
   const statusDef = statusStyles[quote.status] ?? {
     label: quote.status.toUpperCase(),
     className: "bg-gray-50 text-gray-700 border border-gray-200",
@@ -146,7 +140,15 @@ function QuoteCard({
   const isUrgent =
     quote.expiresAt &&
     new Date(quote.expiresAt) > new Date() &&
-    differenceInHours(new Date(quote.expiresAt), new Date()) < 48; // Consider quotes urgent within 48h
+    differenceInHours(new Date(quote.expiresAt), new Date()) < 48;
+
+  const receivedLabel = format(new Date(quote.createdAt), "MMM d, yyyy");
+  const expiryLabel = quote.expiresAt
+    ? formatRelativeExpiry(quote.expiresAt)
+    : "No expiry";
+  const expiryExact = quote.expiresAt
+    ? format(new Date(quote.expiresAt), "MMM d, yyyy h:mm a")
+    : null;
 
   const { data: vendorRes, isLoading: isLoadingVendor } = useVendorDetails(
     quote.vendorId?._id ?? null,
@@ -154,46 +156,17 @@ function QuoteCard({
   const vendor = vendorRes?.data;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border bg-card p-6">
-      {/* Header: Status & Vendor info */}
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        {isUrgent && !isExpired && (
-          <span className="rounded-lg bg-red-100 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
-            Expiring Soon!
-          </span>
-        )}
-        {isExpired && (
-          <span className="rounded-lg bg-red-100 px-2.5 py-0.5 text-[12px] font-medium text-red-600">
-            Expired
-          </span>
-        )}
-        {/* <span>{quote._id}</span>   */}
-        <span
-          className={cn(
-            "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
-            statusDef.className,
-          )}
-        >
-          {statusDef.label}
-        </span>
-        {cr?.serviceCategoryId?.name && (
-          <span className="rounded-full border px-3 py-1 text-[11px] font-medium text-muted-foreground capitalize">
-            {cr.serviceCategoryId.name}
-          </span>
-        )}
-        <span className="ml-auto text-sm text-muted-foreground">
-          Received {format(new Date(quote.createdAt), "MMM d, yyyy")}
-        </span>
-      </div>
-
-      {/* Body Grid */}
-      <div className="grid gap-6 md:grid-cols-[1.5fr_1fr]">
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-xl font-semibold text-foreground">
+    <Card className="overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card/80 to-muted/40 shadow-sm">
+      <div className="flex flex-col gap-5 p-6">
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs uppercase tracking-wide text-muted-foreground">
+              Quote Total
+            </span>
+            <h3 className="text-2xl font-semibold text-foreground">
               {formatCurrency(quote.total, quote.currency)}
             </h3>
-            <div className="mt-1 text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               From{" "}
               {isLoadingVendor ? (
                 <Skeleton className="inline-block h-4 w-24" />
@@ -204,111 +177,165 @@ function QuoteCard({
             </div>
           </div>
 
-          <div>
-            <h4 className="text-sm font-medium text-foreground mb-1">
-              Event: {event?.title ?? "—"}
-            </h4>
-            <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-              {event?.startDate && (
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5" />
-                  {format(new Date(event.startDate), "MMM d, yyyy")}
-                  {event.endDate &&
-                    ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
-                </span>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            {isUrgent && !isExpired && (
+              <span className="rounded-full bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-700">
+                Expiring Soon
+              </span>
+            )}
+            {isExpired && (
+              <span className="rounded-full bg-red-100 px-3 py-1 text-[11px] font-semibold text-red-700">
+                Expired
+              </span>
+            )}
+            <span
+              className={cn(
+                "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
+                statusDef.className,
               )}
-              {event?.guestCount != null && (
-                <span className="flex items-center gap-1.5">
-                  <Users className="h-3.5 w-3.5" />
-                  {event.guestCount} guests
-                </span>
-              )}
-            </div>
+            >
+              {statusDef.label}
+            </span>
+            {cr?.serviceCategoryId?.name && (
+              <span className="rounded-full border px-3 py-1 text-[11px] font-medium text-muted-foreground capitalize">
+                {cr.serviceCategoryId.name}
+              </span>
+            )}
           </div>
+        </div>
 
-          {quote.personalMessage && (
-            <div className="rounded-xl bg-primary/5 p-3 flex gap-3 text-sm text-foreground">
-              <MessageCircle className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <p className="italic leading-relaxed">
-                "{quote.personalMessage}"
-              </p>
-            </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1">
+            <CalendarDays className="h-3.5 w-3.5" />
+            Received {receivedLabel}
+          </span>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded-full px-3 py-1",
+              isExpired
+                ? "bg-red-50 text-red-700 border border-red-200"
+                : isUrgent
+                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                  : "bg-muted text-muted-foreground",
+            )}
+          >
+            <Clock className="h-3.5 w-3.5" />
+            {expiryLabel}
+          </span>
+          {event?.guestCount != null && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1">
+              <Users className="h-3.5 w-3.5" />
+              {event.guestCount} guests
+            </span>
           )}
         </div>
 
-        {/* Info Column */}
-        <div className="space-y-4 rounded-2xl bg-muted/50 p-4">
-          <div>
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Validity
-            </p>
-            {quote.expiresAt ? (
-              <>
-                <p className="text-sm font-medium text-foreground flex items-center gap-1.5 mt-1">
-                  <Clock
-                    className={cn(
-                      "h-3.5 w-3.5",
-                      isUrgent ? "text-red-500" : "text-muted-foreground",
-                    )}
-                  />
-                  {formatRelativeExpiry(quote.expiresAt)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Until{" "}
-                  {format(new Date(quote.expiresAt), "MMM d, yyyy h:mm a")}
-                </p>
-              </>
-            ) : (
-              <p className="text-sm text-muted-foreground mt-1">No expiry</p>
+        <div className="h-px w-full bg-border/70" />
+
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+          <div className="space-y-4">
+            <div>
+              <h4 className="mb-1 text-sm font-medium text-foreground">
+                Event: {event?.title ?? "—"}
+              </h4>
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                {event?.startDate && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    {format(new Date(event.startDate), "MMM d, yyyy")}
+                    {event.endDate &&
+                      ` – ${format(new Date(event.endDate), "MMM d, yyyy")}`}
+                  </span>
+                )}
+                {event?.guestCount != null && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1">
+                    <Users className="h-3.5 w-3.5" />
+                    {event.guestCount} guests
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {quote.personalMessage && (
+              <div className="flex gap-3 rounded-xl bg-primary/5 p-3 text-sm text-foreground">
+                <MessageCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                <p className="leading-relaxed">"{quote.personalMessage}"</p>
+              </div>
             )}
           </div>
 
-          <div className="pt-3 border-t">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              Payment Terms
-            </p>
-            <p className="mt-1 text-sm text-foreground">
-              {quote.paymentTerms.depositPercent}% Deposit
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {quote.paymentTerms.balancePercent}% Balance
-            </p>
+          <div className="space-y-3">
+            <div className="rounded-xl border bg-card/70 p-4">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Validity
+              </p>
+              <p className="mt-2 flex items-center gap-2 text-sm font-medium text-foreground">
+                <Clock
+                  className={cn(
+                    "h-4 w-4",
+                    isExpired
+                      ? "text-red-500"
+                      : isUrgent
+                        ? "text-amber-600"
+                        : "text-muted-foreground",
+                  )}
+                />
+                {expiryLabel}
+              </p>
+              {expiryExact && (
+                <p className="text-xs text-muted-foreground">
+                  Until {expiryExact}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border bg-card/70 p-4">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Payment Terms
+              </p>
+              <p className="mt-2 text-sm font-medium text-foreground">
+                {quote.paymentTerms.depositPercent}% Deposit
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {quote.paymentTerms.balancePercent}% Balance
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="mt-6 flex flex-wrap gap-3">
-        <Button variant="outline" onClick={onViewDetails}>
-          View Full Details
-        </Button>
-        {quote.status === "sent" && (
-          <>
-            <Button variant="default" onClick={onBook}>
-              Accept & Book
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => onRespond("request_changes")}
-            >
-              Request Changes
-            </Button>
-            <Button variant="destructive" onClick={() => onRespond("decline")}>
-              Decline
-            </Button>
-          </>
-        )}
-        {quote.status === "accepted" && (
-          <Button variant="default" onClick={onBook}>
-            Book Vendor
+        <div className="flex flex-wrap gap-3">
+          <Button variant="outline" onClick={onViewDetails}>
+            View Full Details
           </Button>
-        )}
+          {quote.status === "sent" && (
+            <>
+              <Button variant="default" onClick={onBook}>
+                Accept & Book
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => onRespond("request_changes")}
+              >
+                Request Changes
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => onRespond("decline")}
+              >
+                Decline
+              </Button>
+            </>
+          )}
+          {quote.status === "accepted" && (
+            <Button variant="default" onClick={onBook}>
+              Book Vendor
+            </Button>
+          )}
+        </div>
       </div>
     </Card>
   );
 }
-
-// ─── Main Dashboard ─────────────────────────────────────────────────────────
 
 export function QuotesDashboard() {
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("all");
@@ -377,7 +404,6 @@ export function QuotesDashboard() {
 
   return (
     <section className="space-y-6">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           My Quotes
@@ -390,7 +416,6 @@ export function QuotesDashboard() {
         </p>
       </div>
 
-      {/* Filter Bar */}
       <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border bg-card p-3 md:flex-row">
         <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
           {isMobile ? (
@@ -470,7 +495,6 @@ export function QuotesDashboard() {
         </div>
       </div>
 
-      {/* Content */}
       <div className="space-y-4">
         {isError ? (
           <Card className="flex min-h-[400px] flex-col items-center justify-center rounded-2xl border-red-100 bg-red-50/50 p-6 text-center">
@@ -518,7 +542,6 @@ export function QuotesDashboard() {
         )}
       </div>
 
-      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between border-t pt-6">
           <p className="text-sm text-muted-foreground">
@@ -557,14 +580,12 @@ export function QuotesDashboard() {
         </div>
       )}
 
-      {/* View Modal */}
       <ViewQuoteModal
         open={!!selectedQuote}
         onOpenChange={(open) => !open && setSelectedQuote(null)}
         quote={selectedQuote}
       />
 
-      {/* Respond Modal */}
       <RespondQuoteModal
         quote={respondModal.quote}
         decision={respondModal.decision}
@@ -572,7 +593,6 @@ export function QuotesDashboard() {
         onOpenChange={(open) => setRespondModal((prev) => ({ ...prev, open }))}
       />
 
-      {/* Convert to Booking Modal */}
       <ConvertQuoteModal
         quote={convertModal.quote}
         open={convertModal.open}
