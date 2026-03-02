@@ -12,6 +12,9 @@ import { ReviewsSection } from "./_components/reviews-section";
 import { SecuritySection } from "./_components/security-section";
 import { SupportSection } from "./_components/support-section";
 import { TeamSection } from "./_components/team-section";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useVendorReviews, useVendorDetails } from "@/hooks/api/use-vendors";
+import { Loader2 } from "lucide-react";
 
 const vendorTabValues = ["profile", "team", "reviews", "security", "support"];
 
@@ -56,6 +59,55 @@ function VendorSettingsContent() {
       scroll: false,
     });
   };
+
+  const { data: userProfile } = useUserProfile();
+  // A vendor's profile ID is nested inside the userProfile object
+  const vendorId = userProfile?.vendor?._id || userProfile?.vendor?.id || "";
+
+  const { data: vendorDetailsResp } = useVendorDetails(vendorId);
+  const vendorData = vendorDetailsResp?.data;
+
+  const { data: reviewsData, isLoading: isReviewsLoading } = useVendorReviews(vendorId);
+
+  // Map reviews from API
+  const mappedReviews =
+    reviewsData?.data?.data?.map((r: any) => ({
+      id: r._id,
+      author:
+        `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
+        "Anonymous",
+      initials:
+        `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
+        "?",
+      date: new Date(r.createdAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }),
+      rawDate: r.createdAt,
+      rating: r.rating,
+      category: "",
+      content: r.comment,
+    })) || [];
+
+  // Calculate real star distribution from reviews
+  const reviewStats = (() => {
+    const reviewsArr = reviewsData?.data?.data || [];
+    const distribution = [5, 4, 3, 2, 1].map((stars) => ({
+      stars,
+      count: reviewsArr.filter((r: any) => Math.round(r.rating) === stars).length,
+    }));
+    
+    const totalCalculated = reviewsArr.length;
+    const sumRating = reviewsArr.reduce((acc: number, r: any) => acc + r.rating, 0);
+    const averageCalculated = totalCalculated > 0 ? sumRating / totalCalculated : 0;
+
+    return {
+      average: vendorData?.rate || Number(averageCalculated.toFixed(1)) || 0,
+      total: vendorData?.reviewCount || totalCalculated,
+      distribution,
+    };
+  })();
 
   return (
     <section className="space-y-4 h-full min-h-[85vh] flex flex-col">
@@ -118,7 +170,13 @@ function VendorSettingsContent() {
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
-          <ReviewsSection reviews={reviews} />
+          {isReviewsLoading ? (
+             <div className="flex h-40 items-center justify-center border rounded-xl bg-white">
+               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+             </div>
+          ) : (
+             <ReviewsSection vendorId={vendorId} reviews={mappedReviews} stats={reviewStats} />
+          )}
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">

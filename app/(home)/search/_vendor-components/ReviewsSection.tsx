@@ -18,6 +18,7 @@ interface Review {
   author: string;
   initials: string;
   date: string;
+  rawDate: string; // Used for accurate date sorting
   rating: number;
   category: string;
   content: string;
@@ -36,9 +37,10 @@ interface ReviewsSectionProps {
   vendorId: string;
   reviews: Review[];
   stats: ReviewStats;
+  hideTitle?: boolean;
 }
 
-export function ReviewsSection({ vendorId, reviews, stats }: ReviewsSectionProps) {
+export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsSectionProps) {
   const [sortBy, setSortBy] = useState("newest");
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const { data: user, isLoading: isUserLoading } = useUserProfile();
@@ -64,7 +66,7 @@ export function ReviewsSection({ vendorId, reviews, stats }: ReviewsSectionProps
 
   return (
     <div className="">
-      <h2 className="text-lg font-semibold mb-6">Reviews</h2>
+      {!hideTitle && <h2 className="text-lg font-semibold mb-6">Reviews</h2>}
 
       {/* Stats Overview */}
       <div className="flex flex-col md:flex-row gap-6 mb-8 bg-white rounded-2xl p-6">
@@ -154,11 +156,19 @@ export function ReviewsSection({ vendorId, reviews, stats }: ReviewsSectionProps
       {/* Reviews List */}
       <div className="space-y-6 bg-white rounded-2xl p-6">
         {hasReviews ? (
-          reviews.map((review, idx) => (
-            <div
-              key={review.id}
-              className={`${idx > 0 ? "border-t pt-6" : "pt-2"}`}
-            >
+          [...reviews]
+            .sort((a, b) => {
+              if (sortBy === "highest") {
+                return b.rating - a.rating;
+              }
+              // "newest" by default
+              return new Date(b.rawDate).getTime() - new Date(a.rawDate).getTime();
+            })
+            .map((review, idx) => (
+              <div
+                key={review.id}
+                className={`${idx > 0 ? "border-t pt-6" : "pt-2"}`}
+              >
               <div className="flex items-center gap-1 mb-1">
                 {[...Array(5)].map((_, i) => (
                   <Star

@@ -4,6 +4,7 @@ export interface Review {
   author: string;
   initials: string;
   date: string;
+  rawDate: string;
   rating: number;
   category: string;
   content: string;
@@ -279,6 +280,7 @@ export const vendorDetails: Record<string, VendorDetails> = {
         author: "Alex K.",
         initials: "AK",
         date: "Jan 20, 2025",
+        rawDate: "2025-01-20T12:00:00.000Z",
         rating: 5,
         category: "Bridal",
         content:
@@ -289,6 +291,7 @@ export const vendorDetails: Record<string, VendorDetails> = {
         author: "Emily R.",
         initials: "ER",
         date: "Nov 19, 2024",
+        rawDate: "2024-11-19T12:00:00.000Z",
         rating: 5,
         category: "Occasion",
         content:

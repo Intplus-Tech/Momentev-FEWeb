@@ -198,6 +198,7 @@ export default function VendorPage() {
               month: "long",
               day: "numeric",
             }),
+            rawDate: r.createdAt,
             rating: r.rating,
             category: "",
             content: r.comment,
