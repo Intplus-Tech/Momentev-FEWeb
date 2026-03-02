@@ -209,9 +209,14 @@ export default function VendorPage() {
             stars,
             count: reviews.filter((r) => Math.round(r.rating) === stars).length,
           }));
+          
+          const totalCalculated = reviews.length;
+          const sumRating = reviews.reduce((acc, r) => acc + r.rating, 0);
+          const averageCalculated = totalCalculated > 0 ? sumRating / totalCalculated : 0;
+
           return {
-            average: vendorData.rate || 0,
-            total: vendorData.reviewCount || 0,
+            average: vendorData.rate || Number(averageCalculated.toFixed(1)) || 0,
+            total: vendorData.reviewCount || totalCalculated,
             distribution,
           };
         })(),
@@ -264,6 +269,7 @@ export default function VendorPage() {
 
             {/* Reviews */}
             <ReviewsSection
+              vendorId={vendorId}
               reviews={vendor.reviews}
               stats={vendor.reviewStats}
             />

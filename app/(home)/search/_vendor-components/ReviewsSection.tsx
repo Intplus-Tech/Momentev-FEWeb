@@ -9,6 +9,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CreateReviewDialog } from "./CreateReviewDialog";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useRouter, usePathname } from "next/navigation";
 
 interface Review {
   id: string;
@@ -30,17 +33,34 @@ interface ReviewStats {
 }
 
 interface ReviewsSectionProps {
+  vendorId: string;
   reviews: Review[];
   stats: ReviewStats;
 }
 
-export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
+export function ReviewsSection({ vendorId, reviews, stats }: ReviewsSectionProps) {
   const [sortBy, setSortBy] = useState("newest");
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const { data: user, isLoading: isUserLoading } = useUserProfile();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const isClient = user?.role === "customer" || user?.role === "CUSTOMER";
+  const isLoggedOut = !user && !isUserLoading;
 
   const hasReviews = (stats?.total || 0) > 0 && reviews.length > 0;
   const maxCount = hasReviews
     ? Math.max(...stats.distribution.map((d) => d.count))
     : 0;
+
+  const handleWriteReviewClick = () => {
+    if (isLoggedOut) {
+      const redirect = pathname || "/client";
+      router.push(`/client/auth/log-in?redirect=${encodeURIComponent(redirect)}`);
+      return;
+    }
+    setIsReviewDialogOpen(true);
+  };
 
   return (
     <div className="">
@@ -124,7 +144,11 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button className="h-9">Write a Review</Button>
+        {isClient && (
+          <Button className="h-9" onClick={handleWriteReviewClick}>
+            Write a Review
+          </Button>
+        )}
       </div>
 
       {/* Reviews List */}
@@ -173,6 +197,12 @@ export function ReviewsSection({ reviews, stats }: ReviewsSectionProps) {
           </div>
         )}
       </div>
+
+      <CreateReviewDialog
+        vendorId={vendorId}
+        isOpen={isReviewDialogOpen}
+        onOpenChange={setIsReviewDialogOpen}
+      />
     </div>
   );
 }

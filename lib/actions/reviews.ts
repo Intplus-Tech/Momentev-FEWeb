@@ -150,3 +150,57 @@ export async function fetchVendorReviews(vendorId: string, page = 1, limit = 10)
   }
 }
 
+export async function createReview(data: { vendorId: string; rating: number; comment: string }) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+          return { success: false, error: retryData?.message || 'Failed to submit review' };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+      return { success: false, error: result?.message || 'Failed to submit review' };
+    }
+
+    return { success: true, data: result?.data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}

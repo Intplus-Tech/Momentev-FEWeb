@@ -24,8 +24,6 @@ export async function getMyFavorites(page = 1, limit = 10) {
     });
 
     const data = await response.json().catch(() => null);
-    console.log("getMyFavorites response status:", response.status);
-    console.log("getMyFavorites raw data:", JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -40,8 +38,6 @@ export async function getMyFavorites(page = 1, limit = 10) {
             cache: 'no-store',
           });
           const retryData = await retryResponse.json().catch(() => null);
-          console.log("getMyFavorites retry status:", retryResponse.status);
-          console.log("getMyFavorites retry raw data:", JSON.stringify(retryData, null, 2));
 
           if (retryResponse.ok && retryData) {
             return { success: true, data: retryData.data };

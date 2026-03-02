@@ -7,8 +7,6 @@ export function useClientFavorites(page = 1, limit = 10) {
     queryKey: queryKeys.favorites.myFavorites(page, limit),
     queryFn: async () => {
       const result = await getMyFavorites(page, limit);
-      console.log("useClientFavorites result:", result);
-      
       if (!result.success) {
         throw new Error(result.error);
       }
