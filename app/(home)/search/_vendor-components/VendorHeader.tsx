@@ -2,10 +2,12 @@
 
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { Star } from "lucide-react";
+import { Star, Heart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useStartVendorConversation } from "@/hooks/api/use-chat";
+import { useFavoriteStatus, useAddFavorite, useRemoveFavorite } from "@/hooks/api/use-client-favorites";
 import { toast } from "sonner";
 
 interface VendorHeaderProps {
@@ -27,13 +29,18 @@ export function VendorHeader({
 }: VendorHeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { data: user, isLoading, isError } = useUserProfile();
+  const { data: user, isLoading: isUserLoading, isError } = useUserProfile();
   const startConversation = useStartVendorConversation();
+  const { data: isFavorited, isLoading: isFavoriteLoading } = useFavoriteStatus(
+    user?.role === "customer" || user?.role === "CUSTOMER" ? vendorId : undefined
+  );
+  const addFavorite = useAddFavorite();
+  const removeFavorite = useRemoveFavorite();
 
   const role = user?.role?.toUpperCase();
   const isVendor = role === "VENDOR";
   const isClient = role === "CUSTOMER";
-  const isLoggedOut = !user && (isError || !isLoading);
+  const isLoggedOut = !user && (isError || !isUserLoading);
   const showActions = !isVendor;
 
   const redirectToLogin = () => {
@@ -93,6 +100,29 @@ export function VendorHeader({
     redirectToLogin();
   };
 
+  const handleFavoriteToggle = async () => {
+    if (isLoggedOut) {
+      redirectToLogin();
+      return;
+    }
+
+    if (!isClient) return;
+
+    try {
+      if (isFavorited) {
+        await removeFavorite.mutateAsync(vendorId);
+        toast.success("Vendor removed from favorites");
+      } else {
+        await addFavorite.mutateAsync(vendorId);
+        toast.success("Vendor added to favorites");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update favorites"
+      );
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Vendor Info Row */}
@@ -139,7 +169,7 @@ export function VendorHeader({
           <Button
             className="flex-1 h-11"
             onClick={handleBook}
-            disabled={isLoading}
+            disabled={isUserLoading}
           >
             Book Vendor
           </Button>
@@ -147,10 +177,36 @@ export function VendorHeader({
             variant="outline"
             className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={handleMessage}
-            disabled={isLoading || startConversation.isPending}
+            disabled={isUserLoading || startConversation.isPending}
           >
             Message Vendor
           </Button>
+          {isClient && (
+            <Button
+              variant="outline"
+              size="icon"
+              className={cn(
+                "h-11 w-11 shrink-0 transition-all duration-200",
+                isFavorited
+                  ? "border-red-500 bg-red-50 text-red-500 hover:bg-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              onClick={handleFavoriteToggle}
+              disabled={isFavoriteLoading || addFavorite.isPending || removeFavorite.isPending}
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              {isFavoriteLoading || addFavorite.isPending || removeFavorite.isPending ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Heart
+                  className={cn(
+                    "h-5 w-5 transition-all duration-200",
+                    isFavorited ? "fill-current scale-110" : "scale-100"
+                  )}
+                />
+              )}
+            </Button>
+          )}
         </div>
       )}
     </div>

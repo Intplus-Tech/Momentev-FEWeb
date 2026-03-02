@@ -11,8 +11,8 @@ export const SectionShell = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <div className={cn("rounded-md border", className)}>
-    <div className="border bg-primary/40 rounded-t-md text-white px-4 py-3 text-sm font-medium">
+  <div className={cn("rounded-md border bg-white", className)}>
+    <div className="border-b bg-[#A0B0E6] rounded-t-md text-white px-4 py-3 text-sm font-medium">
       {title}
     </div>
     <div className="">{children}</div>

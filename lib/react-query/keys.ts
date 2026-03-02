@@ -31,6 +31,11 @@ export const queryKeys = {
     all: ['reviews'] as const,
     byCustomer: (customerId: string) => [...queryKeys.reviews.all, 'customer', customerId] as const,
   },
+  favorites: {
+    all: ['favorites'] as const,
+    myFavorites: (page?: number, limit?: number) => [...queryKeys.favorites.all, 'me', page, limit] as const,
+    status: (vendorId: string) => [...queryKeys.favorites.all, 'status', vendorId] as const,
+  },
   chat: {
     all: ['chat'] as const,
     conversations: () => [...queryKeys.chat.all, 'conversations'] as const,
