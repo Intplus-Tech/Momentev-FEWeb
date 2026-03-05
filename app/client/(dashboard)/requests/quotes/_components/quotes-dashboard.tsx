@@ -306,33 +306,9 @@ function QuoteCard({
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button variant="outline" onClick={onViewDetails}>
+          <Button variant="outline" onClick={onViewDetails} className="w-full sm:w-auto">
             View Full Details
           </Button>
-          {quote.status === "sent" && (
-            <>
-              <Button variant="default" onClick={onBook}>
-                Accept & Book
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => onRespond("request_changes")}
-              >
-                Request Changes
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => onRespond("decline")}
-              >
-                Decline
-              </Button>
-            </>
-          )}
-          {quote.status === "accepted" && (
-            <Button variant="default" onClick={onBook}>
-              Book Vendor
-            </Button>
-          )}
         </div>
       </div>
     </Card>
@@ -594,6 +570,8 @@ export function QuotesDashboard() {
         open={!!selectedQuote}
         onOpenChange={(open) => !open && setSelectedQuote(null)}
         quote={selectedQuote}
+        onRespond={(decision) => setRespondModal({ quote: selectedQuote, decision, open: true })}
+        onBook={() => setConvertModal({ quote: selectedQuote, open: true })}
       />
 
       <RespondQuoteModal

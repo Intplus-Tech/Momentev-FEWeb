@@ -404,6 +404,8 @@ function CompareRequestsContent() {
         open={!!selectedQuote}
         onOpenChange={(open: boolean) => !open && setSelectedQuote(null)}
         quote={selectedQuote}
+        onRespond={(decision) => setRespondModal({ quote: selectedQuote, decision, open: true })}
+        onBook={() => setConvertModal({ quote: selectedQuote, open: true })}
       />
 
       <RespondQuoteModal

@@ -4,7 +4,7 @@ import { useId } from "react";
 import { format, differenceInHours, differenceInDays } from "date-fns";
 import { Clock, MapPin, Users, CalendarDays, ExternalLink, FileText } from "lucide-react";
 
-import type { CustomerQuote } from "@/types/quote";
+import type { CustomerQuote, QuoteDecision } from "@/types/quote";
 import { useVendorDetails } from "@/hooks/api/use-vendors";
 import {
   Dialog,
@@ -21,12 +21,13 @@ import { cn } from "@/lib/utils";
 
 const statusStyles: Record<string, { bg: string; text: string; label: string }> = {
   sent: { bg: "bg-blue-50", text: "text-blue-700", label: "Received" },
-  accepted: { bg: "bg-green-50", text: "text-green-700", label: "Accepted" },
+  accepted: { bg: "bg-emerald-50", text: "text-emerald-700", label: "Accepted" },
   declined: { bg: "bg-red-50", text: "text-red-700", label: "Declined" },
   changes_requested: { bg: "bg-amber-50", text: "text-amber-700", label: "Changes Requested" },
   revised: { bg: "bg-indigo-50", text: "text-indigo-700", label: "Revised" },
   expired: { bg: "bg-gray-100", text: "text-gray-500", label: "Expired" },
   withdrawn: { bg: "bg-slate-100", text: "text-slate-500", label: "Withdrawn" },
+  converted: { bg: "bg-green-50 text-green-700 border-green-200", text: "text-green-700", label: "Booked" },
 };
 
 const formatCurrency = (val: number, currency = "GBP") =>
@@ -56,9 +57,11 @@ interface ViewQuoteModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   quote: CustomerQuote | null;
+  onRespond?: (decision: QuoteDecision) => void;
+  onBook?: () => void;
 }
 
-export function ViewQuoteModal({ open, onOpenChange, quote }: ViewQuoteModalProps) {
+export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }: ViewQuoteModalProps) {
   const uid = useId();
 
   const { data: vendorRes, isLoading: isLoadingVendor } = useVendorDetails(quote?.vendorId?._id ?? null);
@@ -318,7 +321,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote }: ViewQuoteModalProp
         </ScrollArea>
         
         {/* Footer */}
-        <div className="bg-card px-6 py-4 border-t flex justify-end">
+        <div className="bg-card px-6 py-4 border-t flex flex-wrap items-center justify-between gap-3">
            <Button
              variant="outline"
              onClick={() => onOpenChange(false)}
@@ -326,6 +329,55 @@ export function ViewQuoteModal({ open, onOpenChange, quote }: ViewQuoteModalProp
            >
              Close
            </Button>
+
+           <div className="flex flex-wrap gap-2">
+              {quote.status === "sent" && onBook && onRespond && (
+                <>
+                  <Button
+                    variant="destructive"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onRespond("decline");
+                    }}
+                    className="rounded-full"
+                  >
+                    Decline
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      onOpenChange(false);
+                      onRespond("request_changes");
+                    }}
+                    className="rounded-full"
+                  >
+                    Request Changes
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    onClick={() => {
+                      onOpenChange(false);
+                      onBook();
+                    }}
+                    className="rounded-full"
+                  >
+                    Accept & Book
+                  </Button>
+                </>
+              )}
+              {quote.status === "accepted" && onBook && (
+                <Button 
+                  variant="default" 
+                  onClick={() => {
+                    onOpenChange(false);
+                    onBook();
+                  }}
+                  className="rounded-full"
+                >
+                  Book Vendor
+                </Button>
+              )}
+           </div>
         </div>
       </DialogContent>
     </Dialog>
