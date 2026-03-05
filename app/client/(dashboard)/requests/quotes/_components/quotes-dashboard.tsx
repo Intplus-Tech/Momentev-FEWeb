@@ -12,8 +12,10 @@ import {
   ChevronRight,
   MessageCircle,
   Filter,
+  ArrowLeft,
 } from "lucide-react";
 
+import Link from "next/link";
 import { fetchCustomerQuotes } from "@/lib/actions/client-quotes";
 import { queryKeys } from "@/lib/react-query/keys";
 import type {
@@ -156,7 +158,7 @@ function QuoteCard({
   const vendor = vendorRes?.data;
 
   return (
-    <Card className="overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-br from-card via-card/80 to-muted/40 shadow-sm">
+    <Card className="overflow-hidden rounded-2xl border border-border/80 bg-linear-to-br from-card via-card/80 to-muted/40 shadow-sm">
       <div className="flex flex-col gap-5 p-6">
         <div className="flex flex-wrap items-start gap-3">
           <div className="flex flex-col gap-1">
@@ -404,11 +406,19 @@ export function QuotesDashboard() {
 
   return (
     <section className="space-y-6">
+      <Link
+        href="/client/requests"
+        className="flex w-fit items-center gap-1 text-sm font-medium text-primary"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Requests
+      </Link>
+
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          My Quotes
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          Quotes Inbox
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground mt-2">
           {isLoading
             ? "Loading..."
             : `${total} quote${total !== 1 ? "s" : ""} received from vendors`}

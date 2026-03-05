@@ -272,6 +272,8 @@ export async function fetchCustomerRequestById(
   }
 }
 
+import type { CustomerQuoteListResponse, CustomerQuoteFilters } from "@/types/quote";
+
 /**
  * Fetch authenticated user's customer requests with filtering and pagination
  * GET /api/v1/customer-requests/me
@@ -321,6 +323,48 @@ export async function fetchCustomerRequests(
     return result;
   } catch (error) {
     console.error("[fetchCustomerRequests] UNCAUGHT ERROR:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Fetch quotes for a specific customer request
+ * GET /api/v1/customer-requests/{id}/quotes
+ */
+export async function fetchCustomerRequestQuotes(
+  id: string,
+  page = 1,
+  limit = 10,
+  filters?: CustomerQuoteFilters
+): Promise<ActionResponse<CustomerQuoteListResponse>> {
+  if (!API_URL) {
+    console.error("[fetchCustomerRequestQuotes] BACKEND_URL not configured!");
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  try {
+    const queryParams = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+
+    if (filters?.status) {
+      queryParams.set("status", filters.status);
+    }
+    // Also dateFrom, dateTo if they are added to CustomerQuoteFilters in the future
+
+    const url = `${API_URL}/api/v1/customer-requests/${id}/quotes?${queryParams}`;
+
+    const result = await makeAuthenticatedRequest<CustomerQuoteListResponse>(url, {
+      method: "GET",
+    });
+
+    return result;
+  } catch (error) {
+    console.error("[fetchCustomerRequestQuotes] UNCAUGHT ERROR:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

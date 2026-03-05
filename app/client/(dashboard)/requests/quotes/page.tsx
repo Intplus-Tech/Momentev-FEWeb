@@ -1,4 +1,4 @@
-      "use client";
+"use client";
 
 import { Suspense } from "react";
 import { QuotesDashboard } from "./_components/quotes-dashboard";

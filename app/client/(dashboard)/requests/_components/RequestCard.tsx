@@ -61,10 +61,10 @@ export function RequestCard({ request }: RequestCardProps) {
     createdAt,
   } = request;
 
-  const totalBudget = budgetAllocations.reduce(
+  const totalBudget = budgetAllocations?.reduce?.(
     (sum, item) => sum + (item.budgetedAmount || 0),
     0,
-  );
+  ) || 0;
 
   return (
     <Card className="border">
@@ -117,9 +117,16 @@ export function RequestCard({ request }: RequestCardProps) {
           </div>
         </div>
 
-        {/* <Separator />
+        <Separator />
 
         <div className="flex flex-wrap gap-3">
+          {(status === "active" || status === "pending_approval" || status === "completed") && (
+            <Button asChild variant="default">
+              <Link href={`/client/requests/compare-requests?requestId=${request._id}`}>
+                View & Compare Quotes
+              </Link>
+            </Button>
+          )}
           {status === "draft" && (
             <Button asChild variant="outline">
               <Link href={`/client/custom-request/edit/${request._id}`}>
@@ -127,7 +134,7 @@ export function RequestCard({ request }: RequestCardProps) {
               </Link>
             </Button>
           )}
-        </div> */}
+        </div>
       </CardContent>
     </Card>
   );

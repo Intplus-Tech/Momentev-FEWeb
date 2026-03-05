@@ -25,11 +25,6 @@ export const clientNavItems = [
     href: "/client/requests",
     icon: ClipboardList,
   },
-  {
-    label: "My Quotes",
-    href: "/client/quotes",
-    icon: FileText,
-  },
   // {
   //   label: "Quote Requests",
   //   href: "/client/quote-requests",

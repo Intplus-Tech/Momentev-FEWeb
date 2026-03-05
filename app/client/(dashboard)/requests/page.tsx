@@ -82,8 +82,8 @@ function ClientRequestsContent() {
             {isFetching && !isLoading && " · Updating..."}
           </p>
         </div>
-        <Button asChild>
-          <Link href="/client/custom-request">Create New Request</Link>
+        <Button asChild variant="secondary">
+          <Link href="/client/requests/quotes">View Quotes Inbox</Link>
         </Button>
       </div>
 
