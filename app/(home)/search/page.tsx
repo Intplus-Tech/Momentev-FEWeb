@@ -12,16 +12,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-
-import { PromotedVendorCard, VendorListCard, Pagination } from "./_components";
-import { promotedVendors } from "./_data/vendors";
+import { VendorListCard, Pagination, FeaturedVendorsSearch } from "./_components";
 import { useVendors } from "@/hooks/api/use-vendors";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { Vendor } from "./_data/types";
+import type { FeaturedVendorItem } from "@/lib/actions/featured-vendors";
 
 const ITEMS_PER_PAGE = 10;
 
-function SearchContent() {
+function                                                                                                            SearchContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -79,6 +78,33 @@ function SearchContent() {
   const vendors = data?.data?.data || [];
   const totalItems = data?.data?.total || 0;
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  const [featuredVendors, setFeaturedVendors] = useState<FeaturedVendorItem[]>(
+    [],
+  );
+
+  useEffect(() => {
+    const fetchFeaturedVendors = async () => {
+      try {
+        const response = await fetch("/api/featured-vendors?limit=8", {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) return;
+
+        const payload = await response.json();
+        const featured = Array.isArray(payload?.data)
+          ? (payload.data as FeaturedVendorItem[])
+          : [];
+
+        setFeaturedVendors(featured);
+      } catch {
+        setFeaturedVendors([]);
+      }
+    };
+
+    fetchFeaturedVendors();
+  }, []);
 
   // Handlers
   const handlePageChange = (page: number) => {
@@ -107,11 +133,23 @@ function SearchContent() {
   return (
     <div className="min-h-screen pt-40">
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* API Error Message */}
+        {isError && (
+          <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 text-sm flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <span>Failed to load vendors. Please try refreshing the page.</span>
+          </div>
+        )}
+
+        {featuredVendors.length > 0 && (
+          <FeaturedVendorsSearch vendors={featuredVendors} />
+        )}
+
         {/* Header Row */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             <Select value={sortParam} onValueChange={handleSortChange}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-50">
                 <span className="text-muted-foreground text-sm mr-1">
                   Sort By:
                 </span>
@@ -149,23 +187,6 @@ function SearchContent() {
             <span>
               Set your location using the header to see nearby results.
             </span>
-          </div>
-        )}
-
-        {/* API Error Message */}
-        {isError && (
-          <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-4 rounded-md mb-6 text-sm flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 shrink-0" />
-            <span>Failed to load vendors. Please try refreshing the page.</span>
-          </div>
-        )}
-
-        {/* Step 1: Promoted Vendors Grid (Hardcoded for now) */}
-        {promotedVendors.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            {promotedVendors.map((vendor) => (
-              <PromotedVendorCard key={vendor._id} vendor={vendor} />
-            ))}
           </div>
         )}
 

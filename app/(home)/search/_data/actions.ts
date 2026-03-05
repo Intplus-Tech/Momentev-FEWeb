@@ -30,18 +30,50 @@ const WorkdaySchema = z.object({
   close: z.string(),
 });
 
+const VendorServiceTagSchema = z.object({
+  _id: z.string(),
+  vendorId: z.string().optional(),
+  serviceCategory: z.object({
+    _id: z.string(),
+    name: z.string(),
+  }).optional(),
+  tags: z.array(z.string()).optional().default([]),
+  minimumBookingDuration: z.string().optional(),
+  leadTimeRequired: z.string().optional(),
+  maximumEventSize: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+const VendorSpecialtySchema = z.object({
+  _id: z.string(),
+  vendorId: z.string().optional(),
+  serviceSpecialty: z.object({
+    _id: z.string(),
+    name: z.string(),
+  }).optional(),
+  priceCharge: z.string().optional(),
+  price: z.string().optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
 const RawVendorSchema = z.object({
   _id: z.string(),
+  id: z.string().optional(),
   rate: z.number().optional().default(0),
   reviewCount: z.number().optional().default(0),
   profilePhoto: z.union([
     z.string(),
-    z.object({ url: z.string() })
+    z.object({ _id: z.string().optional(), url: z.string() })
   ]).nullable().optional(),
   coverPhoto: z.union([
     z.string(),
-    z.object({ url: z.string() })
+    z.object({ _id: z.string().optional(), url: z.string() })
   ]).nullable().optional(),
+  portfolioGallery: z.array(
+    z.union([z.string(), z.object({ _id: z.string().optional(), url: z.string() })])
+  ).optional().default([]),
   // userId can be either a string (ID) or a populated object
   userId: z.union([
     z.string(),
@@ -56,25 +88,31 @@ const RawVendorSchema = z.object({
     })
   ]).optional(),
   businessProfile: z.object({
+    _id: z.string().optional(),
     businessName: z.string().optional(),
     businessDescription: z.string().optional(),
+    businessRegType: z.string().optional(),
+    yearInBusiness: z.string().optional(),
     workdays: z.array(WorkdaySchema).optional(),
     contactInfo: z.object({
       primaryContactName: z.string().optional(),
       emailAddress: z.string().optional(),
       phoneNumber: z.string().optional(),
       addressId: AddressSchema
-    }).optional()
+    }).optional(),
+    serviceArea: z.object({
+      areaNames: z.array(z.object({
+        city: z.string().optional(),
+        state: z.string().optional(),
+        country: z.string().optional(),
+      })).optional(),
+      travelDistance: z.string().optional(),
+    }).optional(),
   }).optional(),
-  serviceCategory: z.object({
-    _id: z.string(),
-    name: z.string(),
-  }).optional(),
-  serviceSpecialty: z.object({
-    _id: z.string(),
-    name: z.string(),
-  }).optional(),
-  distanceKm: z.number().optional()
+  vendorServices: z.array(VendorServiceTagSchema).optional().default([]),
+  vendorSpecialties: z.array(VendorSpecialtySchema).optional().default([]),
+  distanceKm: z.number().optional(),
+  isActive: z.boolean().optional(),
 });
 
 const RawApiResponseSchema = z.object({
@@ -118,44 +156,55 @@ function formatWorkdays(workdays?: { dayOfWeek: string; open: string; close: str
 
 function mapRawToUIVendor(raw: RawVendor): Vendor {
   const userIdObj = getUserIdObject(raw.userId);
-  const name = raw.businessProfile?.businessName ||
-    (userIdObj?.firstName && userIdObj?.lastName ? `${userIdObj.firstName} ${userIdObj.lastName}` : "Unknown Vendor");
 
-  // Helper to extract URL from string or object
-  const getImageUrl = (photo: string | { url: string } | null | undefined): string | null => {
+  const getImageUrl = (photo: string | { url?: string } | null | undefined): string | null => {
     if (!photo) return null;
     if (typeof photo === 'string') return photo;
-    return photo.url;
+    return photo.url ?? null;
   };
 
-  const image = getImageUrl(raw.coverPhoto) || getImageUrl(raw.profilePhoto) || userIdObj?.avatar?.url || FALLBACK_IMAGE;
+  const coverImageUrl = getImageUrl(raw.coverPhoto) || getImageUrl(raw.profilePhoto) || userIdObj?.avatar?.url || FALLBACK_IMAGE;
 
-  // Build Service List
-  const services = [];
-  if (raw.serviceCategory?.name) services.push(raw.serviceCategory.name);
-  if (raw.serviceSpecialty?.name) services.push(raw.serviceSpecialty.name);
+  const bpRaw = raw.businessProfile as (typeof raw.businessProfile & { _id?: string; businessRegType?: string; yearInBusiness?: string; serviceArea?: { areaNames?: { city?: string; state?: string; country?: string }[]; travelDistance?: string } }) | undefined;
+
+  const coverPhotoMapped = typeof raw.coverPhoto === 'object' && raw.coverPhoto !== null
+    ? { _id: (raw.coverPhoto as { _id?: string })._id ?? '', url: (raw.coverPhoto as { url: string }).url }
+    : null;
+
+  const profilePhotoMapped = typeof raw.profilePhoto === 'object' && raw.profilePhoto !== null
+    ? { _id: (raw.profilePhoto as { _id?: string })._id ?? '', url: (raw.profilePhoto as { url: string }).url }
+    : null;
 
   return {
     _id: raw._id,
-    name: name,
-    slug: raw._id,
-    serviceCategory: raw.serviceCategory ? {
-      _id: raw.serviceCategory._id,
-      name: raw.serviceCategory.name,
-      description: "",
-      coverImage: ""
-    } : undefined,
-    serviceSpecialty: raw.serviceSpecialty ? {
-      _id: raw.serviceSpecialty._id,
-      name: raw.serviceSpecialty.name
-    } : undefined,
+    id: raw.id ?? raw._id,
+    slug: raw.id ?? raw._id,
+    name: bpRaw?.businessName ??
+      (userIdObj?.firstName && userIdObj?.lastName ? `${userIdObj.firstName} ${userIdObj.lastName}` : "Unknown Vendor"),
     rate: raw.rate ?? 0,
+    reviewCount: raw.reviewCount ?? 0,
     totalReviews: raw.reviewCount ?? 0,
-    coverImage: image,
+    coverImage: coverImageUrl,
+    coverPhoto: coverPhotoMapped,
+    profilePhoto: profilePhotoMapped,
+    businessProfile: bpRaw ? ({
+      _id: bpRaw._id ?? '',
+      businessName: bpRaw.businessName,
+      businessDescription: bpRaw.businessDescription,
+      businessRegType: bpRaw.businessRegType,
+      yearInBusiness: bpRaw.yearInBusiness,
+      workdays: bpRaw.workdays,
+      contactInfo: bpRaw.contactInfo,
+      serviceArea: bpRaw.serviceArea
+        ? { areaNames: bpRaw.serviceArea.areaNames ?? [], travelDistance: bpRaw.serviceArea.travelDistance }
+        : undefined,
+    } as Vendor['businessProfile']) : undefined,
     address: formatAddress(raw),
-    distanceKm: raw.distanceKm,
     workdays: formatWorkdays(raw.businessProfile?.workdays),
-    services: services
+    distanceKm: raw.distanceKm,
+    isActive: raw.isActive,
+    vendorServices: raw.vendorServices as Vendor['vendorServices'],
+    vendorSpecialties: raw.vendorSpecialties as Vendor['vendorSpecialties'],
   };
 }
 

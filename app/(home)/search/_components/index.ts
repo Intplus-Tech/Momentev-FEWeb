@@ -3,3 +3,4 @@ export * from "./PromotedVendorCard";
 export * from "./Pagination";
 export * from "./CategoryFilterBar";
 export * from "./SearchKeywordsInput";
+export * from "./FeaturedVendorsSearch";

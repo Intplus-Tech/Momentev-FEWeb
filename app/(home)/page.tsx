@@ -10,13 +10,16 @@ import StartEvent from "./_components/StartEvent/StartEvent";
 import PeopleFeel from "./_components/PeopleFeel/PeopleFeel";
 import NewMomentev from "./_components/NewMomentev/NewMomentev";
 import BrowseCategory from "./_components/BrowseCategory/BrowseCategory";
+import { getFeaturedVendorsAction } from "@/lib/actions/featured-vendors";
 
-const page = () => {
+const page = async () => {
+  const featuredVendors = await getFeaturedVendorsAction(10);
+
   return (
     <div>
       <Hero />
       <BelowHero />
-      <FeaturedVendors />
+      <FeaturedVendors vendors={featuredVendors} />
       <BookedServices />
       <GrowBusiness />
       <StartEvent />

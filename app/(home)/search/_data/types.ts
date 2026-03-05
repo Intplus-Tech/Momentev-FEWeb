@@ -1,38 +1,85 @@
+export interface VendorServiceTag {
+  _id: string;
+  vendorId: string;
+  serviceCategory: {
+    _id: string;
+    name: string;
+  };
+  tags: string[];
+  minimumBookingDuration?: string;
+  leadTimeRequired?: string;
+  maximumEventSize?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface VendorSpecialty {
+  _id: string;
+  vendorId: string;
+  serviceSpecialty: {
+    _id: string;
+    name: string;
+  };
+  priceCharge?: string;
+  price?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Vendor {
   _id: string;
-  name: string;
-  slug: string;
-  serviceCategory?: {
+  id: string;
+  slug?: string;
+  rate: number;
+  reviewCount: number;
+  coverPhoto?: { _id: string; url: string } | null;
+  profilePhoto?: { _id: string; url: string } | null;
+  portfolioGallery?: { _id: string; url: string }[];
+  businessProfile?: {
     _id: string;
-    name: string;
-    description: string;
-    coverImage: string;
-  }; // Populated
-  serviceSpecialty?: {
-    _id: string;
-    name: string;
-  }; // Populated
-  rate: number; // 0-5
-  totalReviews: number;
-  coverImage: string;
-  address: string;
+    businessName?: string;
+    yearInBusiness?: string;
+    businessRegType?: string;
+    businessDescription?: string;
+    workdays?: { dayOfWeek: string; open: string; close: string }[];
+    serviceArea?: {
+      areaNames: { city?: string; state?: string; country?: string }[];
+      travelDistance?: string;
+    };
+    contactInfo?: {
+      primaryContactName?: string;
+      emailAddress?: string;
+      phoneNumber?: string;
+      addressId?: {
+        _id: string;
+        street: string;
+        city?: string;
+        state?: string;
+        postalCode?: string;
+        country?: string;
+      };
+    };
+  };
+  vendorServices?: VendorServiceTag[];
+  vendorSpecialties?: VendorSpecialty[];
+  isActive?: boolean;
 
-  // Specific fields from /nearby or /search
-  distanceKm?: number; // returned by /nearby
+  // Specific fields from /nearby
+  distanceKm?: number;
 
-  // Potential other fields based on usage
-  bio?: string;
-  gallery?: string[];
-  workdays?: string; // Summary of availability
-
-  // UI Specific (Mapped)
-  services?: string[];
+  // Computed/mapped helpers kept for backwards compat
+  name?: string;         // mapped from businessProfile.businessName
+  address?: string;      // mapped from businessProfile.contactInfo.addressId
+  coverImage?: string;   // legacy
+  totalReviews?: number; // legacy alias for reviewCount
+  workdays?: string;     // legacy summary string
+  services?: string[];   // legacy
 }
 
 export interface VendorResponse {
   success: boolean;
   data: {
-    data: Vendor[]; // The actual list
+    data: Vendor[];
     total: number;
     page: number;
     limit: number;
@@ -44,7 +91,7 @@ export interface SearchFilters {
   q?: string;
   service?: string; // ID
   specialty?: string; // ID
-  sort?: string; // rate_desc, rate_asc, etc.
+  sort?: string;
   page?: number;
   limit?: number;
 }
@@ -54,6 +101,7 @@ export interface NearbyFilters extends SearchFilters {
   long: number;
   maxDistanceKm?: number;
 }
+
 
 // --- Vendor Details API Types ---
 
