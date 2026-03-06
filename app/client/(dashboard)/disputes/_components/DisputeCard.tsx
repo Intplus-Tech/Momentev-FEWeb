@@ -113,6 +113,8 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
           </div>
         </div>
 
+        <p>{dispute._id}</p>
+
         <div className="flex flex-col items-start sm:items-end gap-2">
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground font-medium">Disputed Amount:</span>
