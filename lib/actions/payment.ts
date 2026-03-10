@@ -41,17 +41,13 @@ export async function setPaymentModel(
       },
     );
 
-
-    console.log(`[PaymentAction] setPaymentModel response status: ${res.status}`);
-    const responseData = await res.json();
-    console.log("[PaymentAction] setPaymentModel response:", responseData);
+    const responseData = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error("setPaymentModel failed:", err);
+      console.error("setPaymentModel failed:", responseData);
       return {
         success: false,
-        error: err.message || "Failed to set payment model",
+        error: responseData.message || "Failed to set payment model",
       };
     }
 

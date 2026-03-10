@@ -46,7 +46,7 @@ export function StripeConnectCard() {
   // Loading state
   if (isLoading) {
     return (
-      <Card className="rounded-3xl border bg-white p-6">
+      <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
         <div className="flex items-center gap-3">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="text-sm text-muted-foreground">
@@ -60,7 +60,7 @@ export function StripeConnectCard() {
   // Error state
   if (isError) {
     return (
-      <Card className="rounded-3xl border bg-white p-6">
+      <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
         <div className="flex items-center gap-3 text-destructive">
           <AlertCircle className="h-5 w-5" />
           <span className="text-sm">
@@ -77,20 +77,20 @@ export function StripeConnectCard() {
     account?.detailsSubmitted;
 
   return (
-    <Card className="rounded-3xl border bg-white p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         {/* Left: Status info */}
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold text-foreground">
+            <h3 className="text-base font-semibold tracking-tight text-foreground">
               Stripe Connect
             </h3>
             {isFullyOnboarded ? (
-              <Badge variant="default" className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+              <Badge variant="default" className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
                 Connected
               </Badge>
             ) : (
-              <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100">
+              <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
                 Action Required
               </Badge>
             )}
@@ -119,7 +119,7 @@ export function StripeConnectCard() {
           <Button
             onClick={handleOnboard}
             disabled={onboarding.isPending}
-            className="shrink-0"
+            className="shrink-0 sm:min-w-44"
           >
             {onboarding.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -133,7 +133,7 @@ export function StripeConnectCard() {
             variant="outline"
             onClick={handleDashboard}
             disabled={dashboard.isPending}
-            className="shrink-0"
+            className="shrink-0 sm:min-w-44"
           >
              {dashboard.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

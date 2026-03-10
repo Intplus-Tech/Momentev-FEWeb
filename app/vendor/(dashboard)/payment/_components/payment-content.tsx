@@ -24,6 +24,7 @@ import { TransactionHistoryTable } from "./transaction-history-table";
 import { BankAccountCard } from "./bank-account-card";
 
 import type { SummaryMetric, PayoutHistoryRow, TransactionRow } from "../data";
+import { PaymentModelCard } from "./payment-model-card";
 
 // ── helpers ──────────────────────────────────────────────────
 
@@ -194,6 +195,7 @@ export function PaymentContent() {
           paymentMethods={paymentMethodsData.data.paymentMethods}
         />
       )}
+        <PaymentModelCard />
       <TransactionHistoryTable rows={transactionRows} meta={transactionMeta} />
       <PayoutHistoryTable rows={payoutRows} />
     </div>
