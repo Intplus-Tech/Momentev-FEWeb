@@ -29,9 +29,11 @@ export default function AboutHero() {
             the stress out of planning your perfect day.
           </p>
 
-          <Button size="lg" className="w-full md:w-auto px-8">
-            Learn More
-          </Button>
+          <Link href="/client/auth/log-in">
+            <Button size="lg" className="w-full md:w-auto px-8">
+              Learn More
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

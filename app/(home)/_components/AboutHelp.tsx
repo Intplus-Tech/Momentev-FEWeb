@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 
 export default function AboutHelp() {
@@ -11,6 +12,7 @@ export default function AboutHelp() {
             align="start"
             title="Looking to showcase your talent to the right clients?"
             link="Join our vendors listing"
+            href="/vendor/auth/log-in"
           />
 
           <Divider />
@@ -19,6 +21,7 @@ export default function AboutHelp() {
             align="center"
             title="Frustrated with slow referrals and hard-to-find event professionals?"
             link="Browse our catalogue"
+            href="/search"
           />
 
           <Divider />
@@ -27,6 +30,7 @@ export default function AboutHelp() {
             align="end"
             title="Want more visibility and bookings?"
             link="Get started"
+            href="/client/auth/log-in"
           />
         </div>
       </div>
@@ -38,9 +42,10 @@ type HelpCardProps = {
   align: "start" | "center" | "end";
   title: string;
   link: string;
+  href: string;
 };
 
-function HelpCard({ align, title, link }: HelpCardProps) {
+function HelpCard({ align, title, link, href }: HelpCardProps) {
   const alignment =
     align === "start"
       ? "md:text-left"
@@ -49,13 +54,13 @@ function HelpCard({ align, title, link }: HelpCardProps) {
       : "md:text-center";
 
   return (
-    <div className={`space-y-4 text-center ${alignment}`}>
+    <div className={`flex-1 space-y-4 text-center ${alignment}`}>
       <h3 className="text-2xl text-foreground font-semibold leading-snug">
         {title}
       </h3>
-      <a href="#" className="text-lg text-primary underline font-medium">
+      <Link href={href} className="text-lg text-primary underline font-medium">
         {link}
-      </a>
+      </Link>
     </div>
   );
 }
