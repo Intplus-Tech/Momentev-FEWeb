@@ -1,9 +1,9 @@
       "use client";
 
 import { Suspense } from "react";
-import { QuotesDashboard } from "./_components/quotes-dashboard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { QuotesDashboard } from "@/app/vendor/(dashboard)/quotes/_components/quotes-dashboard";
 
 function LoadingSkeleton() {
   return (

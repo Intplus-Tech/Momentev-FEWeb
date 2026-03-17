@@ -127,10 +127,10 @@ export default function ClientDashboardPage() {
       .slice(0, 4)
       .map((v) => ({
         _id: v._id,
-        name: v.name,
-        slug: v.slug,
+        name: v.name ?? "",
+        slug: v.slug ?? "",
         coverImage: v.coverImage || "",
-        categoryName: v.serviceCategory?.name || "",
+        categoryName: v.vendorServices?.[0]?.serviceCategory?.name || "",
         rate: v.rate || 0,
         address: v.address || "",
       }));
