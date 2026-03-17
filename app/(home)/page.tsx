@@ -24,7 +24,7 @@ const page = async () => {
       <GrowBusiness />
       <StartEvent />
       <PeopleFeel />
-      <NewMomentev />
+      {/* <NewMomentev /> */}
       <BrowseCategory />
     </div>
   );

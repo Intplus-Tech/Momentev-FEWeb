@@ -165,7 +165,7 @@ export function VendorHeader({
 
       {/* Action Buttons */}
       {showActions && (
-        <div className="flex gap-3">
+        <div id="book-vendor" className="flex gap-3">
           <Button
             className="flex-1 h-11"
             onClick={handleBook}

@@ -120,7 +120,9 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
 
           {/* Book Button */}
           <div className="flex md:flex-col md:items-end md:justify-center">
-            <Button className="w-full md:w-auto">Book Service</Button>
+            <Link href={`/search/${slug}#book-vendor`}>
+              <Button className="w-full md:w-auto">Book Service</Button>
+            </Link>
           </div>
         </div>
       </div>

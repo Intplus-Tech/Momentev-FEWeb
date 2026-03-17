@@ -56,7 +56,7 @@ export default function FaqHero() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="bg-[#F0F0F0] min-h-screen py-16 md:py-24">
+    <section className="min-h-screen py-16 md:py-24">
       <div className="max-w-4xl mx-auto px-4 md:px-8 space-y-10">
         {/* Breadcrumbs */}
         <nav className="flex items-center gap-2 text-sm">
@@ -93,7 +93,7 @@ export default function FaqHero() {
                 <span className="text-base md:text-lg font-medium text-foreground pr-4">
                   {faq.question}
                 </span>
-                <span className="text-primary flex-shrink-0">
+                <span className="text-primary shrink-0">
                   {openIndex === index ? (
                     <Minus className="w-5 h-5" />
                   ) : (

@@ -6,7 +6,7 @@ import Link from "next/link";
 
 export default function AboutHero() {
   return (
-    <section className="bg-[#F0F0F0] py-16 md:py-24">
+    <section className="py-16 md:py-24">
       <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-8">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm">
