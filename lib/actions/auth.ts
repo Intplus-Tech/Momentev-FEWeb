@@ -228,6 +228,77 @@ export async function getGoogleAuthUrl(role?: 'customer' | 'vendor') {
 }
 
 /**
+ * Request a password reset email
+ * POST /api/v1/auth/forgot-password
+ */
+export async function forgotPassword(email: string) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return { success: false, error: 'Too many requests. Please wait a moment and try again.' };
+      }
+      const message = (data as { message?: string } | null)?.message;
+      return { success: false, error: message || `Request failed (${response.status})` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+/**
+ * Reset password using token from email link
+ * POST /api/v1/auth/reset-password
+ */
+export async function resetPassword(token: string, newPassword: string) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, newPassword }),
+      cache: 'no-store',
+    });
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        return { success: false, error: 'Reset link is invalid or has expired. Please request a new one.' };
+      }
+      if (response.status === 429) {
+        return { success: false, error: 'Too many requests. Please wait a moment and try again.' };
+      }
+      const message = (data as { message?: string } | null)?.message;
+      return { success: false, error: message || `Reset failed (${response.status})` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+/**
  * Logout - clears auth cookies and redirects to login page
  */
 export async function logout(redirectTo: string = '/client/auth/log-in') {

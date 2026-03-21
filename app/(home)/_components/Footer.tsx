@@ -17,17 +17,32 @@ export default function Footer() {
           <Logo variant="white" className="text-white text-[54px]" />
 
           <div className="flex gap-3">
-            <button className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity">
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity"
+            >
               <Twitter className="text-white w-6 h-6" />
-            </button>
+            </a>
 
-            <button className="flex items-center justify-center w-11 h-11 rounded-full bg-primary hover:bg-primary/90 transition-colors">
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-11 h-11 rounded-full bg-primary hover:bg-primary/90 transition-colors"
+            >
               <Facebook className="text-white w-6 h-6" />
-            </button>
+            </a>
 
-            <button className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity">
+            <a
+              href="https://instagram.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center w-11 h-11 hover:opacity-80 transition-opacity"
+            >
               <Instagram className="text-white w-6 h-6" />
-            </button>
+            </a>
           </div>
         </div>
 
