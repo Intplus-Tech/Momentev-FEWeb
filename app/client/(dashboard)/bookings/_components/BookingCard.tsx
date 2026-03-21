@@ -309,7 +309,7 @@ export function BookingCard({
               variant="link"
               size="sm"
               className="px-0 sm:px-2 text-primary"
-              onClick={() => setIsDetailsOpen(true)}
+              onClick={() => router.push(`/client/bookings/${booking._id}`)}
             >
               View Details
             </Button>

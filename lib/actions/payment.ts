@@ -61,9 +61,6 @@ export async function setPaymentModel(
 /**
  * Create Stripe Connected Account
  * POST /api/v1/vendors/{vendorId}/stripe-account
- *
- * TODO: Re-integrate with real Stripe API when keys are available
- * Currently mocked to allow completing the vendor setup flow
  */
 export async function createStripeAccount(): Promise<
   PaymentActionResponse<{ stripeAccountId: string }>
