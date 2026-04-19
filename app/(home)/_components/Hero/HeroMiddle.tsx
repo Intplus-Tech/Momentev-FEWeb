@@ -9,7 +9,6 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   Search,
   MapPin,
@@ -17,9 +16,8 @@ import {
   X,
   Navigation,
   Loader2,
-  Sparkles,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
@@ -34,23 +32,8 @@ const radiusOptions = [
   { value: 100, label: "100 km" },
 ];
 
-// Fallback services for typewriter effect
-const fallbackServices = [
-  "Makeup Artists",
-  "Caterers",
-  "Photographers",
-  "DJs",
-  "Decorators",
-];
-
-interface HeroMiddleProps {
-  onServiceChange?: (index: number) => void;
-}
-
-export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
-  const [currentServiceIndex, setCurrentServiceIndex] = useState(0);
-  const [displayText, setDisplayText] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
+export default function HeroMiddle() {
+  const [showSearch, setShowSearch] = useState(false);
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,49 +48,9 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
   const router = useRouter();
 
   // Fetch categories from backend
-  const { data: categoriesData, isLoading: isCategoriesLoading } =
-    useServiceCategories();
+  const { data: categoriesData } = useServiceCategories();
   // Access the nested data array from the paginated response
   const categories: ServiceCategory[] = categoriesData?.data?.data || [];
-
-  // Use category names for typewriter effect
-  const services =
-    categories.length > 0
-      ? categories.slice(0, 5).map((c) => c.name)
-      : fallbackServices;
-
-  // Notify parent when service index changes
-  useEffect(() => {
-    onServiceChange?.(currentServiceIndex);
-  }, [currentServiceIndex, onServiceChange]);
-
-  // Typewriter effect
-  useEffect(() => {
-    const currentService = services[currentServiceIndex] || "Vendors";
-    const typingSpeed = isDeleting ? 50 : 100;
-    const pauseDuration = 2000;
-
-    if (!isDeleting && displayText === currentService) {
-      const timeout = setTimeout(() => setIsDeleting(true), pauseDuration);
-      return () => clearTimeout(timeout);
-    }
-
-    if (isDeleting && displayText === "") {
-      setIsDeleting(false);
-      setCurrentServiceIndex((prev) => (prev + 1) % services.length);
-      return;
-    }
-
-    const timeout = setTimeout(() => {
-      if (isDeleting) {
-        setDisplayText(currentService.substring(0, displayText.length - 1));
-      } else {
-        setDisplayText(currentService.substring(0, displayText.length + 1));
-      }
-    }, typingSpeed);
-
-    return () => clearTimeout(timeout);
-  }, [displayText, isDeleting, currentServiceIndex, services]);
 
   // Request user's geolocation
   const handleGetLocation = () => {
@@ -190,154 +133,150 @@ export default function HeroMiddle({ onServiceChange }: HeroMiddleProps) {
   };
 
   return (
-    <section className="w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-      <div className="max-w-5xl w-full mx-auto text-center space-y-6 md:space-y-4">
-        <h1 className="text-white text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">
-          <span>Book Trusted</span> <br className="md:hidden" />
-          <span className="text-yellow-400 underline underline-offset-4 decoration-2">
-            {displayText}
-          </span>{" "}
-          <br className="md:hidden" />
-          In Minutes.
+    <section className="w-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 py-10 md:py-14">
+      <div className="max-w-5xl w-full mx-auto text-center space-y-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight">
+          <span className="bg-linear-to-r from-[#f6f2d5] via-[#f3ea8f] to-[#e8ef75] bg-clip-text text-transparent">
+            Plan with Confidence.
+            <br />
+            Grow with Confidence.
+          </span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-white/80 text-sm sm:text-base lg:text-lg px-4 max-w-3xl mx-auto">
-          Discover, compare, and secure caterers, photographers, and more—all in
-          one place.
+        <p className="text-white/85 text-sm sm:text-base lg:text-2xl px-4 max-w-3xl mx-auto tracking-wide">
+          MOMENTEV connects individuals with rigorously verified vendors, with
+          secure looking for trusted reviews.
         </p>
 
-        {/* Search bar */}
-        <div className="w-full max-w-3xl mx-auto">
-          <div className="flex flex-col sm:flex-row bg-white shadow-lg overflow-visible">
-            {/* Search input */}
-            <div className="relative flex-1">
-              <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-100">
-                <Search className="shrink-0 w-5 h-5 text-gray-400" />
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearch();
+        <div className="pt-2">
+          {!showSearch ? (
+            <div className="flex flex-wrap items-center justify-center gap-3 text-white/90">
+              <Button
+                onClick={() => setShowSearch(true)}
+                className="h-11 px-8 rounded-md bg-blue-600 hover:bg-blue-500 text-white"
+              >
+                Find Vendor
+              </Button>
+              <p className="text-sm sm:text-base">or Let&apos;s find the right vendor for you.</p>
+            </div>
+          ) : (
+            <div id="hero-search-anchor" className="w-full max-w-4xl mx-auto space-y-3">
+              <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-md shadow-2xl overflow-hidden border border-black/10">
+                <div className="relative flex-1">
+                  <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-200">
+                    <Search className="shrink-0 w-4 h-4 text-gray-400" />
+                    <Input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleSearch();
+                        }
+                      }}
+                      placeholder="Search..."
+                      className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 text-sm placeholder:text-gray-400"
+                    />
+                    {searchQuery && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X className="w-4 h-4 text-gray-400" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="w-full sm:w-52 border-b sm:border-b-0 sm:border-r border-gray-200">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="w-full h-full min-h-12 py-2 px-4 rounded-none justify-between font-normal text-gray-600 hover:bg-gray-50"
+                      >
+                        <span className="flex items-center gap-2">
+                          {isLocating ? (
+                            <Loader2 className="w-4 h-4 text-gray-500 animate-spin" />
+                          ) : (
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                          )}
+                          <span className="text-sm">
+                            {isLocating ? "Locating..." : locationLabel}
+                          </span>
+                        </span>
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="min-w-50">
+                      <DropdownMenuItem
+                        onClick={handleGetLocation}
+                        disabled={isLocating}
+                        className="gap-2"
+                      >
+                        <Navigation className="w-4 h-4" />
+                        Use my location
+                      </DropdownMenuItem>
+
+                      {userLat && userLong && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                            Search radius
+                          </div>
+                          {radiusOptions.map((option) => (
+                            <DropdownMenuItem
+                              key={option.value}
+                              onClick={() => setSelectedRadius(option.value)}
+                              className={
+                                selectedRadius === option.value
+                                  ? "bg-primary/10 text-primary font-medium"
+                                  : ""
+                              }
+                            >
+                              {option.label}
+                            </DropdownMenuItem>
+                          ))}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={handleClearLocation}
+                            className="text-muted-foreground"
+                          >
+                            Clear location
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <Button
+                  onClick={handleSearch}
+                  className="sm:rounded-none sm:rounded-r-md rounded-none h-12 px-7 bg-blue-600 hover:bg-blue-500"
+                >
+                  Search
+                </Button>
+              </div>
+
+              <p className="text-white/90 text-sm text-center">
+                Not sure what to search for? Let&apos;s{" "}
+                <button
+                  type="button"
+                  className="text-yellow-300 hover:text-yellow-200 underline underline-offset-2"
+                  onClick={() => {
+                    if (categories.length > 0) {
+                      handleCategoryClick(categories[0]._id);
                     }
                   }}
-                  placeholder="Find a vendor for your event"
-                  className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 text-sm md:text-base placeholder:text-gray-400"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 shrink-0"
-                    onClick={() => {
-                      setSearchQuery("");
-                    }}
-                  >
-                    <X className="w-4 h-4 text-gray-400" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            {/* Divider for desktop */}
-            <div className="hidden sm:block w-px bg-gray-100" />
-
-            {/* Location dropdown + Find button */}
-            <div className="flex items-center gap-3 px-4 py-3">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="h-auto py-1.5 px-2 gap-2 hover:bg-gray-50 font-normal"
-                  >
-                    {isLocating ? (
-                      <Loader2 className="w-5 h-5 text-gray-500 animate-spin" />
-                    ) : (
-                      <MapPin className="w-5 h-5 text-gray-500" />
-                    )}
-                    <span className="text-sm md:text-base whitespace-nowrap">
-                      {isLocating ? "Locating..." : locationLabel}
-                    </span>
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="min-w-[200px]">
-                  <DropdownMenuItem
-                    onClick={handleGetLocation}
-                    disabled={isLocating}
-                    className="gap-2"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    Use my location
-                  </DropdownMenuItem>
-
-                  {userLat && userLong && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                        Search radius
-                      </div>
-                      {radiusOptions.map((option) => (
-                        <DropdownMenuItem
-                          key={option.value}
-                          onClick={() => setSelectedRadius(option.value)}
-                          className={
-                            selectedRadius === option.value
-                              ? "bg-primary/10 text-primary font-medium"
-                              : ""
-                          }
-                        >
-                          {option.label}
-                        </DropdownMenuItem>
-                      ))}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleClearLocation}
-                        className="text-muted-foreground"
-                      >
-                        Clear location
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <Button
-                onClick={handleSearch}
-                className="flex-1 sm:flex-none sm:px-6 min-w-34"
-              >
-                Find
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Browse text */}
-        <p className="text-white text-sm sm:text-base">
-          or Browse Featured Category
-        </p>
-
-        {/* Categories */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 px-4">
-          {isCategoriesLoading
-            ? // Loading skeletons
-              Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="h-10 w-28 rounded-full bg-white/20"
-                />
-              ))
-            : categories.slice(0, 4).map((category) => (
-                <Button
-                  key={category._id}
-                  onClick={() => handleCategoryClick(category._id)}
-                  className="bg-black/10 hover:bg-black/50 backdrop-blur-sm py-2 px-4 sm:px-5 rounded-full text-xs sm:text-sm text-white transition-colors"
                 >
-                  {category.name.split(" ")[0]}
-                </Button>
-              ))}
+                  Post Your Event
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>

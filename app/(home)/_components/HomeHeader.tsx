@@ -149,9 +149,17 @@ function HomeHeaderContent() {
 
     const handleScroll = () => {
       const scrollY = window.scrollY;
-      // Switch to complex header when hero search scrolls out of view (~40% of viewport)
-      const searchOutOfView = window.innerHeight * 0.4;
-      setIsScrolledPastHero(scrollY > searchOutOfView);
+      // Prefer the hero search anchor as the transition trigger when it is visible.
+      const searchAnchor = document.getElementById("hero-search-anchor");
+
+      if (searchAnchor) {
+        const rect = searchAnchor.getBoundingClientRect();
+        setIsScrolledPastHero(rect.top < 64);
+      } else {
+        const searchOutOfView = window.innerHeight * 0.4;
+        setIsScrolledPastHero(scrollY > searchOutOfView);
+      }
+
       setIsScrolledSlightly(scrollY > 50);
     };
 
