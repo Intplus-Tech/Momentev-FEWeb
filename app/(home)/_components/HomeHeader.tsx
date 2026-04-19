@@ -318,83 +318,81 @@ function HomeHeaderContent() {
       {showSimpleHeader ? (
         /* ---- SIMPLE HEADER (Transparent, Home Hero) ---- */
         <nav
-          className={`fixed top-0 left-0 right-0 flex items-center justify-between px-4 sm:px-6 lg:px-20 py-4 lg:py-6 z-50 transition-colors duration-300 ${
-            isScrolledSlightly
-              ? "bg-black/20 backdrop-blur-md"
-              : "bg-transparent"
-          }`}
-          style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
+          className={`fixed top-4 2xl:max-w-7xl max-w-[80%] mx-auto rounded-full left-0 right-0 z-50 transition-colors duration-300 ${isScrolledSlightly
+            ? "bg-black/45 backdrop-blur-md"
+            : "bg-black/30 backdrop-blur-sm"
+            }`}
+        // style={{ paddingTop: "max(1rem, env(safe-area-inset-top))" }}
         >
-          <Logo variant="mixed" className="text-white" />
+          <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10 h-16 lg:h-20 flex items-center justify-between relative">
+            <Logo variant="mixed" className="text-white shrink-0" />
 
-          {/* Desktop Nav */}
-          <ul className="hidden lg:flex items-center gap-4 xl:gap-6 text-white text-sm">
-            {isUserLoading ? (
-              <>
-                <Skeleton className="h-10 w-32 bg-white/20" />
-                <Skeleton className="h-10 w-32 bg-white/20" />
-              </>
-            ) : (
-              <>
-                {(!user || user.role === "CUSTOMER") && (
-                  <li>
-                    <Link
-                      href="/client/custom-request"
-                      className="relative inline-flex px-3 py-2 font-medium group"
-                    >
-                      <span className="relative z-10 transition-colors duration-200 group-hover:text-primary">
-                        Post A Request
-                      </span>
-                      <span className="absolute inset-0 bg-white/0 rounded-lg transition-all duration-200 group-hover:bg-white/10" />
-                    </Link>
-                  </li>
-                )}
-
-                {user ? (
-                  <li>
-                    <UserDropdown user={user} />
-                  </li>
+            {/* Desktop center nav link */}
+            <div className="flex items-center gap-3 xl:gap-4">
+              <div className="hidden lg:flex items-center">
+                {isUserLoading ? (
+                  <Skeleton className="h-8 w-28 bg-white/20" />
                 ) : (
-                  <li>
-                    <Button
-                      className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/20 transition-all duration-200 hover:shadow-lg"
-                      asChild
-                    >
-                      <Link href="/client/auth/log-in">
-                        <CircleUserIcon className="w-4 h-4" />
-                        <span className="hidden xl:inline">
-                          Sign in/Sign up
-                        </span>
-                        <span className="xl:hidden">Sign in</span>
-                      </Link>
-                    </Button>
-                  </li>
-                )}
-
-                {!user && (
-                  <li>
+                  (!user || user.role === "CUSTOMER") && (
                     <Button
                       asChild
-                      className="transition-all duration-200 hover:shadow-lg"
+                      variant={"link"}
                     >
-                      <Link href="/vendor/auth/sign-up">
-                        List your Business
+                      <Link
+                        href="/client/custom-request"
+                        className="text-sm text-white/95 hover:text-white transition-colors duration-200"
+                      >
+                        Post A Request
                       </Link>
                     </Button>
-                  </li>
+                  )
                 )}
-              </>
-            )}
-          </ul>
+              </div>
 
-          {/* Mobile Hamburger */}
-          <button
-            className="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="w-6 h-6 text-white" />
-          </button>
+              {/* Desktop right actions */}
+              <div className="hidden lg:flex items-center gap-3 xl:gap-4 text-white">
+                {isUserLoading ? (
+                  <>
+                    <Skeleton className="h-8 w-16 bg-white/20" />
+                    <Skeleton className="h-10 w-32 rounded-full bg-white/20" />
+                  </>
+                ) : user ? (
+                  <UserDropdown user={user} />
+                ) : (
+                  <>
+                    <Button
+                      asChild
+                      variant={'ghost'}
+                      size={"lg"}
+                      className="transition-colors duration-200 bg-white/15 px-4"
+                    >
+                      <Link
+                        href="/client/auth/log-in"
+                      >
+                        Sign In
+                      </Link>
+                    </Button>
+                    <Button
+                      asChild
+                      size={"lg"}
+                      className="rounded-l-md rounded-r-4xl pr-4"
+                    >
+                      <Link href="/vendor/auth/sign-up">List Your Business</Link>
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Mobile Hamburger */}
+            <button
+              className="lg:hidden relative w-11 h-11 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors duration-200"
+              onClick={() => setMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu className="w-6 h-6 text-white" />
+            </button>
+          </div>
         </nav>
       ) : (
         /* ---- COMPLEX HEADER (Search & Filters) ---- */
@@ -537,11 +535,10 @@ function HomeHeaderContent() {
                                 onClick={() =>
                                   handleCategoryClick(category._id)
                                 }
-                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${
-                                  isActive
-                                    ? "bg-primary/10 text-primary border-primary/20 font-medium"
-                                    : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                                }`}
+                                className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${isActive
+                                  ? "bg-primary/10 text-primary border-primary/20 font-medium"
+                                  : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                                  }`}
                               >
                                 {category.name}
                               </button>

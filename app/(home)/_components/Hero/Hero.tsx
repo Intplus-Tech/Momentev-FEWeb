@@ -19,7 +19,7 @@ const Hero = () => {
 
   return (
     <section className="relative min-h-screen md:min-h-fit xl:min-h-screen w-full font-inter flex flex-col overflow-hidden">
-      {/* Dynamic Background Images with Crossfade */}
+      {/* Dynamic Background Images with Crossfade */}  
       {serviceBackgrounds.map((bg, index) => (
         <div
           key={index}
