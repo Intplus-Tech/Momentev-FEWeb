@@ -42,22 +42,17 @@ export function UserDropdown({ user }: UserDropdownProps) {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="outline"
-          className="relative flex h-10 items-center gap-3 rounded-full pl-1 pr-4 border-black/50 shadow-none transition-colors hover:bg-transparent hover:border-primary focus-visible:border-primary focus-visible:bg-transparent focus-visible:text-primary data-[state=open]:bg-transparent data-[state=open]:border-primary data-[state=open]:text-primary"
-        >
-          <Avatar className="h-8 w-8 border border-black shadow-sm">
-            <AvatarImage src={user.avatar?.url} alt={user.firstName} />
-            <AvatarFallback className="bg-muted text-primary text-xs font-semibold">
-              {user.firstName?.[0]}
-              {user.lastName?.[0]}
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden font-medium md:block group-data-[state=open]:text-white">
-            {user.firstName}
-          </span>
-        </Button>
+      <DropdownMenuTrigger className="flex items-center space-x-2 group focus:outline-none focus:text-foreground data-open:text-foreground  transition-colors                                   ">
+        <Avatar className="h-8 w-8 border border-black shadow-sm">
+          <AvatarImage src={user.avatar?.url} alt={user.firstName} />
+          <AvatarFallback className="bg-muted text-primary text-xs font-semibold">
+            {user.firstName?.[0]}
+            {user.lastName?.[0]}
+          </AvatarFallback>
+        </Avatar>
+        {/* <span className="hidden font-medium md:block group-data-[state=open]:text-white">
+          {user.firstName}
+        </span> */}
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
