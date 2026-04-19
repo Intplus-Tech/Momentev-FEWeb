@@ -28,9 +28,13 @@ export default function BrowseCategory() {
   ];
 
   return (
-    <section className="bg-white w-full">
-      <div className="container max-w-6xl mx-auto py-10 px-4 flex flex-col space-y-8">
-        <p className="font-semibold text-lg ml-2 md:ml-0">Browse By Category</p>
+    <section className="bg-bg py-16 w-full relative overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[url('/assets/bg-images/shadow-bg.png')] bg-cover bg-center bg-no-repeat opacity-80 pointer-events-none"
+      />
+      <div className="container max-w-7xl mx-auto py-10 px-4 flex flex-col space-y-8 relative z-10">
+        <p className="font-semibold text-lg xl:text-2xl ml-2 md:ml-0">Browse By Category</p>
 
         {/* Cards container */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 md:gap-8 lg:gap-12 justify-items-center">
@@ -43,8 +47,8 @@ export default function BrowseCategory() {
               <Image
                 src={vendor.img}
                 alt={vendor.name}
-                width={200}
-                height={200}
+                width={300}
+                height={300}
                 className="rounded-2xl object-cover transition-transform duration-300 group-hover:scale-105"
               />
 

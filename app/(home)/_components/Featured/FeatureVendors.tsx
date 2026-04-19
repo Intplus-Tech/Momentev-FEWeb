@@ -21,11 +21,15 @@ export default function FeaturedVendors({ vendors }: FeaturedVendorsProps) {
   if (vendors.length === 0) return null;
 
   return (
-    <section className="bg-white">
-      <div className="max-w-8xl mx-auto px-6 md:px-0 py-10 flex flex-col items-center space-y-6 relative">
+    <section className="bg-background py-16 relative overflow-hidden">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 bg-[url('/assets/bg-images/shadow-bg.png')] bg-cover bg-center bg-no-repeat opacity-80 pointer-events-none"
+      />
+      <div className="max-w-8xl mx-auto px-6 md:px-0 py-10 flex flex-col items-center space-y-6 relative z-10">
         {/* Title */}
-        <div className="w-full flex items-center justify-between max-w-6xl md:px-10 xl:px-5">
-          <p className="font-semibold text-lg">Featured Vendors</p>
+        <div className="w-full flex items-center justify-between max-w-7xl md:px-10 xl:px-0">
+          <p className="font-semibold text-lg xl:text-2xl">Featured Vendors</p>
         </div>
 
         {/* Carousel */}
@@ -44,12 +48,15 @@ export default function FeaturedVendors({ vendors }: FeaturedVendorsProps) {
           >
             <CarouselContent className="-ml-5">
               {vendors.map((vendor) => (
-                <CarouselItem key={vendor.id} className="pl-5 basis-auto">
+                <CarouselItem
+                  key={vendor.id}
+                  className="pl-5 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4"
+                >
                   <Link
                     href={`/search/${vendor.slug}`}
-                    className="block w-50 xl:w-64.5 shrink-0 group"
+                    className="block w-full shrink-0 group"
                   >
-                    <div className="relative w-50 xl:w-64.5 h-50 xl:h-64.5 rounded-2xl overflow-hidden mb-3">
+                    <div className="relative w-full aspect-square rounded-2xl overflow-hidden mb-3">
                       <Image
                         src={vendor.image}
                         alt={vendor.name}
@@ -82,7 +89,7 @@ export default function FeaturedVendors({ vendors }: FeaturedVendorsProps) {
                 </CarouselItem>
               ))}
             </CarouselContent>
-            <div className="flex items-center gap-4 absolute -top-10 right-10 xl:right-44">
+            <div className="flex items-center gap-4 absolute -top-10 right-10 md:right-24 xl:right-44">
               <CarouselPrevious />
               <CarouselNext />
             </div>
