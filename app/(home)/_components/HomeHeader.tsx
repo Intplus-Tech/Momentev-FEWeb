@@ -6,8 +6,10 @@ import { useMotionValue, useTransform } from "framer-motion";
 
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
+import { useSearchSuggestions } from "@/hooks/api/use-search-suggestions";
 import { useLocation } from "@/hooks/use-location";
 import { logout } from "@/lib/actions/auth";
+import { addRecentSearch } from "@/lib/search/recent-searches";
 
 import { AuthChoiceModal } from "./home-header/AuthChoiceModal";
 import { ComplexHeader } from "./home-header/ComplexHeader";
@@ -46,12 +48,18 @@ function HomeHeaderContent() {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { data: categoriesData, isLoading: isCategoriesLoading } =
     useServiceCategories();
 
   const categories = categoriesData?.data?.data || [];
+  const {
+    suggestions,
+    isLoading: isSuggestionsLoading,
+    refreshRecentSearches,
+  } = useSearchSuggestions(searchQuery);
 
   useEffect(() => {
     if (userLat && userLong) {
@@ -184,6 +192,12 @@ function HomeHeaderContent() {
   };
 
   const handleSearch = () => {
+    if (searchQuery.trim()) {
+      addRecentSearch(searchQuery);
+      refreshRecentSearches();
+    }
+
+    setShowSuggestions(false);
     const params = new URLSearchParams();
 
     if (searchQuery.trim()) {
@@ -213,6 +227,7 @@ function HomeHeaderContent() {
   };
 
   const handleCategoryClick = (categoryId: string) => {
+    setShowSuggestions(false);
     const params = new URLSearchParams(searchParams.toString());
 
     if (selectedCategory === categoryId) {
@@ -271,6 +286,23 @@ function HomeHeaderContent() {
     router.push(getAuthPath(selectedAuthRole, mode));
   };
 
+  const handleSuggestionSelect = (value: string) => {
+    const nextQuery = value.trim();
+    if (!nextQuery) {
+      return;
+    }
+
+    setSearchQuery(nextQuery);
+    addRecentSearch(nextQuery);
+    refreshRecentSearches();
+    setShowSuggestions(false);
+
+    const params = new URLSearchParams();
+    params.set("q", nextQuery);
+    params.set("page", "1");
+    router.push(`/search?${params.toString()}`);
+  };
+
   return (
     <>
       {showSimpleHeader ? (
@@ -288,7 +320,15 @@ function HomeHeaderContent() {
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           onSearchKeyDown={handleKeyDown}
+          onSearchFocus={() => setShowSuggestions(true)}
+          onSearchBlur={() => {
+            window.setTimeout(() => setShowSuggestions(false), 120);
+          }}
           onSearch={handleSearch}
+          showSuggestions={showSuggestions && searchQuery.trim().length > 0}
+          isSuggestionsLoading={isSuggestionsLoading}
+          suggestions={suggestions}
+          onSuggestionSelect={handleSuggestionSelect}
           userLat={userLat}
           userLong={userLong}
           locationSelector={

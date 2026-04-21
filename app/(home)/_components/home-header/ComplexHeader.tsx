@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserDropdown } from "../UserDropdown";
 import type { UserProfile } from "@/types/auth";
 import type { ServiceCategory } from "@/types/service";
+import type { SearchSuggestion } from "@/hooks/api/use-search-suggestions";
 
 import type { AuthIntent } from "./types";
 
@@ -29,7 +30,13 @@ type ComplexHeaderProps = {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   onSearchKeyDown: (e: React.KeyboardEvent) => void;
+  onSearchFocus: () => void;
+  onSearchBlur: () => void;
   onSearch: () => void;
+  showSuggestions: boolean;
+  isSuggestionsLoading: boolean;
+  suggestions: SearchSuggestion[];
+  onSuggestionSelect: (value: string) => void;
   userLat?: number | null;
   userLong?: number | null;
   locationSelector: React.ReactNode;
@@ -53,7 +60,13 @@ export function ComplexHeader({
   searchQuery,
   onSearchQueryChange,
   onSearchKeyDown,
+  onSearchFocus,
+  onSearchBlur,
   onSearch,
+  showSuggestions,
+  isSuggestionsLoading,
+  suggestions,
+  onSuggestionSelect,
   userLat,
   userLong,
   locationSelector,
@@ -101,29 +114,66 @@ export function ComplexHeader({
         <Logo />
 
         <div className="hidden md:flex flex-1 items-center justify-center max-w-2xl mx-4">
-          <div className="flex items-center h-12 w-full rounded-lg border border-border focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
-            <div className="flex items-center gap-2 flex-1 px-4 py-2">
-              <Search className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => onSearchQueryChange(e.target.value)}
-                onKeyDown={onSearchKeyDown}
-                placeholder="Search vendors..."
-                className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent placeholder:text-muted-foreground"
-              />
+          <div className="relative w-full">
+            <div className="flex items-center h-12 w-full rounded-lg border border-border focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+              <div className="flex items-center gap-2 flex-1 px-4 py-2">
+                <Search className="w-4 h-4 text-muted-foreground shrink-0" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => onSearchQueryChange(e.target.value)}
+                  onKeyDown={onSearchKeyDown}
+                  onFocus={onSearchFocus}
+                  onBlur={onSearchBlur}
+                  placeholder="Search vendors..."
+                  className="border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-0 text-sm bg-transparent placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div className="w-px h-6 bg-border" />
+
+              {locationSelector}
+
+              <Button
+                onClick={onSearch}
+                className="rounded-l-none rounded-r-lg px-6 min-w-40 border-none h-full"
+              >
+                {userLat && userLong ? "Apply" : "Find"}
+              </Button>
             </div>
 
-            <div className="w-px h-6 bg-border" />
-
-            {locationSelector}
-
-            <Button
-              onClick={onSearch}
-              className="rounded-l-none rounded-r-lg px-6 min-w-40 border-none h-full"
-            >
-              {userLat && userLong ? "Apply" : "Find"}
-            </Button>
+            {showSuggestions && (
+              <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full rounded-lg border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+                <div className="max-h-72 overflow-y-auto py-1">
+                  {isSuggestionsLoading && suggestions.length === 0 ? (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      Loading suggestions...
+                    </p>
+                  ) : suggestions.length > 0 ? (
+                    suggestions.map((suggestion) => (
+                      <button
+                        key={`${suggestion.source}-${suggestion.value}`}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          onSuggestionSelect(suggestion.value);
+                        }}
+                      >
+                        <span>{suggestion.value}</span>
+                        <span className="ml-2 text-xs text-muted-foreground capitalize">
+                          {suggestion.source}
+                        </span>
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-muted-foreground">
+                      No suggestions yet.
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

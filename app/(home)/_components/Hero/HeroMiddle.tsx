@@ -21,7 +21,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
+import { useSearchSuggestions } from "@/hooks/api/use-search-suggestions";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { addRecentSearch } from "@/lib/search/recent-searches";
 import { ServiceCategory } from "@/types/service";
 import { AuthChoiceModal } from "../home-header/AuthChoiceModal";
 import type { AuthMode, AuthRole } from "../home-header/types";
@@ -44,6 +46,7 @@ export default function HeroMiddle() {
 
   // Search state
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Location state
   const [userLat, setUserLat] = useState<number | null>(null);
@@ -59,6 +62,11 @@ export default function HeroMiddle() {
   const { data: categoriesData } = useServiceCategories();
   // Access the nested data array from the paginated response
   const categories: ServiceCategory[] = categoriesData?.data?.data || [];
+  const {
+    suggestions,
+    isLoading: isSuggestionsLoading,
+    refreshRecentSearches,
+  } = useSearchSuggestions(searchQuery);
 
   // Request user's geolocation
   const handleGetLocation = () => {
@@ -106,6 +114,12 @@ export default function HeroMiddle() {
   };
 
   const handleSearch = () => {
+    if (searchQuery.trim()) {
+      addRecentSearch(searchQuery);
+      refreshRecentSearches();
+    }
+
+    setShowSuggestions(false);
     const params = new URLSearchParams();
 
     if (searchQuery.trim()) {
@@ -120,6 +134,23 @@ export default function HeroMiddle() {
       params.set("sort", "distance");
     }
 
+    params.set("page", "1");
+    router.push(`/search?${params.toString()}`);
+  };
+
+  const handleSuggestionSelect = (value: string) => {
+    const nextQuery = value.trim();
+    if (!nextQuery) {
+      return;
+    }
+
+    setSearchQuery(nextQuery);
+    addRecentSearch(nextQuery);
+    refreshRecentSearches();
+    setShowSuggestions(false);
+
+    const params = new URLSearchParams();
+    params.set("q", nextQuery);
     params.set("page", "1");
     router.push(`/search?${params.toString()}`);
   };
@@ -212,6 +243,10 @@ export default function HeroMiddle() {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => setShowSuggestions(true)}
+                        onBlur={() => {
+                          window.setTimeout(() => setShowSuggestions(false), 120);
+                        }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
                             handleSearch();
@@ -231,6 +266,39 @@ export default function HeroMiddle() {
                         </Button>
                       )}
                     </div>
+
+                    {showSuggestions && searchQuery.trim().length > 0 && (
+                      <div className="absolute top-[calc(100%+2px)] left-0 z-50 w-full rounded-md border bg-white text-foreground shadow-lg overflow-hidden">
+                        <div className="max-h-72 overflow-y-auto py-1">
+                          {isSuggestionsLoading && suggestions.length === 0 ? (
+                            <p className="px-3 py-2 text-sm text-muted-foreground">
+                              Loading suggestions...
+                            </p>
+                          ) : suggestions.length > 0 ? (
+                            suggestions.map((suggestion) => (
+                              <button
+                                key={`${suggestion.source}-${suggestion.value}`}
+                                type="button"
+                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors"
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  handleSuggestionSelect(suggestion.value);
+                                }}
+                              >
+                                <span>{suggestion.value}</span>
+                                <span className="ml-2 text-xs text-muted-foreground capitalize">
+                                  {suggestion.source}
+                                </span>
+                              </button>
+                            ))
+                          ) : (
+                            <p className="px-3 py-2 text-sm text-muted-foreground">
+                              No suggestions yet.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="w-full sm:w-52 border-b sm:border-b-0 sm:border-r border-gray-200">
