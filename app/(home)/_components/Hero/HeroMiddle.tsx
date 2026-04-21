@@ -235,140 +235,142 @@ export default function HeroMiddle() {
               </div>
             ) : (
               <div id="hero-search-anchor" className="w-full max-w-4xl mx-auto space-y-3">
-                <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-md shadow-2xl overflow-hidden border border-black/10">
-                  <div className="relative flex-1">
-                    <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-200">
-                      <Search className="shrink-0 w-4 h-4 text-gray-400" />
-                      <Input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setShowSuggestions(true)}
-                        onBlur={() => {
-                          window.setTimeout(() => setShowSuggestions(false), 120);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleSearch();
-                          }
-                        }}
-                        placeholder="Search..."
-                        className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 text-sm placeholder:text-gray-400"
-                      />
-                      {searchQuery && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0"
-                          onClick={() => setSearchQuery("")}
-                        >
-                          <X className="w-4 h-4 text-gray-400" />
-                        </Button>
-                      )}
+                <div className="relative">
+                  <div className="flex flex-col sm:flex-row items-stretch bg-white rounded-md shadow-2xl overflow-hidden border border-black/10">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 px-4 py-3 border-b sm:border-b-0 sm:border-r border-gray-200">
+                        <Search className="shrink-0 w-4 h-4 text-gray-400" />
+                        <Input
+                          type="text"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          onFocus={() => setShowSuggestions(true)}
+                          onBlur={() => {
+                            window.setTimeout(() => setShowSuggestions(false), 120);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleSearch();
+                            }
+                          }}
+                          placeholder="Search..."
+                          className="flex-1 border-0 shadow-none focus-visible:ring-0 px-0 h-auto py-1 text-sm placeholder:text-gray-400"
+                        />
+                        {searchQuery && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0"
+                            onClick={() => setSearchQuery("")}
+                          >
+                            <X className="w-4 h-4 text-gray-400" />
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
-                    {showSuggestions && searchQuery.trim().length > 0 && (
-                      <div className="absolute top-[calc(100%+2px)] left-0 z-50 w-full rounded-md border bg-white text-foreground shadow-lg overflow-hidden">
-                        <div className="max-h-72 overflow-y-auto py-1">
-                          {isSuggestionsLoading && suggestions.length === 0 ? (
-                            <p className="px-3 py-2 text-sm text-muted-foreground">
-                              Loading suggestions...
-                            </p>
-                          ) : suggestions.length > 0 ? (
-                            suggestions.map((suggestion) => (
-                              <button
-                                key={`${suggestion.source}-${suggestion.value}`}
-                                type="button"
-                                className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors"
-                                onMouseDown={(event) => {
-                                  event.preventDefault();
-                                  handleSuggestionSelect(suggestion.value);
-                                }}
-                              >
-                                <span>{suggestion.value}</span>
-                                <span className="ml-2 text-xs text-muted-foreground capitalize">
-                                  {suggestion.source}
-                                </span>
-                              </button>
-                            ))
-                          ) : (
-                            <p className="px-3 py-2 text-sm text-muted-foreground">
-                              No suggestions yet.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="w-full sm:w-52 border-b sm:border-b-0 sm:border-r border-gray-200">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="w-full h-full min-h-12 py-2 px-4 rounded-none justify-between font-normal text-gray-600 hover:bg-gray-50"
-                        >
-                          <span className="flex items-center gap-2">
-                            {isLocating ? (
-                              <Loader2 className="w-4 h-4 text-gray-500 animate-spin" />
-                            ) : (
-                              <MapPin className="w-4 h-4 text-gray-500" />
-                            )}
-                            <span className="text-sm">
-                              {isLocating ? "Locating..." : locationLabel}
+                    <div className="w-full sm:w-52 border-b sm:border-b-0 sm:border-r border-gray-200">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="w-full h-full min-h-12 py-2 px-4 rounded-none justify-between font-normal text-gray-600 hover:bg-gray-50"
+                          >
+                            <span className="flex items-center gap-2">
+                              {isLocating ? (
+                                <Loader2 className="w-4 h-4 text-gray-500 animate-spin" />
+                              ) : (
+                                <MapPin className="w-4 h-4 text-gray-500" />
+                              )}
+                              <span className="text-sm">
+                                {isLocating ? "Locating..." : locationLabel}
+                              </span>
                             </span>
-                          </span>
-                          <ChevronDown className="w-4 h-4 text-gray-400" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="min-w-50">
-                        <DropdownMenuItem
-                          onClick={handleGetLocation}
-                          disabled={isLocating}
-                          className="gap-2"
-                        >
-                          <Navigation className="w-4 h-4" />
-                          Use my location
-                        </DropdownMenuItem>
+                            <ChevronDown className="w-4 h-4 text-gray-400" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="min-w-50">
+                          <DropdownMenuItem
+                            onClick={handleGetLocation}
+                            disabled={isLocating}
+                            className="gap-2"
+                          >
+                            <Navigation className="w-4 h-4" />
+                            Use my location
+                          </DropdownMenuItem>
 
-                        {userLat && userLong && (
-                          <>
-                            <DropdownMenuSeparator />
-                            <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
-                              Search radius
-                            </div>
-                            {radiusOptions.map((option) => (
+                          {userLat && userLong && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
+                                Search radius
+                              </div>
+                              {radiusOptions.map((option) => (
+                                <DropdownMenuItem
+                                  key={option.value}
+                                  onClick={() => setSelectedRadius(option.value)}
+                                  className={
+                                    selectedRadius === option.value
+                                      ? "bg-primary/10 text-primary font-medium"
+                                      : ""
+                                  }
+                                >
+                                  {option.label}
+                                </DropdownMenuItem>
+                              ))}
+                              <DropdownMenuSeparator />
                               <DropdownMenuItem
-                                key={option.value}
-                                onClick={() => setSelectedRadius(option.value)}
-                                className={
-                                  selectedRadius === option.value
-                                    ? "bg-primary/10 text-primary font-medium"
-                                    : ""
-                                }
+                                onClick={handleClearLocation}
+                                className="text-muted-foreground"
                               >
-                                {option.label}
+                                Clear location
                               </DropdownMenuItem>
-                            ))}
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={handleClearLocation}
-                              className="text-muted-foreground"
-                            >
-                              Clear location
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <Button
+                      onClick={handleSearch}
+                      className="sm:rounded-none sm:rounded-r-md rounded-none h-12 px-7 bg-blue-600 hover:bg-blue-500"
+                    >
+                      Search
+                    </Button>
                   </div>
 
-                  <Button
-                    onClick={handleSearch}
-                    className="sm:rounded-none sm:rounded-r-md rounded-none h-12 px-7 bg-blue-600 hover:bg-blue-500"
-                  >
-                    Search
-                  </Button>
+                  {showSuggestions && searchQuery.trim().length > 0 && (
+                    <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full rounded-md border bg-white text-foreground shadow-lg overflow-hidden">
+                      <div className="max-h-72 overflow-y-auto py-1">
+                        {isSuggestionsLoading && suggestions.length === 0 ? (
+                          <p className="px-3 py-2 text-sm text-muted-foreground">
+                            Loading suggestions...
+                          </p>
+                        ) : suggestions.length > 0 ? (
+                          suggestions.map((suggestion) => (
+                            <button
+                              key={`${suggestion.source}-${suggestion.value}`}
+                              type="button"
+                              className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 transition-colors"
+                              onMouseDown={(event) => {
+                                event.preventDefault();
+                                handleSuggestionSelect(suggestion.value);
+                              }}
+                            >
+                              <span>{suggestion.value}</span>
+                              <span className="ml-2 text-xs text-muted-foreground capitalize">
+                                {suggestion.source}
+                              </span>
+                            </button>
+                          ))
+                        ) : (
+                          <p className="px-3 py-2 text-sm text-muted-foreground">
+                            No suggestions yet.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <p className="text-white/90 text-sm text-center">
