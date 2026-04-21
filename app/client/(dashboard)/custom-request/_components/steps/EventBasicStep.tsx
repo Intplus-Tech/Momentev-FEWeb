@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import {
   eventBasicSchema,
   EventBasicFormData,
@@ -64,6 +64,11 @@ export function EventBasicStep({
   const commitData = useCallback(() => {
     setEventBasic(getValues());
   }, [getValues, setEventBasic]);
+
+  const isSameDayOrAfter = (date: Date, compareDate: string) => {
+    const compare = new Date(compareDate);
+    return startOfDay(date) >= startOfDay(compare);
+  };
 
   // Register commit function to persist when parent advances
   useEffect(() => {
@@ -235,7 +240,7 @@ export function EventBasicStep({
                       }}
                       disabled={(date) => {
                         const startDate = getValues("eventDate");
-                        if (startDate) return date < new Date(startDate);
+                        if (startDate) return !isSameDayOrAfter(date, startDate);
                         return date < new Date();
                       }}
                       initialFocus

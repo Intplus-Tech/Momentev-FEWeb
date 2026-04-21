@@ -31,6 +31,10 @@ export function AdditionalDetailsStep() {
     return base.map((_, idx) => existing[idx] || null);
   });
 
+  const requiredUploadCount = 3;
+  const completedUploadCount = uploads.filter(Boolean).length;
+  const isStepComplete = completedUploadCount === requiredUploadCount;
+
   // Sync FROM store when draft data loads (only once, only if not already initialized)
   useEffect(() => {
     if (isLocalChange.current) {
@@ -53,12 +57,13 @@ export function AdditionalDetailsStep() {
 
     const validFiles = uploads.filter((u): u is UploadedFile => u !== null);
     setAdditionalDetails({ uploadedFiles: validFiles });
+    setIsAdditionalDetailsValid(validFiles.length === requiredUploadCount);
     // isLocalChange is reset in the "sync from store" effect above
-  }, [uploads, setAdditionalDetails]);
+  }, [uploads, requiredUploadCount, setAdditionalDetails, setIsAdditionalDetailsValid]);
 
   useEffect(() => {
-    setIsAdditionalDetailsValid(true);
-  }, [setIsAdditionalDetailsValid]);
+    setIsAdditionalDetailsValid(isStepComplete);
+  }, [isStepComplete, setIsAdditionalDetailsValid]);
 
   const handleUploadComplete = useCallback(
     (index: number, file: UploadedFile) => {
@@ -86,31 +91,73 @@ export function AdditionalDetailsStep() {
       {/* Section 1: Upload Visual Inspiration */}
       <div className="rounded-lg overflow-hidden border border-primary/20">
         <div className="bg-primary/10 px-4 py-2">
-          <span className="text-sm font-semibold text-primary">
-            Upload Visual Inspiration
-          </span>
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-sm font-semibold text-primary">
+              Upload Visual Inspiration
+            </span>
+            <span className="text-xs font-medium text-primary/80">
+              3 images required
+            </span>
+          </div>
         </div>
         <div className="p-4 space-y-4">
+          <div className="rounded-lg border border-dashed border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
+            Upload all 3 inspiration images before continuing. You have uploaded{" "}
+            <span className="font-semibold text-foreground">
+              {completedUploadCount}/{requiredUploadCount}
+            </span>
+            .
+          </div>
           <div className="flex flex-col gap-4">
             {uploads.map((file, idx) => (
-              <FileUploadCard
+              <div
                 key={idx}
-                onUploadComplete={(uploaded) =>
-                  handleUploadComplete(idx, uploaded)
-                }
-                onRemove={() => handleRemove(idx)}
-                uploadedFile={
-                  file
-                    ? {
+                className={`rounded-lg border p-3 transition-colors ${file
+                    ? "border-emerald-200 bg-emerald-50/40"
+                    : "border-red-200 bg-red-50/30"
+                  }`}
+              >
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">
+                      Inspiration Image {idx + 1}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Required {idx + 1} of {requiredUploadCount}
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${file
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-red-100 text-red-800"
+                      }`}
+                  >
+                    {file ? "Uploaded" : "Required"}
+                  </span>
+                </div>
+                <FileUploadCard
+                  onUploadComplete={(uploaded) =>
+                    handleUploadComplete(idx, uploaded)
+                  }
+                  onRemove={() => handleRemove(idx)}
+                  uploadedFile={
+                    file
+                      ? {
                         id: file._id,
                         url: file.url,
                         name: file.originalName,
                       }
-                    : null
-                }
-              />
+                      : null
+                  }
+                />
+              </div>
             ))}
           </div>
+          {!isStepComplete && (
+            <p className="text-sm text-destructive">
+              All 3 inspiration images are required to continue.
+            </p>
+          )}
         </div>
       </div>
     </div>

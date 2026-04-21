@@ -15,6 +15,10 @@ export function ReviewStep() {
     });
   };
 
+  const isSameCalendarDay = (left: string, right: string) => {
+    return new Date(left).toDateString() === new Date(right).toDateString();
+  };
+
   const calculatePercentage = (amount: number, total: number) => {
     if (total === 0) return 0;
     return Math.round((amount / total) * 100);
@@ -30,6 +34,7 @@ export function ReviewStep() {
             <p className="text-sm text-muted-foreground">
               {formatDate(eventBasic.eventDate)}
               {eventBasic.endDate &&
+                !isSameCalendarDay(eventBasic.eventDate, eventBasic.endDate) &&
                 ` - ${formatDate(eventBasic.endDate)}`} •{" "}
               {eventBasic.guestCount} guests
             </p>

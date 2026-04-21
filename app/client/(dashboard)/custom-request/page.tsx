@@ -89,6 +89,9 @@ export default function CustomRequestPage() {
   const isBudgetPlanningValid = useCustomRequestStore(
     (state) => state.isBudgetPlanningValid,
   );
+  const isAdditionalDetailsValid = useCustomRequestStore(
+    (state) => state.isAdditionalDetailsValid,
+  );
 
   // Actions
   const setCurrentStep = useCustomRequestStore((state) => state.setCurrentStep);
@@ -227,7 +230,7 @@ export default function CustomRequestPage() {
       case 3:
         return isBudgetPlanningValid;
       case 4:
-        return true; // Additional details is optional
+        return isAdditionalDetailsValid;
       case 5:
         return true;
       default:
@@ -272,7 +275,12 @@ export default function CustomRequestPage() {
       }
     } else {
       // Pending Approval validation
-      if (!eventBasic || !vendorNeeds || !budgetPlanning) {
+      if (
+        !eventBasic ||
+        !vendorNeeds ||
+        !budgetPlanning ||
+        !isAdditionalDetailsValid
+      ) {
         toast.error("Missing required event information");
         setIsSubmitting(false);
         return;
@@ -296,7 +304,7 @@ export default function CustomRequestPage() {
       } else {
         toast.error(
           result.error ||
-            `Failed to ${status === "draft" ? "save draft" : "post event"}`,
+          `Failed to ${status === "draft" ? "save draft" : "post event"}`,
         );
       }
     } catch (error) {

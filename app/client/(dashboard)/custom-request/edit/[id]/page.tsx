@@ -43,6 +43,9 @@ export default function EditDraftPage() {
   // Store state
   const currentStep = useCustomRequestStore((state) => state.currentStep);
   const isSubmitting = useCustomRequestStore((state) => state.isSubmitting);
+  const isAdditionalDetailsValid = useCustomRequestStore(
+    (state) => state.isAdditionalDetailsValid,
+  );
   const isEventBasicValid = useCustomRequestStore(
     (state) => state.isEventBasicValid,
   );
@@ -248,7 +251,7 @@ export default function EditDraftPage() {
       case 3:
         return isBudgetPlanningValid;
       case 4:
-        return true;
+        return isAdditionalDetailsValid;
       case 5:
         return true;
       default:
@@ -328,7 +331,7 @@ export default function EditDraftPage() {
     commitRef.current?.();
     setIsSubmitting(true);
 
-    if (!eventBasic || !vendorNeeds || !budgetPlanning) {
+    if (!eventBasic || !vendorNeeds || !budgetPlanning || !isAdditionalDetailsValid) {
       toast.error("Missing required event information");
       setIsSubmitting(false);
       return;
