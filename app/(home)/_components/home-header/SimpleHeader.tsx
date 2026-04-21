@@ -26,6 +26,8 @@ export function SimpleHeader({
   onOpenMobileMenu,
   onOpenAuthModal,
 }: SimpleHeaderProps) {
+  const isClient = user?.role === "CUSTOMER" || user?.role === "customer";
+
   return (
     <nav
       className={`fixed top-4 2xl:max-w-7xl max-w-[80%] mx-auto rounded-full left-0 right-0 z-50 transition-colors duration-300 ${isScrolledSlightly
@@ -41,7 +43,7 @@ export function SimpleHeader({
             {isUserLoading ? (
               <Skeleton className="h-8 w-28 bg-white/20" />
             ) : (
-              (!user || user.role === "CUSTOMER") && (
+              (!user || isClient) && (
                 !user ? (
                   <Button
                     variant="link"

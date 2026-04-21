@@ -63,6 +63,8 @@ export function ComplexHeader({
   leftOpacity,
   rightOpacity,
 }: ComplexHeaderProps) {
+  const isClient = user?.role === "CUSTOMER" || user?.role === "customer";
+
   return (
     <header
       className="bg-background fixed top-0 left-0 right-0 w-full shadow-sm z-50 border-b animate-in fade-in slide-in-from-top-5 duration-300"
@@ -106,7 +108,7 @@ export function ComplexHeader({
             </>
           ) : (
             <>
-              {(!user || user.role === "CUSTOMER") && (
+              {(!user || isClient) && (
                 !user ? (
                   <Button
                     variant="ghost"

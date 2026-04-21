@@ -57,6 +57,8 @@ export function MobileMenuSheet({
   onLogout,
   onOpenAuthModal,
 }: MobileMenuSheetProps) {
+  const isClient = user?.role === "CUSTOMER" || user?.role === "customer";
+
   const handleSearchAndClose = () => {
     onSearch();
     onOpenChange(false);
@@ -117,7 +119,7 @@ export function MobileMenuSheet({
           </div>
 
           <nav className="flex-1 p-4 space-y-1">
-            {(!user || user?.role === "CUSTOMER") && (
+            {(!user || isClient) && (
               !user ? (
                 <button
                   onClick={() => openAuthModalFromMobile("post-request")}
