@@ -387,7 +387,7 @@ export default function CustomRequestPage() {
               onClick={() => handleSubmit("pending_approval")}
               disabled={isSubmitting}
             >
-              {isSubmitting ? "Posting..." : "Post Event →"}
+              {isSubmitting ? "Posting..." : "Post Event Request →"}
             </Button>
           )}
         </div>

@@ -439,7 +439,7 @@ export default function EditDraftPage() {
             </Button>
           ) : (
             <Button onClick={handleSubmitDraft} disabled={isSubmitting}>
-              {isSubmitting ? "Posting..." : "Post Event →"}
+              {isSubmitting ? "Posting..." : "Post Event Request →"}
             </Button>
           )}
         </div>

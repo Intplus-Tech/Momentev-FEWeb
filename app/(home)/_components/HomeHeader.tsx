@@ -127,12 +127,48 @@ function HomeHeaderContent() {
   const rightOpacity = useTransform(x, [-width + 20, -width], [1, 0]);
 
   useEffect(() => {
-    if (slideContainerRef.current) {
-      const scrollWidth = slideContainerRef.current.scrollWidth;
-      const offsetWidth = slideContainerRef.current.offsetWidth;
-      setWidth(scrollWidth - offsetWidth);
+    const container = slideContainerRef.current;
+    if (!container) return;
+
+    const calculateWidth = () => {
+      const track = container.querySelector(
+        "[data-category-track='true']",
+      ) as HTMLElement | null;
+
+      if (!track) {
+        setWidth(0);
+        x.set(0);
+        return;
+      }
+
+      const trackWidth = Math.ceil(track.getBoundingClientRect().width);
+      const nextWidth = Math.max(0, trackWidth - container.clientWidth);
+      setWidth(nextWidth);
+
+      // Keep current drag offset valid when list/container sizes change.
+      const currentX = x.get();
+      const minX = -nextWidth;
+      if (currentX < minX) {
+        x.set(minX);
+      } else if (currentX > 0) {
+        x.set(0);
+      }
+    };
+
+    calculateWidth();
+
+    const observer = new ResizeObserver(calculateWidth);
+    observer.observe(container);
+
+    const track = container.querySelector(
+      "[data-category-track='true']",
+    ) as HTMLElement | null;
+    if (track) {
+      observer.observe(track);
     }
-  }, [categoriesData]);
+
+    return () => observer.disconnect();
+  }, [categories.length, isSearchRoute, slideContainerRef, x]);
 
   useEffect(() => {
     setMobileMenuOpen(false);

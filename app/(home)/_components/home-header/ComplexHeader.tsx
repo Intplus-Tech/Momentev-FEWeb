@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import * as React from "react";
-import { motion } from "framer-motion";
+import { animate, motion, useMotionValueEvent } from "framer-motion";
 import type { MotionValue } from "framer-motion";
-import { CircleUserIcon, FileText, Menu, Search } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleUserIcon,
+  FileText,
+  Menu,
+  Search,
+} from "lucide-react";
 
 import Logo from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
@@ -64,6 +71,26 @@ export function ComplexHeader({
   rightOpacity,
 }: ComplexHeaderProps) {
   const isClient = user?.role === "CUSTOMER" || user?.role === "customer";
+  const [canScrollLeft, setCanScrollLeft] = React.useState(false);
+  const [canScrollRight, setCanScrollRight] = React.useState(width > 0);
+  const draggedRef = React.useRef(false);
+
+  useMotionValueEvent(x, "change", (latest) => {
+    setCanScrollLeft(latest < -1);
+    setCanScrollRight(latest > -width + 1);
+  });
+
+  React.useEffect(() => {
+    const currentX = x.get();
+    setCanScrollLeft(currentX < -1);
+    setCanScrollRight(width > 0 && currentX > -width + 1);
+  }, [width, x]);
+
+  const scrollByAmount = (delta: number) => {
+    const current = x.get();
+    const target = Math.min(0, Math.max(-width, current + delta));
+    animate(x, target, { type: "spring", stiffness: 320, damping: 36 });
+  };
 
   return (
     <header
@@ -175,42 +202,103 @@ export function ComplexHeader({
                     />
                   ))
                 ) : (
-                  <div
-                    ref={slideContainerRef}
-                    className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
-                  >
-                    <motion.div
-                      className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
-                      style={{ opacity: leftOpacity }}
-                    />
-
-                    <motion.div
-                      className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background via-background/50 to-transparent z-10 pointer-events-none"
-                      style={{ opacity: rightOpacity }}
-                    />
-
-                    <motion.div
-                      drag="x"
-                      dragConstraints={{ right: 0, left: -width }}
-                      style={{ x }}
-                      className="flex gap-2 w-fit"
+                  <div className="flex items-center gap-2 w-full">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => scrollByAmount(220)}
+                      disabled={!canScrollLeft}
+                      aria-label="Scroll categories left"
                     >
-                      {categories.map((category) => {
-                        const isActive = selectedCategory === category._id;
-                        return (
-                          <button
-                            key={category._id}
-                            onClick={() => onCategoryClick(category._id)}
-                            className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${isActive
-                              ? "bg-primary/10 text-primary border-primary/20 font-medium"
-                              : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
-                              }`}
-                          >
-                            {category.name}
-                          </button>
-                        );
-                      })}
-                    </motion.div>
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+
+                    <div
+                      ref={slideContainerRef}
+                      className="overflow-hidden cursor-grab active:cursor-grabbing w-full relative"
+                    >
+                      <motion.div
+                        className="absolute left-0 top-0 bottom-0 w-40 bg-linear-to-r from-background via-background/50 to-transparent z-10 pointer-events-none"
+                        style={{ opacity: leftOpacity }}
+                      />
+
+                      <motion.div
+                        className="absolute right-0 top-0 bottom-0 w-40 bg-linear-to-l from-background via-background/50 to-transparent z-10 pointer-events-none"
+                        style={{ opacity: rightOpacity }}
+                      />
+
+                      <motion.div
+                        drag="x"
+                        dragConstraints={{ right: 0, left: -width }}
+                        dragElastic={0.05}
+                        dragMomentum={false}
+                        style={{ x }}
+                        data-category-track="true"
+                        className="flex gap-2 w-fit"
+                        onDragStart={() => {
+                          draggedRef.current = false;
+                        }}
+                        onDrag={(_, info) => {
+                          if (Math.abs(info.offset.x) > 6) {
+                            draggedRef.current = true;
+                          }
+                        }}
+                        onDragEnd={() => {
+                          window.setTimeout(() => {
+                            draggedRef.current = false;
+                          }, 0);
+                        }}
+                      >
+                        {categories.map((category) => {
+                          const isActive = selectedCategory === category._id;
+                          return (
+                            <button
+                              key={category._id}
+                              onClick={(event) => {
+                                if (draggedRef.current) {
+                                  event.preventDefault();
+                                  return;
+                                }
+                                onCategoryClick(category._id);
+                              }}
+                              className={`relative overflow-hidden flex items-center gap-2 px-4 py-1.5 rounded-full text-sm whitespace-nowrap transition-all border shrink-0 ${isActive
+                                ? "bg-primary/10 text-primary border-primary/20 font-medium"
+                                : "bg-background hover:bg-muted text-muted-foreground hover:text-foreground border-transparent hover:border-border"
+                                }`}
+                            >
+                              {isActive && (
+                                <motion.span
+                                  aria-hidden
+                                  className="pointer-events-none absolute inset-y-0 -left-1/3 w-1/3 bg-linear-to-r from-transparent via-white/60 to-transparent"
+                                  animate={{ x: ["-120%", "320%"] }}
+                                  transition={{
+                                    duration: 1.8,
+                                    ease: "easeInOut",
+                                    repeat: Infinity,
+                                    repeatDelay: 1.2,
+                                  }}
+                                />
+                              )}
+                              <span className="relative z-10">{category.name}</span>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 shrink-0"
+                      onClick={() => scrollByAmount(-220)}
+                      disabled={!canScrollRight}
+                      aria-label="Scroll categories right"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
                   </div>
                 )}
               </div>
