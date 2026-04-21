@@ -28,14 +28,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
 import { logout } from "@/lib/actions/auth";
-import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
-  const { data: user, isLoading: isUserLoading } = useUserProfile();
   const { unreadCount } = useUnreadBadgeCount("user");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -44,21 +42,6 @@ export const ClientSidebar = () => {
     if (!q) return;
     router.push(`/search?q=${encodeURIComponent(q)}&page=1`);
   };
-
-  const initials = (() => {
-    const first = user?.firstName?.trim();
-    const last = user?.lastName?.trim();
-
-    const segments = [first, ...(last ? last.split(/\s+/) : [])].filter(
-      Boolean,
-    ) as string[];
-    const letters = segments
-      .map((segment: string) => segment[0])
-      .filter(Boolean);
-    const value = letters.join("").slice(0, 2).toUpperCase();
-
-    return value || "CL";
-  })();
 
   return (
     <Sidebar
@@ -71,35 +54,6 @@ export const ClientSidebar = () => {
           className="hidden group-data-[collapsible=icon]:block mx-auto"
           size={32}
         />
-        <div className="flex items-center gap-3">
-          {isUserLoading ? (
-            <>
-              <Skeleton className="h-9 w-9 rounded-full" />
-              <div className="flex flex-col gap-1">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-3 w-16" />
-              </div>
-            </>
-          ) : (
-            <>
-              <Avatar className="h-9 w-9">
-                <AvatarImage
-                  src={user?.avatar?.url}
-                  alt={
-                    user?.firstName + " " + user?.lastName || "Client avatar"
-                  }
-                />
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                <p className="text-sm font-semibold text-foreground">
-                  {user?.firstName}
-                </p>
-                <p className="text-xs text-muted-foreground">momentev client</p>
-              </div>
-            </>
-          )}
-        </div>
         <div className="relative group-data-[collapsible=icon]:hidden">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <SidebarInput

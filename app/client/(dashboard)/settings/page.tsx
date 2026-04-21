@@ -5,15 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Bookmark, MessageSquare, Shield, User2 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-
-import { ProfileSection } from "./_components/profile-section";
-import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
 import { SavedVendorsSection } from "./_components/saved-vendors-section";
 import { SecuritySection } from "./_components/security-section";
 
-const validTabValues = ["profile", "saved", "reviews", "security"];
+const validTabValues = ["saved", "reviews", "security"];
 
 export default function ClientSettingsPage() {
   return (
@@ -31,8 +27,8 @@ function SettingsContent() {
   const validTabs = useMemo(() => new Set(validTabValues), []);
 
   const initialTab = useMemo(() => {
-    const fromQuery = searchParams.get("tab") ?? "profile";
-    return validTabs.has(fromQuery) ? fromQuery : "profile";
+    const fromQuery = searchParams.get("tab") ?? "saved";
+    return validTabs.has(fromQuery) ? fromQuery : "saved";
   }, [searchParams, validTabs]);
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -70,13 +66,6 @@ function SettingsContent() {
       >
         <TabsList className="flex w-full flex-wrap gap-3 bg-transparent p-0">
           <TabsTrigger
-            value="profile"
-            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
-          >
-            <User2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile Settings</span>
-          </TabsTrigger>
-          <TabsTrigger
             value="saved"
             className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
           >
@@ -98,11 +87,6 @@ function SettingsContent() {
             <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="profile" className="space-y-4">
-          <ProfileSection />
-          <AddressSection />
-        </TabsContent>
 
         <TabsContent value="saved" className="space-y-4">
           <SavedVendorsSection />
