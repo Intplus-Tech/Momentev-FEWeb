@@ -2,12 +2,10 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LifeBuoy, MessageSquare, Shield, User2, Users } from "lucide-react";
+import { LifeBuoy, MessageSquare, Shield, Users } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { reviews, supportPrefill } from "./data";
-import { ProfileSection } from "./_components/profile-section";
-import { AddressSection } from "./_components/address-section";
 import { ReviewsSection } from "./_components/reviews-section";
 import { SecuritySection } from "./_components/security-section";
 import { SupportSection } from "./_components/support-section";
@@ -16,7 +14,7 @@ import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useVendorReviews, useVendorDetails } from "@/hooks/api/use-vendors";
 import { Loader2 } from "lucide-react";
 
-const vendorTabValues = ["profile", "team", "reviews", "security", "support"];
+const vendorTabValues = ["team", "reviews", "security", "support"];
 
 export default function VendorSettingsPage() {
   return (
@@ -34,8 +32,8 @@ function VendorSettingsContent() {
   const validTabs = useMemo(() => new Set(vendorTabValues), []);
 
   const initialTab = useMemo(() => {
-    const fromQuery = searchParams.get("tab") ?? "profile";
-    return validTabs.has(fromQuery) ? fromQuery : "profile";
+    const fromQuery = searchParams.get("tab") ?? "team";
+    return validTabs.has(fromQuery) ? fromQuery : "team";
   }, [searchParams, validTabs]);
 
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -97,7 +95,7 @@ function VendorSettingsContent() {
       stars,
       count: reviewsArr.filter((r: any) => Math.round(r.rating) === stars).length,
     }));
-    
+
     const totalCalculated = reviewsArr.length;
     const sumRating = reviewsArr.reduce((acc: number, r: any) => acc + r.rating, 0);
     const averageCalculated = totalCalculated > 0 ? sumRating / totalCalculated : 0;
@@ -118,14 +116,6 @@ function VendorSettingsContent() {
         className="space-y-4"
       >
         <TabsList className="bg-transparent flex items-center justify-between w-full gap-4">
-          <TabsTrigger
-            className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
-            value="profile"
-            aria-label="Profile Settings"
-          >
-            <User2 className="h-4 w-4" />
-            <span className="hidden sm:inline">Profile Settings</span>
-          </TabsTrigger>
           <TabsTrigger
             className="data-active:bg-black data-active:text-white p-3 sm:p-4 bg-muted data-active:hover:text-white cursor-pointer gap-2"
             value="team"
@@ -160,22 +150,17 @@ function VendorSettingsContent() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="profile" className="space-y-4">
-          <ProfileSection />
-          <AddressSection />
-        </TabsContent>
-
         <TabsContent value="team" className="space-y-4">
           <TeamSection />
         </TabsContent>
 
         <TabsContent value="reviews" className="space-y-4">
           {isReviewsLoading ? (
-             <div className="flex h-40 items-center justify-center border rounded-xl bg-white">
-               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-             </div>
+            <div className="flex h-40 items-center justify-center border rounded-xl bg-white">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
           ) : (
-             <ReviewsSection vendorId={vendorId} reviews={mappedReviews} stats={reviewStats} />
+            <ReviewsSection vendorId={vendorId} reviews={mappedReviews} stats={reviewStats} />
           )}
         </TabsContent>
 
