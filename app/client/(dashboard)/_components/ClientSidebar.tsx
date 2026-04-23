@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
-import { logout } from "@/lib/actions/auth";
+import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const ClientSidebar = () => {
@@ -36,6 +36,7 @@ export const ClientSidebar = () => {
   const router = useRouter();
   const { unreadCount } = useUnreadBadgeCount("user");
   const [searchQuery, setSearchQuery] = useState("");
+  const authLogout = useAuthLogout();
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -118,16 +119,17 @@ export const ClientSidebar = () => {
                   asChild
                   className="px-0 pl-2 text-sm font-medium hover:bg-muted cursor-pointer"
                 >
-                  <form action={() => logout("/client/auth/log-in")}>
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      className="flex w-full justify-start gap-3 text-muted-foreground"
-                    >
-                      <LogOut className="size-4" />
-                      <span>Logout</span>
-                    </Button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setOpenMobile(false);
+                      await authLogout("/client/auth/log-in");
+                    }}
+                    className="flex w-full justify-start gap-3 text-muted-foreground"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Logout</span>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

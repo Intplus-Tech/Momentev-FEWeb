@@ -113,7 +113,6 @@ export function AuthChoiceModal({
 
         <DialogFooter className="sm:justify-center">
           <Button
-            variant="secondary"
             className="min-w-32"
             disabled={!selectedAuthRole}
             onClick={onSignIn}
@@ -122,6 +121,7 @@ export function AuthChoiceModal({
           </Button>
           <Button
             className="min-w-36"
+            variant={"outline"}
             disabled={!selectedAuthRole}
             onClick={onCreateAccount}
           >

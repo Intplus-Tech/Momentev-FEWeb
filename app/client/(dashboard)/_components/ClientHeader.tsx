@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { usePathname } from "next/navigation";
+import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useConversations } from "@/hooks/api/use-chat";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
-import { logout } from "@/lib/actions/auth";
 
 const getInitials = (firstName?: string, lastName?: string) => {
   const first = firstName?.trim();
@@ -39,9 +39,10 @@ export const ClientHeader = () => {
   const isMessagesPage = pathname?.startsWith("/client/messages");
   const { data: conversations = [] } = useConversations();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
+  const authLogout = useAuthLogout();
 
   const handleLogout = async () => {
-    await logout("/client/auth/log-in");
+    await authLogout("/client/auth/log-in");
   };
 
   return (
@@ -61,11 +62,11 @@ export const ClientHeader = () => {
         <div className="ml-auto flex items-center gap-2">
           <SidebarTrigger className="text-muted-foreground lg:hidden" />
 
-          <Button variant="ghost" size="icon-sm" className="relative">
+          {/* <Button variant="ghost" size="icon-sm" className="relative">
             <Bell className="size-4 text-primary" />
             <span className="absolute right-1 top-1 inline-flex size-2 rounded-full bg-destructive" />
             <span className="sr-only">Notifications</span>
-          </Button>
+          </Button> */}
 
           <Button size="sm" className="hidden sm:inline-flex" asChild>
             <Link href="/client/custom-request">Create a custom request</Link>
@@ -85,7 +86,7 @@ export const ClientHeader = () => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-3 rounded-full px-2 py-1.5 text-left transition-colors hover:bg-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="flex items-center gap-3 rounded-full px-2 py-1.5 text-left transition-colors hover:bg-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 border"
                     aria-label="Open profile menu"
                   >
                     <Avatar className="h-9 w-9">
@@ -97,11 +98,14 @@ export const ClientHeader = () => {
                         {getInitials(user.firstName, user.lastName)}
                       </AvatarFallback>
                     </Avatar>
-                    {/* <div className="flex flex-col leading-tight">
+                    <div className="flex flex-col leading-tight">
                       <p className="text-sm font-semibold text-foreground">
                         {user.firstName} {user.lastName}
                       </p>
-                    </div> */}
+                      <p className="text-xs text-muted-foreground">
+                        Momentev client
+                      </p>
+                    </div>
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">

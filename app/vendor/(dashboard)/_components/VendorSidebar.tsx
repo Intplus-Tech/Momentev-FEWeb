@@ -24,7 +24,7 @@ import {
 import { LogOut, Search } from "lucide-react";
 import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
-import { logout } from "@/lib/actions/auth";
+import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
 
 export const VendorSidebar = () => {
@@ -33,6 +33,7 @@ export const VendorSidebar = () => {
   const { setOpenMobile } = useSidebar();
   const { unreadCount } = useUnreadBadgeCount("vendor");
   const [searchQuery, setSearchQuery] = useState("");
+  const authLogout = useAuthLogout();
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -115,16 +116,17 @@ export const VendorSidebar = () => {
                   asChild
                   className="py-3 pr-0 text-sm font-medium hover:bg-destructive/10 hover:text-destructive"
                 >
-                  <form action={() => logout("/vendor/auth/log-in")}>
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      className="flex w-full justify-start gap-3 text-destructive"
-                    >
-                      <LogOut className="size-4" />
-                      <span>Logout</span>
-                    </Button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setOpenMobile(false);
+                      await authLogout("/vendor/auth/log-in");
+                    }}
+                    className="flex w-full justify-start gap-3 text-destructive"
+                  >
+                    <LogOut className="size-4" />
+                    <span>Logout</span>
+                  </button>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

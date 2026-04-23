@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { usePathname } from "next/navigation";
+import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useConversations } from "@/hooks/api/use-chat";
-import { logout } from "@/lib/actions/auth";
 
 const getInitials = (firstName?: string, lastName?: string) => {
   const first = firstName?.trim();
@@ -39,9 +39,10 @@ export const VendorHeader = () => {
   const isMessagesPage = pathname?.startsWith("/vendor/messages");
   const { data: conversations = [] } = useConversations();
   const { data: user, isLoading: isUserLoading } = useUserProfile();
+  const authLogout = useAuthLogout();
 
   const handleLogout = async () => {
-    await logout("/vendor/auth/log-in");
+    await authLogout("/vendor/auth/log-in");
   };
 
   return (
@@ -61,14 +62,14 @@ export const VendorHeader = () => {
         <div className="ml-auto flex items-center gap-2">
           <SidebarTrigger className="text-muted-foreground lg:hidden" />
 
-          <Button variant="ghost" size="icon-sm" className="relative">
+          {/* <Button variant="ghost" size="icon-sm" className="relative">
             <Bell className="size-4 text-primary" />
             <span className="absolute right-1 top-1 inline-flex size-2 rounded-full bg-primary" />
             <span className="sr-only">Notifications</span>
           </Button>
           <Button className="hidden sm:inline-flex" size="sm">
             Preview
-          </Button>
+          </Button> */}
 
           <div className="hidden md:flex items-center gap-3">
             {isUserLoading ? (
@@ -84,7 +85,7 @@ export const VendorHeader = () => {
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="flex items-center gap-3 rounded-full px-2 py-1.5 text-left transition-colors hover:bg-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="flex items-center gap-3 rounded-full px-2 py-1.5 text-left transition-colors hover:bg-muted/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 border"
                     aria-label="Open vendor profile menu"
                   >
                     <Avatar className="h-9 w-9">

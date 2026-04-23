@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, differenceInHours, differenceInDays } from "date-fns";
 import { toast } from "sonner";
-import { 
-  Loader2, 
-  Search, 
-  Clock, 
-  MapPin, 
-  Users, 
+import {
+  Loader2,
+  Search,
+  Clock,
+  MapPin,
+  Users,
   CalendarDays,
   ChevronLeft,
   ChevronRight
@@ -84,15 +84,15 @@ function formatRelativeExpiry(dateString?: string) {
   if (!dateString) return null;
   const expiry = new Date(dateString);
   const now = new Date();
-  
+
   if (expiry < now) return "Expired";
-  
+
   const diffHours = differenceInHours(expiry, now);
   if (diffHours < 24) {
     if (diffHours === 0) return "Expires in < 1 hour";
     return `Expires in ${diffHours} hour${diffHours === 1 ? "" : "s"}`;
   }
-  
+
   const diffDays = differenceInDays(expiry, now);
   if (diffDays === 1) return "Expires tomorrow";
   return `Expires in ${diffDays} day${diffDays === 1 ? "" : "s"}`;
@@ -110,21 +110,21 @@ interface QuoteCardProps {
 
 function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: QuoteCardProps) {
   console.log("Quote data:", JSON.stringify(quote, null, 2));
-  
+
   const customerReq = quote.quoteRequestId?.customerRequestId;
   const event = customerReq?.eventDetails;
   const statusDef = statusStyles[quote.status] ?? statusStyles.draft;
-  
+
   const customerName = [quote.customerId?.firstName, quote.customerId?.lastName]
     .filter(Boolean)
     .join(" ") || quote.customerId?.email;
-    
+
   // Check if it's urgent (expires in < 24 hours)
   const isUrgent =
     quote.expiresAt &&
     new Date(quote.expiresAt) > new Date() &&
     differenceInHours(new Date(quote.expiresAt), new Date()) < 24;
-    
+
   const isExpired = quote.expiresAt && new Date(quote.expiresAt) <= new Date();
 
   return (
@@ -144,7 +144,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
             </p>
           </div>
         </div>
-        
+
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-2">
             {quote.revision > 0 && (
@@ -168,7 +168,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
               {statusDef.label}
             </span>
           </div>
-          
+
           {quote.expiresAt && !isExpired && (
             <div className="flex items-center gap-1.5 text-[12px] font-medium text-gray-500">
               <Clock className="size-3.5" />
@@ -197,7 +197,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
                 <p className="text-[14px] font-medium text-gray-900">{event.title}</p>
               </div>
             )}
-            
+
             <div className="grid grid-cols-2 gap-4">
               {event?.startDate && (
                 <div className="flex flex-col gap-1">
@@ -230,7 +230,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
           <h4 className="mb-3 text-[13px] font-semibold uppercase tracking-wider text-gray-500">
             Quote Financials
           </h4>
-          
+
           <div className="space-y-2 mb-4">
             {quote.lineItems?.map((item, i) => (
               <div key={i} className="flex justify-between items-center text-gray-600">
@@ -241,36 +241,36 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
               </div>
             ))}
           </div>
-          
+
           <div className="border-t border-gray-200 pt-3">
-             <div className="flex justify-between items-end">
-               <div>
-                  <p className="text-[12px] font-medium text-gray-500 uppercase tracking-widest">
-                    Total Quoted
-                  </p>
-                  <p className="mt-0.5 text-xl font-bold text-gray-900">
-                    {formatGBP(quote.total)}
-                  </p>
-               </div>
-               <div className="text-right">
-                  <p className="text-[12px] font-medium text-gray-500">
-                    Deposit: {quote.paymentTerms?.depositPercent}%
-                  </p>
-                  <p className="text-[12px] font-medium text-gray-500">
-                    Balance: {quote.paymentTerms?.balancePercent}%
-                  </p>
-               </div>
-             </div>
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-[12px] font-medium text-gray-500 uppercase tracking-widest">
+                  Total Quoted
+                </p>
+                <p className="mt-0.5 text-xl font-bold text-gray-900">
+                  {formatGBP(quote.total)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-[12px] font-medium text-gray-500">
+                  Deposit: {quote.paymentTerms?.depositPercent}%
+                </p>
+                <p className="text-[12px] font-medium text-gray-500">
+                  Balance: {quote.paymentTerms?.balancePercent}%
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      
+
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         {quote.status === "draft" && (
           <Button
             onClick={() => onEditDraft(quote)}
-           variant={"secondary"}
+            variant={"secondary"}
           >
             Edit Draft
           </Button>
@@ -278,7 +278,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
         {(quote.status === "sent" || quote.status === "changes_requested") && (
           <Button
             onClick={() => onRevise(quote)}
-          
+
           >
             Revise Quote
           </Button>
@@ -313,7 +313,7 @@ export function QuotesDashboard() {
   const [selectedDraft, setSelectedDraft] = useState<VendorQuoteResponse | null>(null);
   const [selectedViewQuote, setSelectedViewQuote] = useState<VendorQuoteResponse | null>(null);
   const [selectedRevisionQuote, setSelectedRevisionQuote] = useState<VendorQuoteResponse | null>(null);
-  
+
   const [withdrawQuoteId, setWithdrawQuoteId] = useState<string | null>(null);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const queryClient = useQueryClient();
@@ -397,7 +397,7 @@ export function QuotesDashboard() {
         <Button
           onClick={() => startTransition(() => handleApplyFilters())}
           disabled={isFetching && !isLoading}
-          className="h-[42px] w-full rounded-full bg-gray-900 px-6 text-[13.5px] font-medium text-white hover:bg-black md:w-auto shadow-none"
+
         >
           {isFetching && !isLoading && <Loader2 className="mr-2 size-4 animate-spin text-gray-400" />}
           Apply Filters
@@ -436,12 +436,12 @@ export function QuotesDashboard() {
           </Card>
         ) : (
           quotes.map((quote) => (
-            <QuoteCard 
-              key={quote._id} 
-              quote={quote} 
-              onEditDraft={setSelectedDraft} 
+            <QuoteCard
+              key={quote._id}
+              quote={quote}
+              onEditDraft={setSelectedDraft}
               onViewDetails={setSelectedViewQuote}
-              onWithdraw={setWithdrawQuoteId} 
+              onWithdraw={setWithdrawQuoteId}
               onRevise={setSelectedRevisionQuote}
             />
           ))
@@ -487,18 +487,18 @@ export function QuotesDashboard() {
       )}
 
       {/* ── Modals ───────────────────────────────────────────── */}
-      <CreateQuoteModal 
-        open={!!selectedDraft || !!selectedRevisionQuote} 
+      <CreateQuoteModal
+        open={!!selectedDraft || !!selectedRevisionQuote}
         onOpenChange={(open: boolean) => {
           if (!open) {
             setSelectedDraft(null);
             setSelectedRevisionQuote(null);
           }
-        }} 
-        draftQuote={selectedDraft || selectedRevisionQuote} 
+        }}
+        draftQuote={selectedDraft || selectedRevisionQuote}
         isRevision={!!selectedRevisionQuote}
       />
-      
+
       <ViewQuoteModal
         open={!!selectedViewQuote}
         onOpenChange={(open: boolean) => {
@@ -519,7 +519,7 @@ export function QuotesDashboard() {
             <AlertDialogCancel disabled={isWithdrawing} className="rounded-full shadow-none font-medium hover:bg-gray-100">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={(e) => { e.preventDefault(); handleWithdraw(); }}
               disabled={isWithdrawing}
               className="rounded-full bg-red-600 font-medium hover:bg-red-700 shadow-none text-white"

@@ -5,7 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { getUserProfile } from "@/lib/actions/user";
 import { Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { logout } from "@/lib/actions/auth";
+import { useAuthLogout } from "@/hooks/use-auth-logout";
 
 interface VendorOnboardingGuardProps {
   children: React.ReactNode;
@@ -20,6 +20,7 @@ export function VendorOnboardingGuard({
 }: VendorOnboardingGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const authLogout = useAuthLogout();
   const [isChecking, setIsChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
   const [isActive, setIsActive] = useState<boolean | null>(null);
@@ -148,16 +149,17 @@ export function VendorOnboardingGuard({
           </div>
 
           <div className="pt-2 w-full">
-            <form action={() => logout("/")} className="w-full">
-              <Button
-                type="submit"
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2"
-              >
-                <Home className="w-4 h-4" />
-                Return to Home
-              </Button>
-            </form>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full flex items-center justify-center gap-2"
+              onClick={async () => {
+                await authLogout("/");
+              }}
+            >
+              <Home className="w-4 h-4" />
+              Return to Home
+            </Button>
           </div>
         </div>
       </div>
