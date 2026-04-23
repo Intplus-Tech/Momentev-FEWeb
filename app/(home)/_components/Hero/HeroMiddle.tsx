@@ -212,8 +212,7 @@ export default function HeroMiddle() {
 
           {/* Subtitle */}
           <p className="text-white/85 text-sm sm:text-base lg:text-2xl px-4 max-w-3xl mx-auto tracking-wide">
-            MOMENTEV connects individuals with rigorously verified vendors, with
-            secure looking for trusted reviews.
+            MOMENTEV connects individuals with rigorously verified vendors, with secure booking and trusted reviews.
           </p>
 
           <div className="pt-2">

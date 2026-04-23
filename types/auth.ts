@@ -1,6 +1,32 @@
 
 export type UserRole = 'CUSTOMER' | 'VENDOR' | 'ADMIN';
 
+/**
+ * Error classification for auth operations
+ * Helps distinguish between auth failures, network issues, and server errors
+ */
+export enum AuthErrorType {
+  /** User is not authenticated (no token) */
+  NOT_AUTHENTICATED = 'NOT_AUTHENTICATED',
+  /** Token expired or invalid (401 from server) */
+  SESSION_EXPIRED = 'SESSION_EXPIRED',
+  /** Network/fetch error (no response or connection issue) */
+  NETWORK_ERROR = 'NETWORK_ERROR',
+  /** Server error (5xx or other non-auth error) */
+  SERVER_ERROR = 'SERVER_ERROR',
+  /** Backend not configured */
+  CONFIG_ERROR = 'CONFIG_ERROR',
+}
+
+/**
+ * Typed auth error with classification
+ */
+export interface AuthError {
+  type: AuthErrorType;
+  message: string;
+  statusCode?: number;
+}
+
 export interface AuthUser {
   _id: string;
   email: string;

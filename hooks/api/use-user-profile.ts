@@ -12,13 +12,22 @@ export function useUserProfile() {
         throw new Error(result.error || 'Failed to fetch user profile');
       }
 
+      // Return null for unauthenticated state (valid, not an error)
       if (!result.data) {
-        throw new Error('No user data returned');
+        return null;
       }
 
       return result.data;
     },
-    retry: 1, // Don't retry too many times for auth errors
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors (unauthenticated/unauthorized)
+      const message = error instanceof Error ? error.message : '';
+      if (message.includes('Not authenticated') || message.includes('Session expired')) {
+        return false;
+      }
+      // Allow 1 retry on network/server errors
+      return failureCount < 1;
+    },
     staleTime: 5 * 60 * 1000, // Consider profile data fresh for 5 minutes
   });
 }

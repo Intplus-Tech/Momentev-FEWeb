@@ -1,5 +1,6 @@
-"use strict";
+"use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { logout } from "@/lib/actions/auth";
+import { queryKeys } from "@/lib/react-query/keys";
 import type { UserProfile } from "@/types/auth";
 import { redirect } from "next/navigation";
 
@@ -28,6 +30,7 @@ interface UserDropdownProps {
 }
 
 export function UserDropdown({ user }: UserDropdownProps) {
+  const queryClient = useQueryClient();
   const isVendor = user.role === "VENDOR";
 
   const dashboardLink = isVendor ? "/vendor/dashboard" : "/client/dashboard";
@@ -36,6 +39,9 @@ export function UserDropdown({ user }: UserDropdownProps) {
   const messagesLink = isVendor ? "/vendor/messages" : "/client/messages";
 
   const handleLogout = async () => {
+    // Clear the auth user query cache before logging out
+    queryClient.setQueryData(queryKeys.auth.user(), null);
+    queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
     await logout();
     redirect("/");
   };

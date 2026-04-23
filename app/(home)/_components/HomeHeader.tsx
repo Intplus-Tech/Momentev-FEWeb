@@ -3,12 +3,14 @@
 import { useState, useEffect, Suspense, useRef } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMotionValue, useTransform } from "framer-motion";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useServiceCategories } from "@/hooks/api/use-service-categories";
 import { useSearchSuggestions } from "@/hooks/api/use-search-suggestions";
 import { useLocation } from "@/hooks/use-location";
 import { logout } from "@/lib/actions/auth";
+import { queryKeys } from "@/lib/react-query/keys";
 import { addRecentSearch } from "@/lib/search/recent-searches";
 
 import { AuthChoiceModal } from "./home-header/AuthChoiceModal";
@@ -247,8 +249,13 @@ function HomeHeaderContent() {
   const settingsLink = isVendor ? "/vendor/settings" : "/client/settings";
   const messagesLink = isVendor ? "/vendor/messages" : "/client/messages";
 
+  const queryClient = useQueryClient();
+
   const handleLogout = async () => {
     setMobileMenuOpen(false);
+    // Clear the auth user query cache before logging out
+    queryClient.setQueryData(queryKeys.auth.user(), null);
+    queryClient.invalidateQueries({ queryKey: queryKeys.auth.all });
     await logout();
   };
 
