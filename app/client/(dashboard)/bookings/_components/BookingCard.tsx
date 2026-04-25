@@ -182,7 +182,7 @@ export function BookingCard({
               >
                 {status.label}
               </Badge>
-              <span>{booking._id}</span>
+              {/* <span>{booking._id}</span> */}
             </div>
 
             <div>

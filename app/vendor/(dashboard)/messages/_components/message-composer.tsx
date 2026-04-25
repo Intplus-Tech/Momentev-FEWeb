@@ -53,7 +53,7 @@ export const MessageComposer = ({
   const isImage = pendingAttachment?.file.type.startsWith("image/");
 
   return (
-    <div className="border-t px-4 py-4">
+    <div className="shrink-0 border-t bg-background px-4 py-4">
       {/* Pending attachment preview */}
       {pendingAttachment && (
         <div className="mb-3 flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
@@ -146,7 +146,7 @@ export const MessageComposer = ({
           onChange={handleFileChange}
         />
 
-        <Input
+        <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
@@ -156,7 +156,7 @@ export const MessageComposer = ({
             }
           }}
           placeholder="Type your message here..."
-          className="h-11 flex-1 border-0 bg-transparent px-1 text-sm focus-visible:ring-0"
+          className="h-11 flex-1 resize-none border-0 bg-transparent px-2 py-[10px] text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           disabled={isUploading}
         />
         <Button

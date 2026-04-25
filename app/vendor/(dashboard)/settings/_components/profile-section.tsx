@@ -250,17 +250,32 @@ export const ProfileSection = () => {
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem className="mt-1">
                     <Popover open={open} onOpenChange={setOpen}>
                       <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          id="date"
-                          className="justify-between font-normal text-muted-foreground"
-                        >
-                          {date ? date.toLocaleDateString() : "Select date"}
-                          <ChevronDownIcon className="h-4 w-4" />
-                        </Button>
+                        <FormControl>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-[42px] rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
+                            >
+                              <span className={cn(!field.value && "opacity-0")}>
+                                {field.value ? format(field.value, "PPP") : "Select date"}
+                              </span>
+                              <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                            </button>
+                            <label
+                              className={cn(
+                                "pointer-events-none absolute left-4 z-10 bg-background px-2 transition-all duration-200 -translate-y-4",
+                                field.value || open
+                                  ? "top-2.5 text-xs text-muted-foreground"
+                                  : "top-2/3 text-sm text-muted-foreground"
+                              )}
+                            >
+                              Date of Birth
+                            </label>
+                          </div>
+                        </FormControl>
                       </PopoverTrigger>
                       <PopoverContent
                         className="w-auto overflow-hidden p-0"
@@ -268,12 +283,14 @@ export const ProfileSection = () => {
                       >
                         <Calendar
                           mode="single"
-                          selected={date}
+                          selected={field.value}
                           captionLayout="dropdown"
                           fromYear={1900}
                           toYear={new Date().getFullYear()}
-                          onSelect={(date) => {
-                            setDate(date);
+                          onSelect={(newDate) => {
+                            if (newDate) {
+                              field.onChange(newDate);
+                            }
                             setOpen(false);
                           }}
                         />

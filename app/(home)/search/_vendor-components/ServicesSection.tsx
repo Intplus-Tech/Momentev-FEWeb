@@ -15,14 +15,27 @@ export function ServicesSection({ services }: ServicesSectionProps) {
   const hasServices = services.length > 0;
 
   const renderPrice = (price: string) => {
+    const formatCurrency = (val: string) => {
+      const num = Number(val);
+      if (!isNaN(num) && val.trim() !== "") {
+        return new Intl.NumberFormat("en-GB", {
+          style: "currency",
+          currency: "GBP",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        }).format(num);
+      }
+      return val;
+    };
+
     const match = price.match(/^(.*?)\s*\((.*?)\)\s*$/);
     if (match) {
       return {
-        main: match[1],
+        main: formatCurrency(match[1]),
         note: match[2],
       };
     }
-    return { main: price, note: undefined };
+    return { main: formatCurrency(price), note: undefined };
   };
 
   const formatTag = (tag: string) =>

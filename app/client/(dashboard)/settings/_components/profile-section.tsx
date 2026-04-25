@@ -245,29 +245,32 @@ export const ProfileSection = () => {
                 control={form.control}
                 name="dob"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col gap-2">
-                    {/* <FormLabel className="text-sm font-medium text-muted-foreground">
-                      Date of Birth
-                    </FormLabel> */}
+                  <FormItem className="mt-1">
                     <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className={cn(
-                            "justify-between font-normal",
-                            !field.value && "text-muted-foreground",
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span className="text-muted-foreground">
-                              Select date
-                            </span>
-                          )}
-                          <ChevronDownIcon className="h-4 w-4" />
-                        </Button>
+                        <FormControl>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-[42px] rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
+                            >
+                              <span className={cn(!field.value && "opacity-0")}>
+                                {field.value ? format(field.value, "PPP") : "Select date"}
+                              </span>
+                              <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                            </button>
+                            <label
+                              className={cn(
+                                "pointer-events-none absolute left-4 z-10 bg-background px-2 transition-all duration-200 -translate-y-4",
+                                field.value || calendarOpen
+                                  ? "top-2.5 text-xs text-muted-foreground"
+                                  : "top-2/3 text-sm text-muted-foreground"
+                              )}
+                            >
+                              Date of Birth
+                            </label>
+                          </div>
+                        </FormControl>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
