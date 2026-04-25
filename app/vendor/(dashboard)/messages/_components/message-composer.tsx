@@ -3,6 +3,13 @@ import { Send, Smile, Paperclip, X, FileIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import EmojiPicker, { Theme } from "emoji-picker-react";
+import { useTheme } from "next-themes";
 
 export type PendingAttachment = {
   file: File;
@@ -29,6 +36,7 @@ export const MessageComposer = ({
   isUploading,
 }: MessageComposerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -93,14 +101,31 @@ export const MessageComposer = ({
 
       {/* Composer input row */}
       <div className="flex items-center gap-2 rounded-2xl border bg-muted/50 px-3 py-2 shadow-inner">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          className="text-muted-foreground"
-        >
-          <Smile className="h-4 w-4" />
-        </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              className="text-muted-foreground"
+            >
+              <Smile className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            side="top"
+            align="start"
+            sideOffset={16}
+            className="w-full border-none bg-transparent p-0 shadow-none"
+          >
+            <EmojiPicker
+              theme={theme === "dark" ? Theme.DARK : Theme.LIGHT}
+              onEmojiClick={(emojiData) => {
+                onChange(value + emojiData.emoji);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
 
         <Button
           type="button"
