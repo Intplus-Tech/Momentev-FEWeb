@@ -2,6 +2,7 @@
 
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
+import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import type {
   ServiceCategoriesFormData,
 } from "@/app/vendor/(vendor-setup)/_schemas/serviceCategoriesSchema";
@@ -150,6 +151,17 @@ export async function submitServiceSetup(
     });
 
     await Promise.all(specialtyPromises);
+
+    // Update onboarding stage to 2 (Payment Setup)
+    console.log('📋 [Step 2 Submission] Incrementing onboarding stage to 2...');
+    const stageUpdateResult = await updateVendorOnboardingStage(2);
+    
+    if (!stageUpdateResult.success) {
+      console.warn('⚠️ [Step 2 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
+      // Continue anyway - stage update is secondary to service setup submission
+    } else {
+      console.log('✅ [Step 2 Submission] Onboarding stage successfully updated to 2');
+    }
 
     return { success: true };
 

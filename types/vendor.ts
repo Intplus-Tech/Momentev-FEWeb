@@ -34,7 +34,7 @@ export interface Workday {
 
 export interface BusinessProfilePayload {
   vendorId: string; // Required from user profile
-  contactInfo: BusinessProfileContactInfo;
+  contactInfo?: BusinessProfileContactInfo; // Optional - contact fields no longer collected from form
   businessName: string;
   yearInBusiness: string;
   companyRegNo: string;

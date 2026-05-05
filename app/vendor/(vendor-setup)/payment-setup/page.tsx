@@ -3,18 +3,18 @@
 import { useEffect } from "react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { PaymentConfigurationForm } from "../_components/PaymentConfigurationForm";
-import { StepGuard } from "../_components/StepGuard";
+import { useVendorOnboardingRedirect } from "../_hooks/useVendorOnboardingRedirect";
 
 export default function PaymentSetupPage() {
   const setCurrentStep = useVendorSetupStore((state) => state.setCurrentStep);
+
+  // Check onboarding stage and redirect if necessary
+  // Stage 2 = Step 3 (Payment Setup)
+  useVendorOnboardingRedirect(2);
 
   useEffect(() => {
     setCurrentStep(3);
   }, [setCurrentStep]);
 
-  return (
-    <StepGuard requiredStep={3}>
-      <PaymentConfigurationForm />
-    </StepGuard>
-  );
+  return <PaymentConfigurationForm />;
 }

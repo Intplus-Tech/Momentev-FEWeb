@@ -8,18 +8,18 @@ import type { UploadedFile } from "@/lib/actions/upload";
 export function DocumentUploadSection() {
   // Zustand store - use new metadata fields
   const documents = useVendorSetupStore((state) => state.documents);
+  const businessInfo = useVendorSetupStore((state) => state.businessInfo);
   const addDocument = useVendorSetupStore((state) => state.addDocument);
   const removeDocument = useVendorSetupStore((state) => state.removeDocument);
   const setDocumentsValid = useVendorSetupStore(
     (state) => state.setDocumentsValid,
   );
 
-  // Update validation based on uploaded files
+  // Update validation - all documents are optional now
   useEffect(() => {
-    const hasRequiredDocs =
-      documents.identification.length > 0 && documents.registration.length > 0;
-    setDocumentsValid(hasRequiredDocs);
-  }, [documents, setDocumentsValid]);
+    // Since all documents are optional, documents are always valid
+    setDocumentsValid(true);
+  }, [setDocumentsValid]);
 
   // Handle file upload for identification
   const handleIdentificationUpload = (data: UploadedFile) => {
@@ -57,7 +57,7 @@ export function DocumentUploadSection() {
             Means of Identification
           </h3>
           <span className="text-xs text-muted-foreground">
-            Required • PDF, JPG, PNG
+            Optional • PDF, JPG, PNG
           </span>
         </div>
 
@@ -91,46 +91,48 @@ export function DocumentUploadSection() {
         </div>
       </div>
 
-      {/* Company Registration Certificate */}
-      <div className="space-y-3">
-        <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg bg-primary/5 px-4 py-2">
-          <h3 className="text-sm font-semibold text-primary">
-            Company Registration Certificate
-          </h3>
-          <span className="text-xs text-muted-foreground">
-            Required • PDF, JPG, PNG
-          </span>
-        </div>
-
+      {/* Company Registration Certificate - Only show for company registration type */}
+      {businessInfo?.businessRegistrationType === "company" && (
         <div className="space-y-3">
-          {/* Show uploaded files */}
-          {documents.registration.map((doc) => (
-            <FileUploadCard
-              key={doc.id}
-              uploadedFile={doc}
-              onRemove={() => removeDocument("registration", doc.id)}
-              accept={{
-                "application/pdf": [".pdf"],
-                "image/jpeg": [".jpg", ".jpeg"],
-                "image/png": [".png"],
-              }}
-            />
-          ))}
+          <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg bg-primary/5 px-4 py-2">
+            <h3 className="text-sm font-semibold text-primary">
+              Company Registration Certificate
+            </h3>
+            <span className="text-xs text-muted-foreground">
+              Optional • PDF, JPG, PNG
+            </span>
+          </div>
 
-          {/* Upload zone - always show at least one */}
-          {documents.registration.length === 0 && (
-            <FileUploadCard
-              onUploadComplete={handleRegistrationUpload}
-              accept={{
-                "application/pdf": [".pdf"],
-                "image/jpeg": [".jpg", ".jpeg"],
-                "image/png": [".png"],
-              }}
-              maxSize={10 * 1024 * 1024}
-            />
-          )}
+          <div className="space-y-3">
+            {/* Show uploaded files */}
+            {documents.registration.map((doc) => (
+              <FileUploadCard
+                key={doc.id}
+                uploadedFile={doc}
+                onRemove={() => removeDocument("registration", doc.id)}
+                accept={{
+                  "application/pdf": [".pdf"],
+                  "image/jpeg": [".jpg", ".jpeg"],
+                  "image/png": [".png"],
+                }}
+              />
+            ))}
+
+            {/* Upload zone - always show at least one */}
+            {documents.registration.length === 0 && (
+              <FileUploadCard
+                onUploadComplete={handleRegistrationUpload}
+                accept={{
+                  "application/pdf": [".pdf"],
+                  "image/jpeg": [".jpg", ".jpeg"],
+                  "image/png": [".png"],
+                }}
+                maxSize={10 * 1024 * 1024}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Business License/Permits */}
       <div className="space-y-3">

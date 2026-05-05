@@ -108,20 +108,6 @@ export function ServiceSetupForm() {
     }
   };
 
-  // Check if current section is valid
-  const canProceed = () => {
-    if (expandedSection === 1) return isServiceCategoriesValid;
-    if (expandedSection === 2) return isPricingStructureValid;
-    return false;
-  };
-
-  // Determine button text based on current section
-  const getButtonText = () => {
-    if (isSubmitting) return "Saving...";
-    if (expandedSection === 2) return "Submit & Continue to Step 3";
-    return "Save & Continue";
-  };
-
   const isSection2Locked = !completedSections.has("step2-section1");
 
   return (
@@ -151,7 +137,20 @@ export function ServiceSetupForm() {
                 isExpanded={expandedSection === 1}
                 onToggle={() => toggleSection(1)}
               />
-              {expandedSection === 1 && <ServiceCategoriesForm />}
+              {expandedSection === 1 && (
+                <div className="flex flex-col">
+                  <ServiceCategoriesForm />
+                  <div className="px-6 py-4 border-t flex justify-end">
+                    <Button
+                      onClick={handleSaveAndContinue}
+                      disabled={isSubmitting || !isServiceCategoriesValid}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSubmitting && expandedSection === 1 ? "Saving..." : "Save & Continue"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Section 2: Pricing Structure (Placeholder) */}
@@ -164,24 +163,27 @@ export function ServiceSetupForm() {
                 onToggle={() => !isSection2Locked && toggleSection(2)}
                 isLocked={isSection2Locked}
               />
-              {expandedSection === 2 && <PricingStructureForm />}
+              {expandedSection === 2 && (
+                <div className="flex flex-col">
+                  <PricingStructureForm />
+                  <div className="px-6 py-4 border-t flex justify-end">
+                    <Button
+                      onClick={handleSaveAndContinue}
+                      disabled={isSubmitting || !isPricingStructureValid}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSubmitting && expandedSection === 2 ? "Submitting..." : "Submit & Continue to Step 3"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
+        {/* Progress Bar */}
+        <div className="flex justify-start mt-auto">
           <ProgressBar currentStep={2} />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-            <Button
-              onClick={handleSaveAndContinue}
-              disabled={isSubmitting || !canProceed()}
-              className="w-full sm:w-auto"
-            >
-              {getButtonText()}
-            </Button>
-          </div>
         </div>
       </div>
     </>

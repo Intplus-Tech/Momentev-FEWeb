@@ -17,6 +17,7 @@ import {
   useServiceSpecialties,
   useSuggestedTags,
 } from "@/hooks/api/use-service-categories";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 // Removed hardcoded SERVICE_CATEGORIES and SPECIALTIES_BY_CATEGORY
 // Now fetched from API via TanStack Query hooks
@@ -225,7 +226,7 @@ export function ServiceCategoriesForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="Primary Service Category"
+                label={<FormFieldLabel label="Primary Service Category" isRequired />}
                 options={categories}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -246,7 +247,7 @@ export function ServiceCategoriesForm() {
       {/* Specialties Section */}
       <div className="space-y-4">
         <div className="bg-primary/5 px-4 py-4 -mx-6">
-          <h3 className="">Specialties*</h3>
+          <h3 className=""><FormFieldLabel label="Specialties" isRequired /></h3>
         </div>
 
         {!selectedCategory ? (
@@ -306,7 +307,7 @@ export function ServiceCategoriesForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="Minimum Booking Duration"
+                label={<FormFieldLabel label="Minimum Booking Duration" isRequired />}
                 options={MINIMUM_BOOKING_DURATION}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -320,7 +321,7 @@ export function ServiceCategoriesForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="Lead Time Required"
+                label={<FormFieldLabel label="Lead Time Required" isRequired />}
                 options={LEAD_TIME_REQUIRED}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -334,7 +335,7 @@ export function ServiceCategoriesForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="Maximum Event Size"
+                label={<FormFieldLabel label="Maximum Event Size" isRequired />}
                 options={MAXIMUM_EVENT_SIZE}
                 value={field.value}
                 onValueChange={field.onChange}

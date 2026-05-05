@@ -154,3 +154,103 @@ export async function submitVendorProfile(
     };
   }
 }
+
+/**
+ * Update vendor onboarding stage
+ * Called after each step is successfully submitted
+ * Updates vendor.onBoardingStage to the next stage
+ * 
+ * PATCH /api/v1/vendors/{vendorId}
+ */
+export async function updateVendorOnboardingStage(
+  newStage: number,
+): Promise<ActionResponse<VendorProfileResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  try {
+    console.log(`📤 [Onboarding] Updating onboarding stage to ${newStage}...`);
+
+    // Get user profile to extract vendorId
+    const profileResult = await getUserProfile();
+    if (!profileResult.success || !profileResult.data) {
+      console.error("❌ [Onboarding] Failed to get user profile:", profileResult.error);
+      return {
+        success: false,
+        error: profileResult.error || "Failed to get user profile",
+      };
+    }
+
+    const vendorId = profileResult.data.vendor?._id;
+    if (!vendorId) {
+      console.error("❌ [Onboarding] No vendor ID found in user profile");
+      return {
+        success: false,
+        error: "No vendor ID found. Please ensure you have a vendor account.",
+      };
+    }
+
+    const accessToken = await getAccessToken();
+
+    if (!accessToken) {
+      console.error("❌ [Onboarding] No access token found");
+      return {
+        success: false,
+        error: "Authentication required",
+      };
+    }
+
+    const payload = {
+      onBoardingStage: newStage,
+    };
+
+    console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
+
+    const response = await fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    console.log(`📡 [Onboarding] Response status: ${response.status} ${response.statusText}`);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        console.error("❌ [Onboarding] Unauthorized (401)");
+        return { success: false, error: "Unauthorized" };
+      }
+      if (response.status === 400) {
+        const errorData = await response.json().catch(() => null);
+        console.error("❌ [Onboarding] Validation error (400):", JSON.stringify(errorData, null, 2));
+        return {
+          success: false,
+          error: errorData?.message || "Validation error",
+        };
+      }
+      console.error(`❌ [Onboarding] API error: ${response.status} ${response.statusText}`);
+      return {
+        success: false,
+        error: `Failed to update onboarding stage: ${response.statusText}`,
+      };
+    }
+
+    const responseData: VendorProfileResponse = await response.json();
+    console.log(`✅ [Onboarding] Successfully updated to stage ${newStage}`);
+
+    return {
+      success: true,
+      data: responseData,
+    };
+  } catch (error) {
+    console.error("💥 [Onboarding] Exception caught:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}

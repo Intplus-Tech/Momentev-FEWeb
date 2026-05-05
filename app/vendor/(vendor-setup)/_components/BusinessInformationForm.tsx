@@ -18,6 +18,7 @@ import {
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { CityAutocomplete } from "./CityAutocomplete";
 import { getUserProfile } from "@/lib/actions/user";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 interface ServiceLocation {
   city: string;
@@ -234,7 +235,7 @@ export function BusinessInformationForm() {
               render={({ field }) => (
                 <FloatingLabelInput
                   {...field}
-                  label="Business Name"
+                  label={<FormFieldLabel label="Business Name" isRequired />}
                   error={errors.businessName?.message}
                 />
               )}
@@ -245,7 +246,7 @@ export function BusinessInformationForm() {
               control={control}
               render={({ field }) => (
                 <FloatingLabelSelect
-                  label="Years in Business"
+                  label={<FormFieldLabel label="Years in Business" isRequired />}
                   options={yearsInBusinessOptions}
                   value={field.value}
                   onValueChange={field.onChange}
@@ -259,7 +260,7 @@ export function BusinessInformationForm() {
               control={control}
               render={({ field }) => (
                 <FloatingLabelSelect
-                  label="Business Registration Type"
+                  label={<FormFieldLabel label="Business Registration Type" isRequired />}
                   options={businessRegistrationTypeOptions}
                   value={field.value}
                   onValueChange={field.onChange}
@@ -275,7 +276,7 @@ export function BusinessInformationForm() {
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Company Registration Number"
+                    label={<FormFieldLabel label="Company Registration Number" isRequired={false} />}
                     error={errors.companyRegistrationNumber?.message}
                   />
                 )}
@@ -288,7 +289,7 @@ export function BusinessInformationForm() {
               render={({ field }) => (
                 <FloatingLabelTextarea
                   {...field}
-                  label="Business Description"
+                  label={<FormFieldLabel label="Business Description" isRequired={false} />}
                   error={errors.businessDescription?.message}
                   showCharCount
                   maxLength={500}
@@ -310,7 +311,7 @@ export function BusinessInformationForm() {
           {/* Service Locations */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
-              Where do you provide services?
+              <FormFieldLabel label="Where do you provide services?" isRequired />
             </label>
             <div className="flex flex-col gap-2">
               <CityAutocomplete
@@ -350,7 +351,7 @@ export function BusinessInformationForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="Maximum Travel Distance"
+                label={<FormFieldLabel label="Maximum Travel Distance" isRequired />}
                 options={maximumTravelDistanceOptions}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -374,9 +375,9 @@ export function BusinessInformationForm() {
             control={control}
             render={({ field }) => (
               <div className="space-y-3">
-                <label className="text-sm font-medium text-foreground">
-                  Working Days
-                </label>
+            <label className="text-sm font-medium text-foreground">
+              <FormFieldLabel label="Working Days" isRequired />
+            </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   {Object.entries(field.value).map(([day, checked]) => (
                     <div key={day} className="flex items-center space-x-2">
@@ -414,7 +415,7 @@ export function BusinessInformationForm() {
                 <FloatingLabelInput
                   {...field}
                   type="time"
-                  label="Start Time"
+                  label={<FormFieldLabel label="Start Time" isRequired />}
                   error={errors.workingHoursStart?.message}
                 />
               )}
@@ -427,7 +428,7 @@ export function BusinessInformationForm() {
                 <FloatingLabelInput
                   {...field}
                   type="time"
-                  label="End Time"
+                  label={<FormFieldLabel label="End Time" isRequired />}
                   error={errors.workingHoursEnd?.message}
                 />
               )}

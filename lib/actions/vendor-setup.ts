@@ -2,6 +2,7 @@
 
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
+import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import { createAddress, updateAddress } from "@/lib/actions/address";
 import type {
   BusinessProfilePayload,
@@ -112,13 +113,6 @@ function transformFormToPayload(
 
   return {
     vendorId, // Include vendorId from user profile
-    contactInfo: {
-      primaryContactName: formData.primaryContactName,
-      emailAddress: formData.emailAddress,
-      phoneNumber: formData.phoneNumber,
-      meansOfIdentification: formData.meansOfIdentification,
-      addressId, // Include addressId if address was created
-    },
     businessName: formData.businessName,
     yearInBusiness: formData.yearsInBusiness, // Send as is (lowercase)
     companyRegNo: formData.companyRegistrationNumber,
@@ -300,6 +294,17 @@ export async function submitBusinessInformation(
 
     const data: BusinessProfileResponse = await response.json();
     console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(redactSensitiveFields(data), null, 2));
+
+    // Update onboarding stage to 1 (Service Setup)
+    console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
+    const stageUpdateResult = await updateVendorOnboardingStage(1);
+    
+    if (!stageUpdateResult.success) {
+      console.warn('⚠️ [Step 1 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
+      // Continue anyway - stage update is secondary to business info submission
+    } else {
+      console.log('✅ [Step 1 Submission] Onboarding stage successfully updated to 1');
+    }
 
     return {
       success: true,

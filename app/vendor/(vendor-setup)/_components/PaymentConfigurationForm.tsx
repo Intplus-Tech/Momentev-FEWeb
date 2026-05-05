@@ -32,6 +32,8 @@ import {
   acceptCommission,
   type PaymentActionResponse,
 } from "@/lib/actions/payment";
+import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 export function PaymentConfigurationForm() {
   const router = useRouter();
@@ -155,6 +157,17 @@ export function PaymentConfigurationForm() {
           );
         }
 
+        // Update onboarding stage to 3 (Profile Setup)
+        console.log('📋 [Step 3 Submission] Incrementing onboarding stage to 3...');
+        const stageUpdateResult = await updateVendorOnboardingStage(3);
+        
+        if (!stageUpdateResult.success) {
+          console.warn('⚠️ [Step 3 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
+          // Continue anyway - stage update is secondary to payment setup submission
+        } else {
+          console.log('✅ [Step 3 Submission] Onboarding stage successfully updated to 3');
+        }
+
         markSectionComplete(3, 3); // Step 3, Section 3
         router.push("/vendor/profile-setup"); // Navigate to next page/step
       } catch (error) {
@@ -220,7 +233,7 @@ export function PaymentConfigurationForm() {
               <div className="px-6 pb-6 space-y-4">
                 <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
                   <h3 className="text-sm font-medium">
-                    Choose Your Payment Model
+                    <FormFieldLabel label="Choose Your Payment Model" isRequired />
                   </h3>
                 </div>
 
@@ -314,7 +327,7 @@ export function PaymentConfigurationForm() {
               <div className="px-6 pb-6 space-y-4">
                 <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
                   <h3 className="text-sm font-medium">
-                    Connect Your Bank Account
+                    <FormFieldLabel label="Connect Your Bank Account" isRequired />
                   </h3>
                 </div>
 
@@ -381,7 +394,7 @@ export function PaymentConfigurationForm() {
             {expandedSection === 3 && (
               <div className="px-6 pb-6 space-y-6">
                 <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
-                  <h3 className="text-sm font-medium">Momentev Commission</h3>
+                  <h3 className="text-sm font-medium"><FormFieldLabel label="Momentev Commission" isRequired /></h3>
                 </div>
 
                 <p className="text-sm">

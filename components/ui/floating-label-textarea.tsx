@@ -4,7 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface FloatingLabelTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label: string;
+  label: string | React.ReactNode;
   error?: string;
   showCharCount?: boolean;
   maxLength?: number;
@@ -23,7 +23,7 @@ const FloatingLabelTextarea = React.forwardRef<
     const [charCount, setCharCount] = React.useState(0);
 
     const textareaId =
-      id || `textarea-${label.replace(/\s+/g, "-").toLowerCase()}`;
+      id || (typeof label === "string" ? `textarea-${label.replace(/\s+/g, "-").toLowerCase()}` : "textarea-field");
     const isFloating =
       isFocused || hasValue || props.value || props.defaultValue;
 

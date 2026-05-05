@@ -21,6 +21,7 @@ import type { UploadedFile } from "@/lib/actions/upload";
 import { submitVendorProfile } from "@/lib/actions/vendor-profile";
 import { SOCIAL_MEDIA_PLATFORMS } from "../_schemas/profileCompletionSchema";
 import { SubmissionOverlay } from "./SubmissionOverlay";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 export function ProfileCompletionForm() {
   const router = useRouter();
@@ -259,7 +260,7 @@ export function ProfileCompletionForm() {
                   {/* Profile Photo */}
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium">Profile Photo</h3>
+                      <h3 className="text-sm font-medium"><FormFieldLabel label="Profile Photo" isRequired /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Professional headshot or logo • JPG, PNG, WebP up to
                         10MB
@@ -282,7 +283,7 @@ export function ProfileCompletionForm() {
                   {/* Cover Photo */}
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium">Cover Photo</h3>
+                      <h3 className="text-sm font-medium"><FormFieldLabel label="Cover Photo" isRequired /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Showcase your best work • Recommended 1200x400px
                       </p>
@@ -303,7 +304,7 @@ export function ProfileCompletionForm() {
                   {/* Portfolio Gallery */}
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium">Portfolio Gallery</h3>
+                      <h3 className="text-sm font-medium"><FormFieldLabel label="Portfolio Gallery" isRequired /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Add at least 5 photos of your best work (
                         {portfolioImages.length}/5)
@@ -375,8 +376,7 @@ export function ProfileCompletionForm() {
               {expandedSection === 2 && (
                 <div className="px-6 pb-6 space-y-6">
                   <p className="text-sm text-muted-foreground">
-                    Add your social media profiles to help clients find you
-                    (optional)
+                    <FormFieldLabel label="Add your social media profiles to help clients find you" isRequired={false} />
                   </p>
 
                   {/* Existing Links */}

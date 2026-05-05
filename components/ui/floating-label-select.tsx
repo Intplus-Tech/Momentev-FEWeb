@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 
 export interface FloatingLabelSelectProps {
-  label: string;
+  label: string | React.ReactNode;
   error?: string;
   options: Array<{ value: string; label: string }>;
   value?: string;

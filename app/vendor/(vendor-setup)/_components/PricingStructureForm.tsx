@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2, Plus } from "lucide-react";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
+import { FormFieldLabel } from "./FormFieldLabel";
 
 const PRICING_TYPES = [
   { value: "hourly", label: "Hourly Rate" },
@@ -145,7 +146,7 @@ export function PricingStructureForm() {
             control={control}
             render={({ field }) => (
               <FloatingLabelSelect
-                label="How do you charge?*"
+                label={<FormFieldLabel label="How do you charge?" isRequired />}
                 options={PRICING_TYPES}
                 value={field.value}
                 onValueChange={field.onChange}
@@ -163,8 +164,9 @@ export function PricingStructureForm() {
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Hourly Rate*"
+                    label={<FormFieldLabel label="Hourly Rate" isRequired />}
                     type="number"
+                    prefix="£"
                     error={errors.hourlyRate?.message}
                   />
                 )}
@@ -177,7 +179,7 @@ export function PricingStructureForm() {
       {/* Transport Fee Section (Compulsory) */}
       <div className="space-y-4">
         <div className="bg-primary/5 px-4 py-4 -mx-6">
-          <h3 className="">Transport Fee*</h3>
+          <h3 className=""><FormFieldLabel label="Transport Fee" isRequired /></h3>
         </div>
 
         <div className="space-y-4">
@@ -187,7 +189,7 @@ export function PricingStructureForm() {
               control={control}
               render={({ field }) => (
                 <FloatingLabelSelect
-                  label="Select Travel fees"
+                  label={<FormFieldLabel label="Select Travel fees" isRequired />}
                   options={TRANSPORT_FEE_OPTIONS}
                   value={field.value}
                   onValueChange={(val) => {
@@ -210,8 +212,9 @@ export function PricingStructureForm() {
                 render={({ field }) => (
                   <FloatingLabelInput
                     {...field}
-                    label="Custom Amount"
+                    label={<FormFieldLabel label="Custom Amount" isRequired />}
                     type="number"
+                    prefix="£"
                     error={errors.transportFee?.amount?.message}
                     className="flex-1"
                   />
@@ -225,7 +228,7 @@ export function PricingStructureForm() {
       {/* Additional Fees Section (formerly Equipment Fees) */}
       <div className="space-y-4">
         <div className="bg-primary/5 px-4 py-4 -mx-6">
-          <h3 className="">Additional Fees*</h3>
+          <h3 className=""><FormFieldLabel label="Additional Fees" isRequired={false} /></h3>
         </div>
 
         <div className="space-y-3">
@@ -263,6 +266,7 @@ export function PricingStructureForm() {
                     {...field}
                     label="Price*"
                     type="number"
+                    prefix="£"
                     className="w-32"
                   />
                 )}

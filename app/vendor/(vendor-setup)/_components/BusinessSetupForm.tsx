@@ -126,20 +126,6 @@ export function BusinessSetupForm() {
     }
   };
 
-  // Check if current section is valid
-  const canProceed = () => {
-    if (expandedSection === 1) return isBusinessInfoValid;
-    if (expandedSection === 2) return isDocumentsValid;
-    return false;
-  };
-
-  // Determine button text based on current section
-  const getButtonText = () => {
-    if (isSubmitting) return "Saving...";
-    if (expandedSection === 2) return "Submit & Continue to Step 2";
-    return "Save & Continue";
-  };
-
   // Check if Section 2 is locked
   const isSection2Locked = !completedSections.has("step1-section1");
 
@@ -170,7 +156,20 @@ export function BusinessSetupForm() {
                 isExpanded={expandedSection === 1}
                 onToggle={() => toggleSection(1)}
               />
-              {expandedSection === 1 && <BusinessInformationForm />}
+              {expandedSection === 1 && (
+                <div className="flex flex-col">
+                  <BusinessInformationForm />
+                  <div className="px-6 py-4 border-t flex justify-end">
+                    <Button
+                      onClick={handleSaveAndContinue}
+                      disabled={isSubmitting || !isBusinessInfoValid || activeUploads > 0}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSubmitting && expandedSection === 1 ? "Saving..." : "Save & Continue"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Section 2: Document Upload */}
@@ -183,24 +182,27 @@ export function BusinessSetupForm() {
                 onToggle={() => !isSection2Locked && toggleSection(2)}
                 isLocked={isSection2Locked}
               />
-              {expandedSection === 2 && <DocumentUploadSection />}
+              {expandedSection === 2 && (
+                <div className="flex flex-col">
+                  <DocumentUploadSection />
+                  <div className="px-6 py-4 border-t flex justify-end">
+                    <Button
+                      onClick={handleSaveAndContinue}
+                      disabled={isSubmitting || !isDocumentsValid || activeUploads > 0}
+                      className="w-full sm:w-auto"
+                    >
+                      {isSubmitting && expandedSection === 2 ? "Submitting..." : "Submit & Continue to Step 2"}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-10 mt-auto md:justify-between">
+        {/* Progress Bar */}
+        <div className="flex justify-start mt-auto">
           <ProgressBar currentStep={1} />
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-3">
-            <Button
-              onClick={handleSaveAndContinue}
-              disabled={isSubmitting || !canProceed() || activeUploads > 0}
-              className="w-full sm:w-auto"
-            >
-              {getButtonText()}
-            </Button>
-          </div>
         </div>
       </div>
     </>

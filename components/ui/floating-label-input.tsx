@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils";
 
 export type FloatingLabelInputProps =
   React.ComponentPropsWithoutRef<"input"> & {
-    label: string;
+    label: string | React.ReactNode;
+    prefix?: React.ReactNode;
     suffix?: React.ReactNode;
     error?: string;
   };
@@ -17,6 +18,7 @@ export const FloatingLabelInput = React.forwardRef<
     {
       label,
       className,
+      prefix,
       suffix,
       error,
       id,
@@ -41,6 +43,7 @@ export const FloatingLabelInput = React.forwardRef<
             "focus:border-primary focus:ring-4 focus:ring-primary/40",
             "disabled:bg-slate-100 disabled:text-muted-foreground",
             "aria-invalid:border-rose-500 aria-invalid:ring-rose-100",
+            prefix ? "pl-8" : "pl-2.5",
             suffix ? "pr-12" : "pr-4",
             className,
           )}
@@ -55,6 +58,11 @@ export const FloatingLabelInput = React.forwardRef<
         >
           {label}
         </label>
+        {prefix ? (
+          <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted-foreground">
+            {prefix}
+          </div>
+        ) : null}
         {suffix ? (
           <div className="pointer-events-auto absolute inset-y-0 right-3 flex items-center">
             {suffix}
