@@ -23,7 +23,7 @@ export function FeaturedVendorsSearch({ vendors }: FeaturedVendorsSearchProps) {
   return (
     <div className="mb-8 w-full">
       <div className="flex items-center gap-2 mb-4">
-        <Sparkles className="w-5 h-5 text-primary" />
+        {/* <Sparkles className="w-5 h-5 text-primary" /> */}
         <h2 className="text-xl font-semibold text-foreground">Featured Vendors</h2>
       </div>
 

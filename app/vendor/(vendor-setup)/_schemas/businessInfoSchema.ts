@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { parsePhoneNumber } from "libphonenumber-js";
 
 export const businessInfoSchema = z.object({
   // Company Information
@@ -8,42 +7,17 @@ export const businessInfoSchema = z.object({
     .min(2, "Business name must be at least 2 characters")
     .max(100, "Business name must not exceed 100 characters"),
   yearsInBusiness: z.string().min(1, "Please select years in business"),
-  companyRegistrationNumber: z
-    .string()
-    .min(1, "Company registration number is required"),
   businessRegistrationType: z
     .string()
     .min(1, "Please select business registration type"),
+  companyRegistrationNumber: z
+    .string()
+    .optional(),
   businessDescription: z
     .string()
     .max(500, "Business description must not exceed 500 characters")
     .optional(),
 
-  // Contact Information
-  primaryContactName: z
-    .string()
-    .min(2, "Contact name must be at least 2 characters")
-    .max(100, "Contact name must not exceed 100 characters"),
-  emailAddress: z.string().email("Please enter a valid email address"),
-  phoneNumber: z.string().refine(
-    (phone) => {
-      try {
-        const phoneNum = parsePhoneNumber(phone);
-        return phoneNum?.isValid() ?? false;
-      } catch {
-        return false;
-      }
-    },
-    { message: "Please enter a valid international phone number (e.g., +1 234 567 8900)" }
-  ),
-  meansOfIdentification: z.string().min(1, "Means of identification is required"),
-  street: z.string().optional(),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  postalCode: z.string().optional(),
-  country: z.string().optional(),
-
-  // Service Area
   // Service Area
   serviceLocations: z
     .array(
@@ -84,8 +58,6 @@ export const yearsInBusinessOptions = [
 export const businessRegistrationTypeOptions = [
   { value: "company", label: "Company" },
   { value: "sole_trader", label: "Sole Trader" },
-  { value: "partnership", label: "Partnership" },
-  { value: "limited_liability_partnership", label: "Limited Liability Partnership (LLP)" },
 ];
 
 export const maximumTravelDistanceOptions = [

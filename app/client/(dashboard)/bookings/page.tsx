@@ -98,8 +98,10 @@ export default async function ClientBookingsPage({
   // Separate upcoming and past bookings
   const now = new Date();
   const completedBookings = bookings.filter(
-    (booking) =>
-      booking.status === "completed" || booking.status === "cancelled" || booking.status === "rejected",
+    (booking) => {
+      const isPastDate = new Date(booking.eventDetails.endDate) < now;
+      return booking.status === "completed" || booking.status === "cancelled" || booking.status === "rejected" || isPastDate;
+    }
   );
   const upcomingBookings = bookings.filter(
     (booking) => !completedBookings.includes(booking)

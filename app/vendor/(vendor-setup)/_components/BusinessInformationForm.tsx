@@ -17,7 +17,7 @@ import {
 } from "../_schemas/businessInfoSchema";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { CityAutocomplete } from "./CityAutocomplete";
-import { PhoneInput } from "@/components/ui/phone-input";
+import { getUserProfile } from "@/lib/actions/user";
 
 interface ServiceLocation {
   city: string;
@@ -42,6 +42,27 @@ export function BusinessInformationForm() {
   const isUpdatingFromContext = useRef(false);
   const [formKey, setFormKey] = useState(0); // Key to force re-render
 
+  const defaultBusinessInfo: BusinessInfoFormData = {
+    businessName: "",
+    yearsInBusiness: "",
+    businessRegistrationType: "",
+    companyRegistrationNumber: "",
+    businessDescription: "",
+    serviceLocations: [],
+    maximumTravelDistance: "",
+    workingDays: {
+      monday: true,
+      tuesday: true,
+      wednesday: true,
+      thursday: true,
+      friday: false,
+      saturday: false,
+      sunday: false,
+    },
+    workingHoursStart: "09:00",
+    workingHoursEnd: "17:00",
+  };
+
   const {
     control,
     handleSubmit,
@@ -52,38 +73,11 @@ export function BusinessInformationForm() {
   } = useForm<BusinessInfoFormData>({
     resolver: zodResolver(businessInfoSchema),
     mode: "onChange",
-    defaultValues: {
-      businessName: "",
-      yearsInBusiness: "",
-      companyRegistrationNumber: "",
-      businessRegistrationType: "",
-      businessDescription: "",
-      primaryContactName: "",
-      emailAddress: "",
-      phoneNumber: "",
-      meansOfIdentification: "",
-      street: "",
-      city: "",
-      state: "",
-      postalCode: "",
-      country: "",
-      serviceLocations: [],
-      maximumTravelDistance: "",
-      workingDays: {
-        monday: true,
-        tuesday: true,
-        wednesday: true,
-        thursday: true,
-        friday: false,
-        saturday: false,
-        sunday: false,
-      },
-      workingHoursStart: "09:00",
-      workingHoursEnd: "17:00",
-    },
+    defaultValues: defaultBusinessInfo,
   });
 
   const hasLoadedInitialData = useRef(false);
+  const hasPrefilledBusinessName = useRef(false);
   const isMounted = useRef(true);
 
   // Load from context when component mounts
@@ -93,6 +87,44 @@ export function BusinessInformationForm() {
       isMounted.current = false;
     };
   }, []);
+
+  // Prefill the business name from the user profile (firstName) when the field is empty.
+  useEffect(() => {
+    const prefillBusinessName = async () => {
+      if (hasPrefilledBusinessName.current || businessInfo?.businessName?.trim()) {
+        return;
+      }
+
+      const profileResult = await getUserProfile();
+      if (!profileResult.success || !profileResult.data?.firstName) {
+        return;
+      }
+
+      const businessName = profileResult.data.firstName.trim();
+      if (!businessName) {
+        return;
+      }
+
+      const nextBusinessInfo = {
+        ...defaultBusinessInfo,
+        ...(businessInfo ?? {}),
+        businessName,
+      };
+
+      hasPrefilledBusinessName.current = true;
+      isUpdatingFromContext.current = true;
+      updateBusinessInfo(nextBusinessInfo);
+      setValue("businessName", businessName, { shouldValidate: true, shouldDirty: false });
+
+      setTimeout(() => {
+        if (isMounted.current) {
+          isUpdatingFromContext.current = false;
+        }
+      }, 100);
+    };
+
+    void prefillBusinessName();
+  }, [businessInfo?.businessName, setValue, updateBusinessInfo]);
 
   // Load from context on mount or when businessInfo changes initially
   useEffect(() => {
@@ -223,18 +255,6 @@ export function BusinessInformationForm() {
             />
 
             <Controller
-              name="companyRegistrationNumber"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Company Registration Number"
-                  error={errors.companyRegistrationNumber?.message}
-                />
-              )}
-            />
-
-            <Controller
               name="businessRegistrationType"
               control={control}
               render={({ field }) => (
@@ -248,6 +268,20 @@ export function BusinessInformationForm() {
               )}
             />
 
+            {watch("businessRegistrationType") === "company" && (
+              <Controller
+                name="companyRegistrationNumber"
+                control={control}
+                render={({ field }) => (
+                  <FloatingLabelInput
+                    {...field}
+                    label="Company Registration Number"
+                    error={errors.companyRegistrationNumber?.message}
+                  />
+                )}
+              />
+            )}
+
             <Controller
               name="businessDescription"
               control={control}
@@ -259,139 +293,6 @@ export function BusinessInformationForm() {
                   showCharCount
                   maxLength={500}
                   rows={4}
-                />
-              )}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Contact Information Section */}
-      <div className="space-y-4">
-        <div className="bg-primary/5 px-4 py-4">
-          <h3 className="">Contact Information</h3>
-        </div>
-
-        <div className="px-6 space-y-4">
-          <Controller
-            name="primaryContactName"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelInput
-                {...field}
-                label="Primary Contact Name"
-                error={errors.primaryContactName?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="emailAddress"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelInput
-                {...field}
-                type="email"
-                label="Email Address"
-                error={errors.emailAddress?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="phoneNumber"
-            control={control}
-            render={({ field }) => (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">
-                  Phone Number
-                </label>
-                <PhoneInput
-                  placeholder="Enter phone number"
-                  {...field}
-                  defaultCountry="GB"
-                />
-                {errors.phoneNumber && (
-                  <p className="text-xs text-destructive">
-                    {errors.phoneNumber.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-
-          <Controller
-            name="meansOfIdentification"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelInput
-                {...field}
-                label="Means of Identification"
-                error={errors.meansOfIdentification?.message}
-              />
-            )}
-          />
-
-          <Controller
-            name="street"
-            control={control}
-            render={({ field }) => (
-              <FloatingLabelInput
-                {...field}
-                label="Street Address"
-                error={errors.street?.message}
-              />
-            )}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Controller
-              name="city"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="City"
-                  error={errors.city?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="state"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="State"
-                  error={errors.state?.message}
-                />
-              )}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Controller
-              name="postalCode"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Postal Code"
-                  error={errors.postalCode?.message}
-                />
-              )}
-            />
-
-            <Controller
-              name="country"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  label="Country"
-                  placeholder="e.g., NG, UK, US"
-                  error={errors.country?.message}
                 />
               )}
             />

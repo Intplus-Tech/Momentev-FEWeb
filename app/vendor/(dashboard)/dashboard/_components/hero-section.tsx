@@ -21,10 +21,10 @@ export function HeroSection({
           Welcome, {name}
         </h1>
       </div>
-      <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-6">
+      {/* <div className="flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:gap-6">
         <p>{helperText}</p>
         <Button>{ctaLabel}</Button>
-      </div>
+      </div> */}
     </div>
   );
 }
