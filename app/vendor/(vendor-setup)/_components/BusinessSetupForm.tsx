@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { submitBusinessInformation } from "@/lib/actions/vendor-setup";
 import type { BusinessInfoFormData } from "../_schemas/businessInfoSchema";
 import { SubmissionOverlay } from "./SubmissionOverlay";
+import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 
 export function BusinessSetupForm() {
   const router = useRouter();
@@ -114,6 +115,7 @@ export function BusinessSetupForm() {
         toast.success("Business setup Step 1 completed successfully!");
 
         markSectionComplete(1, 2); // Step 1, Section 2
+        setOnboardingStageOverride(1);
         router.push("/vendor/service-setup");
       }
     } catch (error) {

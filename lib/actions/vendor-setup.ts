@@ -81,6 +81,9 @@ function transformFormToPayload(
     license?: string[];
   },
 ): BusinessProfilePayload {
+  const normalizedCompanyRegNo = formData.companyRegistrationNumber?.trim();
+  const companyRegNoForApi = normalizedCompanyRegNo || "NOT_PROVIDED";
+
   // Transform working days to workdays array
   const workdays = Object.entries(formData.workingDays)
     .filter(([_, isSelected]) => isSelected)
@@ -115,7 +118,8 @@ function transformFormToPayload(
     vendorId, // Include vendorId from user profile
     businessName: formData.businessName,
     yearInBusiness: formData.yearsInBusiness, // Send as is (lowercase)
-    companyRegNo: formData.companyRegistrationNumber,
+    // Keep client field optional while satisfying backend non-empty validation.
+    companyRegNo: companyRegNoForApi,
     businessRegType: formData.businessRegistrationType, // Send as is (lowercase)
     businessDescription: formData.businessDescription,
     serviceArea: {
@@ -297,7 +301,10 @@ export async function submitBusinessInformation(
 
     // Update onboarding stage to 1 (Service Setup)
     console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
-    const stageUpdateResult = await updateVendorOnboardingStage(1);
+    const stageUpdateResult = await updateVendorOnboardingStage(1, {
+      vendorId,
+      accessToken,
+    });
     
     if (!stageUpdateResult.success) {
       console.warn('⚠️ [Step 1 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);

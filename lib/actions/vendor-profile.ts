@@ -13,8 +13,8 @@ type ActionResponse<T = void> = {
 
 interface VendorProfilePayload {
   profilePhoto: string;
-  coverPhoto: string;
-  portfolioGallery: string[];
+  coverPhoto?: string;
+  portfolioGallery?: string[];
   socialMediaLinks?: { name: string; link: string }[];
   isActive?: boolean;
   onBoardingStage?: number;
@@ -43,8 +43,8 @@ interface VendorProfileResponse {
 export async function submitVendorProfile(
   data: {
     profilePhoto: string;
-    coverPhoto: string;
-    portfolioGallery: string[];
+    coverPhoto?: string;
+    portfolioGallery?: string[];
     socialMediaLinks?: { name: string; link: string }[];
   }
 ): Promise<ActionResponse<VendorProfileResponse>> {
@@ -56,8 +56,8 @@ export async function submitVendorProfile(
     console.log("📤 [Step 4 Submission] Starting vendor profile submission...");
     console.log("📋 [Step 4 Submission] Payload:", {
       profilePhoto: data.profilePhoto,
-      coverPhoto: data.coverPhoto,
-      portfolioGallery: `[${data.portfolioGallery.length} images]`,
+      coverPhoto: data.coverPhoto || "omitted",
+      portfolioGallery: data.portfolioGallery ? `[${data.portfolioGallery.length} images]` : "omitted",
       socialMediaLinks: data.socialMediaLinks ? `[${data.socialMediaLinks.length} links]` : "none",
     });
 
@@ -94,9 +94,13 @@ export async function submitVendorProfile(
 
     const payload: VendorProfilePayload = {
       profilePhoto: data.profilePhoto,
-      coverPhoto: data.coverPhoto,
-      portfolioGallery: data.portfolioGallery,
-      socialMediaLinks: data.socialMediaLinks,
+      ...(data.coverPhoto ? { coverPhoto: data.coverPhoto } : {}),
+      ...(data.portfolioGallery && data.portfolioGallery.length > 0
+        ? { portfolioGallery: data.portfolioGallery }
+        : {}),
+      ...(data.socialMediaLinks && data.socialMediaLinks.length > 0
+        ? { socialMediaLinks: data.socialMediaLinks }
+        : {}),
       // Set vendor as pending approval and mark onboarding as complete
       isActive: false,
       onBoardingStage: 4,
@@ -164,6 +168,10 @@ export async function submitVendorProfile(
  */
 export async function updateVendorOnboardingStage(
   newStage: number,
+  options?: {
+    vendorId?: string;
+    accessToken?: string;
+  },
 ): Promise<ActionResponse<VendorProfileResponse>> {
   if (!API_URL) {
     return { success: false, error: "Backend URL not configured" };
@@ -172,17 +180,21 @@ export async function updateVendorOnboardingStage(
   try {
     console.log(`📤 [Onboarding] Updating onboarding stage to ${newStage}...`);
 
-    // Get user profile to extract vendorId
-    const profileResult = await getUserProfile();
-    if (!profileResult.success || !profileResult.data) {
-      console.error("❌ [Onboarding] Failed to get user profile:", profileResult.error);
-      return {
-        success: false,
-        error: profileResult.error || "Failed to get user profile",
-      };
+    // Reuse provided IDs/tokens from the calling action when possible.
+    let vendorId = options?.vendorId;
+
+    if (!vendorId) {
+      const profileResult = await getUserProfile();
+      if (!profileResult.success || !profileResult.data) {
+        console.error("❌ [Onboarding] Failed to get user profile:", profileResult.error);
+        return {
+          success: false,
+          error: profileResult.error || "Failed to get user profile",
+        };
+      }
+      vendorId = profileResult.data.vendor?._id;
     }
 
-    const vendorId = profileResult.data.vendor?._id;
     if (!vendorId) {
       console.error("❌ [Onboarding] No vendor ID found in user profile");
       return {
@@ -191,7 +203,7 @@ export async function updateVendorOnboardingStage(
       };
     }
 
-    const accessToken = await getAccessToken();
+    const accessToken = options?.accessToken || await getAccessToken();
 
     if (!accessToken) {
       console.error("❌ [Onboarding] No access token found");

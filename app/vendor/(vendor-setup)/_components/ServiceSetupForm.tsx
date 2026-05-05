@@ -13,6 +13,7 @@ import { submitServiceSetup } from "@/lib/actions/service";
 import type { ServiceCategoriesFormData } from "../_schemas/serviceCategoriesSchema";
 import type { PricingStructureFormData } from "../_schemas/pricingStructureSchema";
 import { SubmissionOverlay } from "./SubmissionOverlay";
+import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 
 export function ServiceSetupForm() {
   const router = useRouter();
@@ -97,6 +98,7 @@ export function ServiceSetupForm() {
         }
 
         markSectionComplete(2, 2); // Step 2, Section 2
+        setOnboardingStageOverride(2);
         router.push("/vendor/payment-setup");
       }
     } catch (error) {

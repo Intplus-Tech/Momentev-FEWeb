@@ -11,8 +11,8 @@ export type SocialMediaLink = z.infer<typeof socialMediaLinkSchema>;
 export const profileCompletionSchema = z.object({
   // Profile Media Upload
   profilePhoto: z.string().min(1, "Please upload a profile photo"),
-  coverPhoto: z.string().min(1, "Please upload a cover photo"),
-  portfolioGallery: z.array(z.string()).min(5, "Please upload at least 5 portfolio photos"),
+  coverPhoto: z.string().optional(),
+  portfolioGallery: z.array(z.string()).optional(),
   // Social Media Links (optional)
   socialMediaLinks: z.array(socialMediaLinkSchema).max(5, "You can add up to 5 links including your website").optional(),
 });

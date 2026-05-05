@@ -22,6 +22,7 @@ import { submitVendorProfile } from "@/lib/actions/vendor-profile";
 import { SOCIAL_MEDIA_PLATFORMS } from "../_schemas/profileCompletionSchema";
 import { SubmissionOverlay } from "./SubmissionOverlay";
 import { FormFieldLabel } from "./FormFieldLabel";
+import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 
 export function ProfileCompletionForm() {
   const router = useRouter();
@@ -146,7 +147,7 @@ export function ProfileCompletionForm() {
 
   // Check if form can proceed
   const canProceedSection1 = () => {
-    return profilePhoto && coverPhoto && portfolioImages.length >= 5;
+    return Boolean(profilePhoto);
   };
 
   // Section 2 is optional, so always can proceed
@@ -161,7 +162,7 @@ export function ProfileCompletionForm() {
   // Handle section 1 save and continue
   const handleSaveSection1 = () => {
     if (!canProceedSection1()) {
-      toast.error("Please upload all required photos");
+      toast.error("Please upload a profile photo");
       return;
     }
     markSectionComplete(4, 1);
@@ -178,7 +179,7 @@ export function ProfileCompletionForm() {
 
     // Section 2 - final submission
     if (!canProceedSection1()) {
-      toast.error("Please complete Section 1 first");
+      toast.error("Please upload a profile photo first");
       setExpandedSection(1);
       return;
     }
@@ -191,10 +192,13 @@ export function ProfileCompletionForm() {
 
       const result = await submitVendorProfile({
         profilePhoto: profilePhoto!.id,
-        coverPhoto: coverPhoto!.id,
-        portfolioGallery: portfolioImages.map((img) => img.id),
-        socialMediaLinks:
-          socialMediaLinks.length > 0 ? socialMediaLinks : undefined,
+        ...(coverPhoto ? { coverPhoto: coverPhoto.id } : {}),
+        ...(portfolioImages.length > 0
+          ? { portfolioGallery: portfolioImages.map((img) => img.id) }
+          : {}),
+        ...(socialMediaLinks.length > 0
+          ? { socialMediaLinks }
+          : {}),
       });
 
       toast.dismiss();
@@ -207,6 +211,7 @@ export function ProfileCompletionForm() {
 
       markSectionComplete(4, 2);
       toast.success("Profile setup complete!");
+      setOnboardingStageOverride(4);
       router.push("/vendor/setup-review");
     } catch (error) {
       console.error("❌ Failed to save:", error);
@@ -283,7 +288,7 @@ export function ProfileCompletionForm() {
                   {/* Cover Photo */}
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium"><FormFieldLabel label="Cover Photo" isRequired /></h3>
+                        <h3 className="text-sm font-medium"><FormFieldLabel label="Cover Photo" isRequired={false} /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Showcase your best work • Recommended 1200x400px
                       </p>
@@ -304,10 +309,9 @@ export function ProfileCompletionForm() {
                   {/* Portfolio Gallery */}
                   <div className="space-y-3">
                     <div>
-                      <h3 className="text-sm font-medium"><FormFieldLabel label="Portfolio Gallery" isRequired /></h3>
+                      <h3 className="text-sm font-medium"><FormFieldLabel label="Portfolio Gallery" isRequired={false} /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
-                        Add at least 5 photos of your best work (
-                        {portfolioImages.length}/5)
+                        Add portfolio photos to showcase your best work ({portfolioImages.length} uploaded)
                       </p>
                     </div>
 
@@ -356,7 +360,7 @@ export function ProfileCompletionForm() {
                     >
                       {activeUploads > 0
                         ? "Uploading..."
-                        : "Save & Continue to Social Links"}
+                        : "Save & Continue"}
                     </Button>
                   </div>
                 </div>

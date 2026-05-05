@@ -39,7 +39,15 @@ export async function submitServiceSetup(
     if (!accessToken) return { success: false, error: "Authentication required" };
 
     // 1. Prepare Vendor Service Payload
-    const additionalFees = [];
+    const additionalFees: { name: string; price: string; feeCategory: string }[] = [];
+
+    // Helper: sanitize price strings (remove currency symbols, commas)
+    const sanitizePrice = (val: any) => {
+      if (val === null || val === undefined) return "0";
+      const s = String(val);
+      const cleaned = s.replace(/[^0-9.]/g, "");
+      return cleaned === "" ? "0" : cleaned;
+    };
 
     // Add Transport Fee
     if (pricingData.transportFee?.type) {
@@ -51,9 +59,8 @@ export async function submitServiceSetup(
         name = "Transport Fee (Flat)";
       } else if (pricingData.transportFee.type === "per_mile_1") {
         price = "1";
-        name = "Transport Fee (Per Mile)";
       } else if (pricingData.transportFee.type === "custom") {
-        price = pricingData.transportFee.amount || "0";
+        price = sanitizePrice(pricingData.transportFee.amount) || "0";
         name = "Transport Fee (Custom)";
       }
 
@@ -68,7 +75,7 @@ export async function submitServiceSetup(
     if (pricingData.additionalFees) {
       additionalFees.push(...pricingData.additionalFees.map(fee => ({
         name: fee.name,
-        price: fee.price,
+        price: sanitizePrice(fee.price),
         feeCategory: fee.category
       })));
     }
@@ -113,20 +120,20 @@ export async function submitServiceSetup(
     }
 
     // 2. Create Vendor Specialties
-    // Determine base price from pricing structure
+    // Determine base price from pricing structure (sanitize to plain numeric string)
     let basePrice = "0";
-    let priceCharge = "custom_quote";
+    let priceCharge = "custom_quotes";
 
     if (pricingData.pricingType === "hourly") {
-      basePrice = pricingData.hourlyRate || "0";
+      basePrice = sanitizePrice(pricingData.hourlyRate) || "0";
       priceCharge = "hourly_rate";
     }
-    // Custom is default "custom_quote" with price "0"
+    // Custom is default "custom_quotes" with price "0"
 
     console.log(`Creating ${serviceData.specialties.length} Specialties...`);
 
     const specialtyPromises = serviceData.specialties.map(specialtyId => {
-      const payload = {
+      const bodyPayload = {
         vendorId,
         serviceSpecialty: specialtyId,
         priceCharge,
@@ -139,11 +146,12 @@ export async function submitServiceSetup(
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(bodyPayload),
       }).then(async res => {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          console.error(`Failed to create specialty ${specialtyId}:`, err);
+          console.error(`Failed to create specialty ${specialtyId}:`, JSON.stringify(err, null, 2));
+          console.error("Payload sent:", JSON.stringify(bodyPayload));
           throw new Error(err.message || "Failed to create specialty");
         }
         return res.json();
@@ -154,7 +162,10 @@ export async function submitServiceSetup(
 
     // Update onboarding stage to 2 (Payment Setup)
     console.log('📋 [Step 2 Submission] Incrementing onboarding stage to 2...');
-    const stageUpdateResult = await updateVendorOnboardingStage(2);
+    const stageUpdateResult = await updateVendorOnboardingStage(2, {
+      vendorId,
+      accessToken,
+    });
     
     if (!stageUpdateResult.success) {
       console.warn('⚠️ [Step 2 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);

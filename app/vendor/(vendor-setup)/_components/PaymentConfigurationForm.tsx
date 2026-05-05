@@ -34,6 +34,7 @@ import {
 } from "@/lib/actions/payment";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import { FormFieldLabel } from "./FormFieldLabel";
+import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 
 export function PaymentConfigurationForm() {
   const router = useRouter();
@@ -169,6 +170,7 @@ export function PaymentConfigurationForm() {
         }
 
         markSectionComplete(3, 3); // Step 3, Section 3
+        setOnboardingStageOverride(3);
         router.push("/vendor/profile-setup"); // Navigate to next page/step
       } catch (error) {
         console.error("❌ Failed to save:", error);
