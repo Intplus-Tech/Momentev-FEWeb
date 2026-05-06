@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { handleGoogleCallback } from "@/lib/actions/auth";
 import { getUserProfile } from "@/lib/actions/user";
+import { getEffectiveOnboardedStatus } from "@/lib/vendor-cache";
 import { Spinner } from "@/components/ui/spinner";
 
 function GoogleCallbackContent() {
@@ -54,7 +55,12 @@ function GoogleCallbackContent() {
           if (profileResult.success && profileResult.data?.vendor) {
             const { vendor } = profileResult.data;
 
-            if (!vendor.onBoarded) {
+            const effectiveOnBoarded = getEffectiveOnboardedStatus(
+              vendor.onBoarded,
+              vendor._id || vendor.id,
+            );
+
+            if (!effectiveOnBoarded) {
               // Redirect to appropriate setup step based on onBoardingStage
               const stageRoutes: Record<number, string> = {
                 0: "/vendor/business-setup",

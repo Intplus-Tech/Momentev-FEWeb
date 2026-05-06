@@ -102,6 +102,7 @@ export const ClientHeader = () => {
                       <p className="text-sm font-semibold text-foreground">
                         {user.firstName} {user.lastName}
                       </p>
+                      {/* <p>{user.status}</p> */}
                       <p className="text-xs text-muted-foreground">
                         Momentev client
                       </p>

@@ -113,7 +113,8 @@ export default async function BookingDetailPage({
               {booking.eventDetails.title}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Booking ID: #{booking._id.slice(-8).toUpperCase()}
+              {/* Booking ID: #{booking._id.slice(-8).toUpperCase()} */}
+              {booking._id}
             </p>
           </div>
           <Badge variant="outline" className={cn("font-medium text-sm", status.color)}>

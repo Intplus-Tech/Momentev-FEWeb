@@ -26,6 +26,7 @@ import { GoogleIcon } from "@/components/icons/google-icon";
 import { Spinner } from "@/components/ui/spinner";
 import { getGoogleAuthUrl, login } from "@/lib/actions/auth";
 import { getUserProfile } from "@/lib/actions/user";
+import { getEffectiveOnboardedStatus } from "@/lib/vendor-cache";
 import { toast } from "sonner";
 import { loginSchema } from "@/validation/auth";
 
@@ -84,7 +85,12 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
       if (profileResult.success && profileResult.data?.vendor) {
         const { vendor } = profileResult.data;
 
-        if (!vendor.onBoarded) {
+        const effectiveOnBoarded = getEffectiveOnboardedStatus(
+          vendor.onBoarded,
+          vendor._id || vendor.id,
+        );
+
+        if (!effectiveOnBoarded) {
           // Redirect to appropriate setup step based on onBoardingStage
           const stageRoutes: Record<number, string> = {
             0: "/vendor/business-setup",
