@@ -65,7 +65,7 @@ const FloatingLabelSelect = React.forwardRef<
           </SelectTrigger>
           <SelectContent>
             {options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
+              <SelectItem key={option.value} value={option.value} className="capitalize">
                 {option.label}
               </SelectItem>
             ))}

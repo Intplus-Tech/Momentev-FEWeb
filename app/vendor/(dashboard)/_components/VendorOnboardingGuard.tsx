@@ -6,6 +6,7 @@ import { getUserProfile } from "@/lib/actions/user";
 import { Loader2, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthLogout } from "@/hooks/use-auth-logout";
+import { getEffectiveOnboardedStatus } from "@/lib/vendor-cache";
 
 interface VendorOnboardingGuardProps {
   children: React.ReactNode;
@@ -59,8 +60,12 @@ export function VendorOnboardingGuard({
           return;
         }
 
-        // Check onboarding status
-        if (!vendor.onBoarded) {
+        // Check onboarding status - use cache if available to prevent looping
+        const effectiveOnBoarded = getEffectiveOnboardedStatus(
+          vendor.onBoarded,
+          vendor._id || vendor.id,
+        );
+        if (!effectiveOnBoarded) {
           // Determine which step to redirect to based on onBoardingStage
           const stageRoutes: Record<number, string> = {
             0: "/vendor/business-setup",

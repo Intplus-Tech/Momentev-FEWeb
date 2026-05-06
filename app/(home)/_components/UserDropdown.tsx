@@ -53,7 +53,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
           <AvatarImage src={user.avatar?.url} alt={user.firstName} />
           <AvatarFallback className="bg-muted text-primary text-xs font-semibold">
             {user.firstName?.[0]}
-            {user.lastName?.[0]}
+            {/* {user.lastName?.[0]} */}
           </AvatarFallback>
         </Avatar>
         {/* <span className="hidden font-medium md:block group-data-[state=open]:text-white">
@@ -64,7 +64,7 @@ export function UserDropdown({ user }: UserDropdownProps) {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.firstName} {user.lastName}
+              {user.firstName}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user.email}

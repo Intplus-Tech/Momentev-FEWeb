@@ -232,6 +232,7 @@ export function ServiceCategoriesForm() {
                 onValueChange={field.onChange}
                 error={errors.serviceCategory?.message}
                 disabled={isLoadingCategories}
+                className="capitalize"
               />
             )}
           />

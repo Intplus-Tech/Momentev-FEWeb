@@ -19,10 +19,12 @@ import {
 } from "@/components/ui/select";
 import type { UploadedFile } from "@/lib/actions/upload";
 import { submitVendorProfile } from "@/lib/actions/vendor-profile";
+import { updateUserProfile } from "@/lib/actions/user";
 import { SOCIAL_MEDIA_PLATFORMS } from "../_schemas/profileCompletionSchema";
 import { SubmissionOverlay } from "./SubmissionOverlay";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
+import { setOnboardedCache } from "@/lib/vendor-cache";
 
 export function ProfileCompletionForm() {
   const router = useRouter();
@@ -145,9 +147,9 @@ export function ProfileCompletionForm() {
     return platform?.placeholder || "https://...";
   };
 
-  // Check if form can proceed
+  // Check if form can proceed (profile + cover required)
   const canProceedSection1 = () => {
-    return Boolean(profilePhoto);
+    return Boolean(profilePhoto && coverPhoto);
   };
 
   // Section 2 is optional, so always can proceed
@@ -162,7 +164,13 @@ export function ProfileCompletionForm() {
   // Handle section 1 save and continue
   const handleSaveSection1 = () => {
     if (!canProceedSection1()) {
-      toast.error("Please upload a profile photo");
+      if (!profilePhoto) {
+        toast.error("Please upload a profile photo");
+      } else if (!coverPhoto) {
+        toast.error("Please upload a cover photo");
+      } else {
+        toast.error("Please upload both profile and cover photos");
+      }
       return;
     }
     markSectionComplete(4, 1);
@@ -179,7 +187,7 @@ export function ProfileCompletionForm() {
 
     // Section 2 - final submission
     if (!canProceedSection1()) {
-      toast.error("Please upload a profile photo first");
+      toast.error("Please upload a profile and cover photo first");
       setExpandedSection(1);
       return;
     }
@@ -209,8 +217,23 @@ export function ProfileCompletionForm() {
         return;
       }
 
+      // Sync the business profile photo as the user avatar (best-effort)
+      if (profilePhoto?.url) {
+        console.log("🖼️ [ProfileSetup] Syncing business profile photo as user avatar:", profilePhoto.url);
+        updateUserProfile({ avatar: profilePhoto.url })
+          .then((res) => {
+            console.log("✅ [ProfileSetup] Avatar sync result:", res);
+          })
+          .catch((err) => {
+            console.warn("⚠️ [ProfileSetup] Could not sync avatar with user profile:", err);
+          });
+      }
+
       markSectionComplete(4, 2);
       toast.success("Profile setup complete!");
+      // Cache the onboarded status locally for 5 minutes to prevent looping
+      // while the backend processes the update
+      setOnboardedCache(true, result.data?.data?._id);
       setOnboardingStageOverride(4);
       router.push("/vendor/setup-review");
     } catch (error) {
@@ -288,7 +311,7 @@ export function ProfileCompletionForm() {
                   {/* Cover Photo */}
                   <div className="space-y-3">
                     <div>
-                        <h3 className="text-sm font-medium"><FormFieldLabel label="Cover Photo" isRequired={false} /></h3>
+                      <h3 className="text-sm font-medium"><FormFieldLabel label="Cover Photo" isRequired /></h3>
                       <p className="text-xs text-muted-foreground mt-0.5">
                         Showcase your best work • Recommended 1200x400px
                       </p>
