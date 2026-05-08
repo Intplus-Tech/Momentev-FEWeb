@@ -261,7 +261,7 @@ export function ServiceCategoriesForm() {
             Loading specialties...
           </div>
         ) : isSpecialtiesError ? (
-          <p className="text-sm text-destructive">
+          <p className="text-sm text-destructive capitalize">
             {specialtiesError instanceof Error
               ? specialtiesError.message
               : "Failed to load specialties"}
@@ -281,7 +281,7 @@ export function ServiceCategoriesForm() {
                 />
                 <label
                   htmlFor={specialty.id}
-                  className="text-sm font-normal cursor-pointer"
+                  className="text-sm font-normal cursor-pointer capitalize"
                 >
                   {specialty.label}
                 </label>

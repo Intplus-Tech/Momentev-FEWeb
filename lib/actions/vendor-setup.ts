@@ -3,7 +3,6 @@
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
-import { createAddress, updateAddress } from "@/lib/actions/address";
 import type {
   BusinessProfilePayload,
   BusinessProfileResponse,
@@ -205,41 +204,10 @@ export async function submitBusinessInformation(
       }
     }
 
-    // Create or Update address if address fields are provided
+    // Link an existing address if one is already available on the profile.
+    // Step 1 no longer collects address fields, so we do not create/update
+    // an address here.
     let addressId: string | undefined = existingAddressId;
-
-    if (formData.street || formData.city || formData.state || formData.postalCode) {
-      const addressPayload = {
-        street: formData.street || '',
-        city: formData.city || '',
-        state: formData.state || '',
-        postalCode: formData.postalCode || '',
-        country: formData.country || 'NG',
-      };
-
-      if (existingAddressId) {
-        console.log(`🏠 [Step 1 Submission] Updating existing address: ${existingAddressId}...`);
-        const updateResult = await updateAddress(existingAddressId, addressPayload);
-
-        if (updateResult.success) {
-          console.log(`✅ [Step 1 Submission] Address updated: ${existingAddressId}`);
-        } else {
-          console.warn('⚠️ [Step 1 Submission] Address update failed:', updateResult.error);
-        }
-      } else {
-        console.log('🏠 [Step 1 Submission] Creating new address...');
-
-        const addressResult = await createAddress(addressPayload);
-
-        if (addressResult.success && addressResult.data) {
-          addressId = addressResult.data._id;
-          console.log(`✅ [Step 1 Submission] Address created: ${addressId}`);
-        } else {
-          console.warn('⚠️ [Step 1 Submission] Address creation failed:', addressResult.error);
-          // Continue without address - it's optional
-        }
-      }
-    }
 
     const accessToken = await getAccessToken();
 
@@ -305,7 +273,7 @@ export async function submitBusinessInformation(
       vendorId,
       accessToken,
     });
-    
+
     if (!stageUpdateResult.success) {
       console.warn('⚠️ [Step 1 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
       // Continue anyway - stage update is secondary to business info submission

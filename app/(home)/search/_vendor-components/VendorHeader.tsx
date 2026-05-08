@@ -3,12 +3,15 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { Star, Heart, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useStartVendorConversation } from "@/hooks/api/use-chat";
 import { useFavoriteStatus, useAddFavorite, useRemoveFavorite } from "@/hooks/api/use-client-favorites";
 import { toast } from "sonner";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
 
 interface VendorHeaderProps {
   name: string;
@@ -30,12 +33,14 @@ export function VendorHeader({
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isLoading: isUserLoading, isError } = useUserProfile();
+  const { canPerformAction } = useClientActionGuard();
   const startConversation = useStartVendorConversation();
   const { data: isFavorited, isLoading: isFavoriteLoading } = useFavoriteStatus(
     user?.role === "customer" || user?.role === "CUSTOMER" ? vendorId : undefined
   );
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const role = user?.role?.toUpperCase();
   const isVendor = role === "VENDOR";
@@ -55,6 +60,10 @@ export function VendorHeader({
     }
 
     if (isClient) {
+      if (!canPerformAction(() => setShowBlockedDialog(true))) {
+        return;
+      }
+
       if (onBookVendor) {
         onBookVendor();
         return;
@@ -148,11 +157,10 @@ export function VendorHeader({
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.floor(rating)
+                  className={`w-4 h-4 ${i < Math.floor(rating)
                       ? "fill-yellow-400 text-yellow-400"
                       : "fill-muted text-muted"
-                  }`}
+                    }`}
                 />
               ))}
             </div>
@@ -209,6 +217,11 @@ export function VendorHeader({
           )}
         </div>
       )}
+
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+      />
     </div>
   );
 }

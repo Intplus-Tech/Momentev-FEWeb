@@ -15,8 +15,8 @@ export const businessInfoSchema = z.object({
     .optional(),
   businessDescription: z
     .string()
-    .max(500, "Business description must not exceed 500 characters")
-    .optional(),
+    .min(10, "Business description must be at least 10 characters long")
+    .max(500, "Business description must not exceed 500 characters"),
 
   // Service Area
   serviceLocations: z
@@ -39,7 +39,12 @@ export const businessInfoSchema = z.object({
     friday: z.boolean(),
     saturday: z.boolean(),
     sunday: z.boolean(),
-  }),
+  }).refine(
+    (workingDays) => Object.values(workingDays).filter(Boolean).length >= 2,
+    {
+      message: "Please select at least 2 working days",
+    },
+  ),
   workingHoursStart: z.string().min(1, "Please select start time"),
   workingHoursEnd: z.string().min(1, "Please select end time"),
 });

@@ -16,7 +16,7 @@ export function HeroSection({
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div>
-        <p className="text-sm text-muted-foreground">{location}</p>
+        {/* <p className="text-sm text-muted-foreground">{location}</p> */}
         <h1 className="mt-1 text-3xl font-semibold text-foreground">
           Welcome, {name}
         </h1>

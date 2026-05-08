@@ -81,7 +81,7 @@ export function StripeConnectBanner() {
           ) : (
             <ExternalLink className="mr-2 h-4 w-4" />
           )}
-          Connect Stripe
+          Go to Stripe
         </Button>
       </div>
 

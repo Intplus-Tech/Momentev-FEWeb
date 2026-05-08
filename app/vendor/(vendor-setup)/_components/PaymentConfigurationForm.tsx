@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Info, Check } from "lucide-react";
+import { Info, Check, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -161,7 +161,7 @@ export function PaymentConfigurationForm() {
         // Update onboarding stage to 3 (Profile Setup)
         console.log('📋 [Step 3 Submission] Incrementing onboarding stage to 3...');
         const stageUpdateResult = await updateVendorOnboardingStage(3);
-        
+
         if (!stageUpdateResult.success) {
           console.warn('⚠️ [Step 3 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
           // Continue anyway - stage update is secondary to payment setup submission
@@ -326,59 +326,81 @@ export function PaymentConfigurationForm() {
               isLocked={isSection2Locked}
             />
             {expandedSection === 2 && (
-              <div className="px-6 pb-6 space-y-4">
+              <div className="px-6 pb-6">
                 <div className="bg-primary/5 px-4 py-3 -mx-6 mb-4">
                   <h3 className="text-sm font-medium">
                     <FormFieldLabel label="Connect Your Bank Account" isRequired />
                   </h3>
                 </div>
 
-                <p className="text-sm text-muted-foreground">
-                  We use Stripe for secure, compliant payments
-                </p>
+                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.95fr)]">
+                  <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      We use Stripe for secure, compliant payments
+                    </p>
 
-                <Button
-                  onClick={handleStripeConnect}
-                  disabled={stripeConnected || isConnecting}
-                  className="w-full sm:w-auto"
-                >
-                  {isConnecting ? (
-                    <>
-                      <span className="animate-spin mr-2">⚡</span>
-                      Connecting...
-                    </>
-                  ) : stripeConnected ? (
-                    <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Connected
-                    </>
-                  ) : (
-                    "Connect with Stripe"
-                  )}
-                </Button>
+                    <Button
+                      onClick={handleStripeConnect}
+                      disabled={stripeConnected || isConnecting}
+                      className="w-full sm:w-auto"
+                    >
+                      {isConnecting ? (
+                        <>
+                          <span className="animate-spin mr-2">⚡</span>
+                          Connecting...
+                        </>
+                      ) : stripeConnected ? (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Connected
+                        </>
+                      ) : (
+                        "Connect with Stripe"
+                      )}
+                    </Button>
 
-                <div className="mt-6">
-                  <p className="text-sm font-medium mb-3">Once connected:</p>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span>Bank account verified</span>
+                    <div className="mt-6">
+                      <p className="text-sm font-medium mb-3">Once connected:</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span>Bank account verified</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span>Payouts enabled</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Check className="h-4 w-4 text-green-600" />
+                          <span>Secure payment processing</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span>Payouts enabled</span>
+
+                    <p className="text-xs text-muted-foreground mt-4">
+                      Your bank details are never stored on our servers. Feature
+                      powered by Stripe.
+                    </p>
+                  </div>
+
+                  <div className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm">
+                    <div className="absolute right-4 top-4 h-7 w-7 rounded-full bg-primary/15" />
+                    <div className="absolute left-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/90 text-white shadow-md">
+                      <AlertCircle className="h-5 w-5" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-600" />
-                      <span>Secure payment processing</span>
+
+                    <div className="pt-12">
+
+                      <p className="text-sm leading-6 text-muted-foreground">
+                        To ensure secure and compliant payments, we use Stripe.
+                        You will be temporarily redirected to their secure portal
+                        to link your account. After completion, Stripe will bring
+                        you back to this page so you can finalize your account
+                        setup.
+                      </p>
                     </div>
                   </div>
                 </div>
-
-                <p className="text-xs text-muted-foreground mt-4">
-                  Your bank details are never stored on our servers. Feature
-                  powered by Stripe.
-                </p>
               </div>
             )}
           </div>

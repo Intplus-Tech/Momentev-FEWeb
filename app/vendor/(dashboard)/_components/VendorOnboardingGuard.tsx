@@ -3,9 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getUserProfile } from "@/lib/actions/user";
-import { Loader2, Home } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useAuthLogout } from "@/hooks/use-auth-logout";
+import { Loader2 } from "lucide-react";
 import { getEffectiveOnboardedStatus } from "@/lib/vendor-cache";
 
 interface VendorOnboardingGuardProps {
@@ -21,11 +19,8 @@ export function VendorOnboardingGuard({
 }: VendorOnboardingGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const authLogout = useAuthLogout();
   const [isChecking, setIsChecking] = useState(true);
   const [isOnboarded, setIsOnboarded] = useState(false);
-  const [isActive, setIsActive] = useState<boolean | null>(null);
-  const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
     async function checkOnboardingStatus() {
@@ -40,7 +35,6 @@ export function VendorOnboardingGuard({
         }
 
         const { vendor } = result.data;
-        setUserProfile(result.data);
 
         console.log("[VendorGuard] User profile:", {
           firstName: result.data.firstName,
@@ -81,12 +75,6 @@ export function VendorOnboardingGuard({
           return;
         }
 
-        // Vendor is onboarded, check if active
-        if (vendor.isActive === false) {
-          setIsActive(false);
-        } else {
-          setIsActive(true);
-        }
         setIsOnboarded(true);
       } catch (error) {
         console.error(
@@ -117,58 +105,6 @@ export function VendorOnboardingGuard({
   // Don't render if not onboarded (will redirect)
   if (!isOnboarded) {
     return null;
-  }
-
-  // If onboarded but not active, show under review screen
-  if (isActive === false) {
-    const businessName =
-      userProfile?.vendor?.businessProfile?.businessName ||
-      userProfile?.firstName + "'s Business";
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-background">
-        <div className="max-w-md w-full space-y-6 bg-card p-8 rounded-xl shadow-sm border border-border text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-2">
-            <Loader2 className="w-8 h-8 animate-spin text-yellow-600" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
-              Account Under Review
-            </h1>
-            <p className="text-lg font-medium text-foreground">
-              {businessName}
-            </p>
-
-            <div className="inline-block px-4 py-1.5 rounded-full bg-yellow-500/10 text-yellow-600 font-semibold text-sm border border-yellow-500/20 my-4 shadow-sm">
-              Status: Pending Approval
-            </div>
-
-            <p className="text-muted-foreground pt-2">
-              Your onboarding information has been submitted successfully and is
-              currently under review by our team.
-            </p>
-            <p className="text-muted-foreground font-medium pt-2">
-              Please check back in 24 hours if you have not received an email
-              notification.
-            </p>
-          </div>
-
-          <div className="pt-2 w-full">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full flex items-center justify-center gap-2"
-              onClick={async () => {
-                await authLogout("/");
-              }}
-            >
-              <Home className="w-4 h-4" />
-              Return to Home
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   return <>{children}</>;

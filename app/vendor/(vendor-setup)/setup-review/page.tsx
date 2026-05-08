@@ -60,17 +60,17 @@ export default function SetupReviewPage() {
 
               <div className="border-t pt-6">
                 <h2 className="text-lg font-semibold mb-3">
-                  Next Steps After Submission:
+                  What happens next:
                 </h2>
                 <ol className="space-y-2 text-sm text-muted-foreground">
-                  <li>1. Our team reviews your application (24-48 hours)</li>
-                  <li>2. You'll receive an email when approved</li>
-                  <li>3. Start receiving quote requests immediately!</li>
+                  <li>1. Your vendor account is activated now</li>
+                  <li>2. You can access the dashboard immediately</li>
+                  <li>3. Start receiving quote requests right away</li>
                 </ol>
               </div>
 
               <Button onClick={handleSubmit} className="w-full mt-4" size="lg">
-                Submit
+                Go to Dashboard
               </Button>
             </div>
           </div>

@@ -126,7 +126,7 @@ export function StripeConnectCard() {
             ) : (
               <ExternalLink className="mr-2 h-4 w-4" />
             )}
-            Onboard to Stripe
+            Go to Stripe
           </Button>
         ) : (
           <Button
@@ -135,7 +135,7 @@ export function StripeConnectCard() {
             disabled={dashboard.isPending}
             className="shrink-0 sm:min-w-44"
           >
-             {dashboard.isPending ? (
+            {dashboard.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <ExternalLink className="mr-2 h-4 w-4" />

@@ -17,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
 import {
   EventBasicStep,
   VendorNeedsStep,
@@ -67,6 +69,7 @@ function buildPayload(): CustomRequestPayload {
 
 export default function CustomRequestPage() {
   const router = useRouter();
+  const { canPerformAction } = useClientActionGuard();
   const [mounted, setMounted] = useState(false);
   const hydrated = useRef(false);
   const commitRef = useRef<(() => void) | null>(null);
@@ -76,6 +79,7 @@ export default function CustomRequestPage() {
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);
   const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   // Store state (only subscribe to what drives rendering)
   const currentStep = useCustomRequestStore((state) => state.currentStep);
@@ -239,6 +243,10 @@ export default function CustomRequestPage() {
   };
 
   const handleNext = () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     if (!canProceed()) {
       toast.error("Please complete all required fields");
       return;
@@ -260,6 +268,10 @@ export default function CustomRequestPage() {
   const handleSubmit = async (
     status: "draft" | "pending_approval" = "pending_approval",
   ) => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     commitRef.current?.();
     setIsSubmitting(true);
 
@@ -439,6 +451,11 @@ export default function CustomRequestPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+      />
     </div>
   );
 }

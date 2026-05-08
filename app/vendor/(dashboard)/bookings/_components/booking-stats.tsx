@@ -21,7 +21,7 @@ export function BookingStats({ stats }: { stats: BookingStat[] }) {
             </span>
           </CardHeader>
           <CardContent>
-            <p className="text-sm font-semibold text-primary">{stat.helper}</p>
+            <p className="text-sm font-semibold capitalize text-primary">{stat.helper}</p>
             <p className="text-xs text-muted-foreground">{stat.subtext}</p>
           </CardContent>
         </Card>

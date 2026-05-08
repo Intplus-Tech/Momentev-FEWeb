@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, LogOut, UserRound } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
+import { AlertTriangle, Bell, LogOut, UserRound } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -16,11 +18,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { usePathname } from "next/navigation";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useConversations } from "@/hooks/api/use-chat";
-import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
+import { CLIENT_BAN_DESCRIPTION, CLIENT_BAN_TITLE } from "@/lib/client-access";
 
 const getInitials = (firstName?: string, lastName?: string) => {
   const first = firstName?.trim();
@@ -35,18 +37,48 @@ const getInitials = (firstName?: string, lastName?: string) => {
 };
 
 export const ClientHeader = () => {
+  const router = useRouter();
   const pathname = usePathname();
   const isMessagesPage = pathname?.startsWith("/client/messages");
   const { data: conversations = [] } = useConversations();
-  const { data: user, isLoading: isUserLoading } = useUserProfile();
+  const { data: user, isLoading: isUserLoading, isBanned, canPerformAction } =
+    useClientActionGuard();
   const authLogout = useAuthLogout();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleLogout = async () => {
     await authLogout("/client/auth/log-in");
   };
 
+  const handleCreateCustomRequest = () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
+    router.push("/client/custom-request");
+  };
+
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+      {isBanned && (
+        <div className="border-b border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-50 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-sm font-semibold">{CLIENT_BAN_TITLE}</p>
+              <p className="text-sm text-foreground/80">{CLIENT_BAN_DESCRIPTION}</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              asChild
+              className="shrink-0 border-amber-500/30 bg-background/70 text-foreground hover:bg-background"
+            >
+              <a href="mailto:support@momentev.com">Contact support</a>
+            </Button>
+          </div>
+        </div>
+      )}
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:px-8">
         <LogoSmall className="md:hidden" />
 
@@ -68,8 +100,8 @@ export const ClientHeader = () => {
             <span className="sr-only">Notifications</span>
           </Button> */}
 
-          <Button size="sm" className="hidden sm:inline-flex" asChild>
-            <Link href="/client/custom-request">Create a custom request</Link>
+          <Button size="sm" className="hidden sm:inline-flex" onClick={handleCreateCustomRequest}>
+            Create a custom request
           </Button>
 
           <div className="hidden md:flex items-center gap-3">
@@ -140,6 +172,10 @@ export const ClientHeader = () => {
             ) : null}
           </div>
         </div>
+        <ClientActionBlockedDialog
+          open={showBlockedDialog}
+          onOpenChange={setShowBlockedDialog}
+        />
       </div>
     </header>
   );

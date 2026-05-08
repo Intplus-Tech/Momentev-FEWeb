@@ -52,10 +52,10 @@ export function BusinessInformationForm() {
     serviceLocations: [],
     maximumTravelDistance: "",
     workingDays: {
-      monday: true,
-      tuesday: true,
-      wednesday: true,
-      thursday: true,
+      monday: false,
+      tuesday: false,
+      wednesday: false,
+      thursday: false,
       friday: false,
       saturday: false,
       sunday: false,
@@ -67,10 +67,10 @@ export function BusinessInformationForm() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid },
     watch,
     setValue,
     reset,
+    formState: { errors, isValid },
   } = useForm<BusinessInfoFormData>({
     resolver: zodResolver(businessInfoSchema),
     mode: "onChange",
@@ -81,7 +81,7 @@ export function BusinessInformationForm() {
   const hasPrefilledBusinessName = useRef(false);
   const isMounted = useRef(true);
 
-  // Load from context when component mounts
+  // Track mounted state
   useEffect(() => {
     isMounted.current = true;
     return () => {
@@ -92,36 +92,32 @@ export function BusinessInformationForm() {
   // Prefill the business name from the user profile (firstName) when the field is empty.
   useEffect(() => {
     const prefillBusinessName = async () => {
-      if (hasPrefilledBusinessName.current || businessInfo?.businessName?.trim()) {
-        return;
+      if (hasPrefilledBusinessName.current) return;
+      try {
+        const profileResult = await getUserProfile();
+        if (!profileResult?.data) return;
+        const businessName = profileResult.data.firstName.trim();
+        if (!businessName) return;
+
+        const nextBusinessInfo = {
+          ...defaultBusinessInfo,
+          ...(businessInfo ?? {}),
+          businessName,
+        };
+
+        hasPrefilledBusinessName.current = true;
+        isUpdatingFromContext.current = true;
+        updateBusinessInfo(nextBusinessInfo);
+        setValue("businessName", businessName, { shouldValidate: true, shouldDirty: false });
+
+        setTimeout(() => {
+          if (isMounted.current) {
+            isUpdatingFromContext.current = false;
+          }
+        }, 100);
+      } catch (e) {
+        // ignore
       }
-
-      const profileResult = await getUserProfile();
-      if (!profileResult.success || !profileResult.data?.firstName) {
-        return;
-      }
-
-      const businessName = profileResult.data.firstName.trim();
-      if (!businessName) {
-        return;
-      }
-
-      const nextBusinessInfo = {
-        ...defaultBusinessInfo,
-        ...(businessInfo ?? {}),
-        businessName,
-      };
-
-      hasPrefilledBusinessName.current = true;
-      isUpdatingFromContext.current = true;
-      updateBusinessInfo(nextBusinessInfo);
-      setValue("businessName", businessName, { shouldValidate: true, shouldDirty: false });
-
-      setTimeout(() => {
-        if (isMounted.current) {
-          isUpdatingFromContext.current = false;
-        }
-      }, 100);
     };
 
     void prefillBusinessName();
@@ -215,6 +211,30 @@ export function BusinessInformationForm() {
     updateBusinessInfo(data);
   };
 
+  // Helper: Convert 24-hour "HH:MM" to 12-hour parts
+  const parse24To12 = (timeStr?: string) => {
+    if (!timeStr) return { hour: "12", minute: "00", ampm: "AM" };
+    const [hh, mm] = timeStr.split(":");
+    let h = Number(hh);
+    const m = mm || "00";
+    const ampm = h >= 12 ? "PM" : "AM";
+    h = h % 12;
+    if (h === 0) h = 12;
+    return { hour: String(h), minute: m, ampm };
+  };
+
+  // Helper: Convert 12-hour parts to 24-hour "HH:MM"
+  const to24HourString = (hour12: string, minute: string, ampm: string) => {
+    let h = Number(hour12);
+    const m = minute.padStart(2, "0");
+    if (ampm === "AM") {
+      if (h === 12) h = 0;
+    } else {
+      if (h !== 12) h = h + 12;
+    }
+    return `${String(h).padStart(2, "0")}:${m}`;
+  };
+
   return (
     <form
       key={formKey}
@@ -289,7 +309,7 @@ export function BusinessInformationForm() {
               render={({ field }) => (
                 <FloatingLabelTextarea
                   {...field}
-                  label={<FormFieldLabel label="Business Description" isRequired={false} />}
+                  label={<FormFieldLabel label="Business Description" isRequired />}
                   error={errors.businessDescription?.message}
                   showCharCount
                   maxLength={500}
@@ -307,44 +327,77 @@ export function BusinessInformationForm() {
           <h3 className="">Service Area</h3>
         </div>
 
-        <div className="px-6 pb-6 space-y-4">
-          {/* Service Locations */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-foreground">
-              <FormFieldLabel label="Where do you provide services?" isRequired />
-            </label>
-            <div className="flex flex-col gap-2">
-              <CityAutocomplete
-                onLocationSelect={handleLocationSelect}
-                placeholder="Enter a city (e.g. London)"
-              />
-            </div>
+        <div className="px-6 pb-6 space-y-6">
+          <Controller
+            name="serviceLocations"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">
+                  <FormFieldLabel label="Service Locations" isRequired />
+                </label>
 
-            {serviceLocations.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {serviceLocations.map((location, index) => (
-                  <div
-                    key={`${location.city}-${index}`}
-                    className="flex items-center gap-1 rounded-md bg-primary/10 px-3 py-1 text-sm"
-                  >
-                    <span>{location.city}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveLocation(index)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                <CityAutocomplete
+                  onLocationSelect={(location) => {
+                    const isDuplicate = serviceLocations.some(
+                      (loc) =>
+                        loc.city.toLowerCase() === location.city.toLowerCase() &&
+                        loc.state.toLowerCase() === location.state.toLowerCase(),
+                    );
+
+                    if (!isDuplicate) {
+                      const nextLocations = [
+                        ...serviceLocations,
+                        {
+                          city: location.city,
+                          state: location.state,
+                          country: location.country,
+                        },
+                      ];
+
+                      setServiceLocations(nextLocations);
+                      field.onChange(nextLocations);
+                    }
+                  }}
+                />
+
+                {serviceLocations.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {serviceLocations.map((location, index) => (
+                      <div
+                        key={`${location.city}-${location.state}-${index}`}
+                        className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-sm"
+                      >
+                        <span>
+                          {location.city}, {location.state}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextLocations = serviceLocations.filter(
+                              (_, currentIndex) => currentIndex !== index,
+                            );
+                            setServiceLocations(nextLocations);
+                            field.onChange(nextLocations);
+                          }}
+                          className="text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label={`Remove ${location.city}, ${location.state}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {errors.serviceLocations && (
+                  <p className="text-xs text-destructive">
+                    {errors.serviceLocations.message as string}
+                  </p>
+                )}
               </div>
             )}
-            {errors.serviceLocations && (
-              <p className="text-xs text-destructive">
-                {errors.serviceLocations.message}
-              </p>
-            )}
-          </div>
+          />
 
           <Controller
             name="maximumTravelDistance"
@@ -360,79 +413,194 @@ export function BusinessInformationForm() {
             )}
           />
         </div>
-      </div>
 
-      {/* Availability Section */}
-      <div className="space-y-4">
-        <div className="bg-primary/5 px-4 py-4">
-          <h3 className="">Availability</h3>
-        </div>
+        {/* Availability Section */}
+        <div className="space-y-4">
+          <div className="bg-primary/5 px-4 py-4">
+            <h3 className="">Availability</h3>
+          </div>
 
-        <div className="px-6 pb-6 space-y-6">
-          {/* Working Days */}
-          <Controller
-            name="workingDays"
-            control={control}
-            render={({ field }) => (
-              <div className="space-y-3">
-            <label className="text-sm font-medium text-foreground">
-              <FormFieldLabel label="Working Days" isRequired />
-            </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {Object.entries(field.value).map(([day, checked]) => (
-                    <div key={day} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id={day}
-                        checked={checked}
-                        onChange={(e) =>
-                          field.onChange({
-                            ...field.value,
-                            [day]: e.target.checked,
-                          })
-                        }
-                        className="rounded border-input"
-                      />
-                      <label
-                        htmlFor={day}
-                        className="cursor-pointer capitalize text-sm"
-                      >
-                        {day}
-                      </label>
+          <div className="px-6 pb-6 space-y-6">
+            {/* Working Days */}
+            <Controller
+              name="workingDays"
+              control={control}
+              render={({ field }) => {
+                const workingDays = field.value ?? defaultBusinessInfo.workingDays;
+
+                return (
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium text-foreground">
+                      <FormFieldLabel label="Working Days" isRequired />
+                    </label>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                      {Object.entries(workingDays).map(([day, checked]) => (
+                        <div key={day} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={day}
+                            checked={checked}
+                            onChange={(e) =>
+                              field.onChange({
+                                ...workingDays,
+                                [day]: e.target.checked,
+                              })
+                            }
+                            className="rounded border-input"
+                          />
+                          <label
+                            htmlFor={day}
+                            className="cursor-pointer capitalize text-sm"
+                          >
+                            {day}
+                          </label>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          />
-
-          {/* Working Hours */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Controller
-              name="workingHoursStart"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  type="time"
-                  label={<FormFieldLabel label="Start Time" isRequired />}
-                  error={errors.workingHoursStart?.message}
-                />
-              )}
+                    {errors.workingDays && (
+                      <p className="text-xs text-destructive">
+                        {errors.workingDays.message}
+                      </p>
+                    )}
+                  </div>
+                );
+              }}
             />
 
-            <Controller
-              name="workingHoursEnd"
-              control={control}
-              render={({ field }) => (
-                <FloatingLabelInput
-                  {...field}
-                  type="time"
-                  label={<FormFieldLabel label="End Time" isRequired />}
-                  error={errors.workingHoursEnd?.message}
-                />
-              )}
-            />
+            {/* Working Hours */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Controller
+                name="workingHoursStart"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      <FormFieldLabel label="Start Time" isRequired />
+                    </label>
+                    {/* 12-hour selector: hour, minute (15-min steps), AM/PM */}
+                    <div className="flex gap-2">
+                      {/** Hour */}
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).hour}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(e.target.value, parts.minute, parts.ampm);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        {[...Array(12)].map((_, i) => {
+                          const val = String(i + 1);
+                          return (
+                            <option key={val} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      {/** Minute */}
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).minute}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(parts.hour, e.target.value, parts.ampm);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        {['00', '15', '30', '45'].map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+
+                      {/** AM/PM */}
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).ampm}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(parts.hour, parts.minute, e.target.value);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                    {errors.workingHoursStart && (
+                      <p className="text-xs text-destructive">
+                        {errors.workingHoursStart.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
+
+              <Controller
+                name="workingHoursEnd"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">
+                      <FormFieldLabel label="End Time" isRequired />
+                    </label>
+                    <div className="flex gap-2">
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).hour}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(e.target.value, parts.minute, parts.ampm);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        {[...Array(12)].map((_, i) => {
+                          const val = String(i + 1);
+                          return (
+                            <option key={val} value={val}>
+                              {val}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).minute}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(parts.hour, e.target.value, parts.ampm);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        {['00', '15', '30', '45'].map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        className="rounded-md border px-2 py-2 text-sm"
+                        value={parse24To12(field.value).ampm}
+                        onChange={(e) => {
+                          const parts = parse24To12(field.value);
+                          const newVal = to24HourString(parts.hour, parts.minute, e.target.value);
+                          field.onChange(newVal);
+                        }}
+                      >
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                      </select>
+                    </div>
+                    {errors.workingHoursEnd && (
+                      <p className="text-xs text-destructive">
+                        {errors.workingHoursEnd.message}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
+            </div>
           </div>
         </div>
       </div>

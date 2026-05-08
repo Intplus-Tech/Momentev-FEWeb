@@ -101,8 +101,8 @@ export async function submitVendorProfile(
       ...(data.socialMediaLinks && data.socialMediaLinks.length > 0
         ? { socialMediaLinks: data.socialMediaLinks }
         : {}),
-      // Set vendor as pending approval and mark onboarding as complete
-      isActive: false,
+      // Activate the vendor as part of the final onboarding submission.
+      isActive: true,
       onBoardingStage: 4,
       onBoarded: true,
     };
