@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarIcon, Loader2, Minus, Plus, Users } from "lucide-react";
@@ -51,11 +52,62 @@ interface BookingModalProps {
   specialties: VendorSpecialtyItem[] | undefined;
 }
 
-const CURRENCIES = [
-  { value: "GBP", label: "GBP (£)" },
-  { value: "USD", label: "USD ($)" },
-  { value: "EUR", label: "EUR (€)" },
-];
+function LabeledFormLabel({
+  children,
+  optional = false,
+}: {
+  children: React.ReactNode;
+  optional?: boolean;
+}) {
+  return (
+    <FormLabel className="flex items-center gap-2">
+      <span>{children}</span>
+      <span
+        className={cn(
+          "text-[11px] font-medium uppercase tracking-wide",
+          optional ? "text-muted-foreground" : "text-destructive",
+        )}
+      >
+        {optional ? "(Optional)" : "*"}
+      </span>
+    </FormLabel>
+  );
+}
+
+function findFirstErrorPath(
+  errors: Record<string, unknown>,
+  prefix = "",
+): string | null {
+  for (const [key, value] of Object.entries(errors)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+
+    if (!value) {
+      continue;
+    }
+
+    if (
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      !("message" in value)
+    ) {
+      const nestedPath = findFirstErrorPath(value as Record<string, unknown>, path);
+      if (nestedPath) {
+        return nestedPath;
+      }
+      continue;
+    }
+
+    return path;
+  }
+
+  return null;
+}
+
+const getStartOfDay = (date: Date) => {
+  const nextDate = new Date(date);
+  nextDate.setHours(0, 0, 0, 0);
+  return nextDate;
+};
 
 export function BookingModal({
   open,
@@ -64,6 +116,7 @@ export function BookingModal({
   vendorName,
   specialties = [],
 }: BookingModalProps) {
+  const router = useRouter();
   const createBookingMutation = useCreateBooking();
   const [selectedSpecialties, setSelectedSpecialties] = React.useState<
     Map<string, number>
@@ -152,9 +205,13 @@ export function BookingModal({
 
   const onSubmit = async (values: CreateBookingFormValues) => {
     try {
-      await createBookingMutation.mutateAsync(values);
+      const booking = await createBookingMutation.mutateAsync(values);
+      if (!booking?._id) {
+        throw new Error("Booking created without an ID");
+      }
       toast.success(`Booking request submitted successfully to ${vendorName}!`);
       onOpenChange(false);
+      router.push(`/client/bookings/${booking._id}`);
     } catch (error) {
       toast.error("Failed to create booking", {
         description:
@@ -163,11 +220,29 @@ export function BookingModal({
     }
   };
 
+  const onInvalid = (errors: Record<string, unknown>) => {
+    const firstErrorPath = findFirstErrorPath(errors);
+
+    if (firstErrorPath) {
+      window.requestAnimationFrame(() => {
+        form.setFocus(firstErrorPath as any);
+
+        const firstErrorElement = document.querySelector(
+          `[name="${firstErrorPath}"]`,
+        );
+        firstErrorElement?.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+      });
+    }
+
+    toast.error("Please fix the highlighted fields before submitting.");
+  };
+
   const isSubmitting =
     form.formState.isSubmitting || createBookingMutation.isPending;
-  const currency = form.watch("currency");
-  const currencySymbol =
-    currency === "GBP" ? "£" : currency === "EUR" ? "€" : "$";
+  const currencySymbol = "£";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -179,21 +254,33 @@ export function BookingModal({
             review and respond to your request.
           </DialogDescription>
         </DialogHeader>
+        {/* 
+        <p className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">*</span> Required fields
+          <span className="mx-2">•</span>
+          Optional fields are labeled as such.
+        </p> */}
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit, onInvalid)}
+            className="space-y-6"
+          >
             {/* Event Details Section */}
             <div className="space-y-4">
-              <h3 className="text-sm font-medium text-foreground">
-                Event Details
-              </h3>
+              {/* <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                <span>Event Details</span>
+                <span className="text-[11px] font-medium uppercase tracking-wide text-destructive">
+                  *
+                </span>
+              </h3> */}
 
               <FormField
                 control={form.control}
                 name="eventDetails.title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Title</FormLabel>
+                    <LabeledFormLabel>Event Title</LabeledFormLabel>
                     <FormControl>
                       <Input
                         placeholder="e.g., Wedding Reception, Birthday Party"
@@ -212,7 +299,7 @@ export function BookingModal({
                   name="eventDetails.startDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>Start Date & Time</FormLabel>
+                      <LabeledFormLabel>Start Date & Time</LabeledFormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -245,7 +332,7 @@ export function BookingModal({
                                 field.onChange(date.toISOString());
                               }
                             }}
-                            disabled={(date) => date < new Date()}
+                            disabled={(date) => date < getStartOfDay(new Date())}
                             initialFocus
                           />
                           {field.value && (
@@ -282,7 +369,7 @@ export function BookingModal({
                   name="eventDetails.endDate"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                      <FormLabel>End Date & Time</FormLabel>
+                      <LabeledFormLabel>End Date & Time</LabeledFormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -331,9 +418,9 @@ export function BookingModal({
                                 "eventDetails.startDate",
                               );
                               if (startDate) {
-                                return date < new Date(startDate);
+                                return date < getStartOfDay(new Date(startDate));
                               }
-                              return date < new Date();
+                              return date < getStartOfDay(new Date());
                             }}
                             initialFocus
                           />
@@ -372,7 +459,7 @@ export function BookingModal({
                 name="eventDetails.guestCount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Number of Guests</FormLabel>
+                    <LabeledFormLabel>Number of Guests</LabeledFormLabel>
                     <FormControl>
                       <div className="flex items-center gap-3">
                         <Button
@@ -423,7 +510,7 @@ export function BookingModal({
                 name="eventDetails.description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Event Description</FormLabel>
+                    <LabeledFormLabel>Event Description</LabeledFormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your event, special requirements, or any other details the vendor should know..."
@@ -445,7 +532,7 @@ export function BookingModal({
               name="location.addressText"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Event Location</FormLabel>
+                  <LabeledFormLabel>Event Location</LabeledFormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., 123 Party St, London, UK"
@@ -462,32 +549,15 @@ export function BookingModal({
             {/* Services & Budget */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-foreground">
-                  Select Services & Budget
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <span>Select Services & Budget</span>
+                  <span className="text-[11px] font-medium uppercase tracking-wide text-destructive">
+                    *
+                  </span>
                 </h3>
-                <FormField
-                  control={form.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
-                      <FormLabel className="text-xs text-muted-foreground">
-                        Currency:
-                      </FormLabel>
-                      <FormControl>
-                        <select
-                          className="h-8 rounded-md border bg-background px-2 text-sm"
-                          {...field}
-                        >
-                          {CURRENCIES.map((c) => (
-                            <option key={c.value} value={c.value}>
-                              {c.label}
-                            </option>
-                          ))}
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
+                <div className="text-xs text-muted-foreground">
+                  Currency enforced as GBP
+                </div>
               </div>
 
               {specialties.length === 0 ? (

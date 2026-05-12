@@ -102,7 +102,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote }: ViewQuoteModalProp
               </p>
             </div>
             
-            <div className="flex flex-col items-end gap-2">
+            <div className="flex flex-col items-end gap-2 mr-8">
               <span
                 className={cn(
                   "inline-flex rounded-full px-3 py-1 text-[12px] font-bold tracking-wide uppercase shadow-sm border border-black/5",

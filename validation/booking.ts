@@ -22,10 +22,9 @@ export const bookingEventDetailsSchema = z.object({
       (date) => {
         const parsed = new Date(date);
         const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        return parsed >= now;
+        return parsed > now;
       },
-      { message: "Start date must be in the future" }
+      { message: "Start date and time must be in the future" }
     ),
   endDate: z
     .string()
@@ -80,10 +79,10 @@ export const createBookingSchema = z
     (data) => {
       const startDate = new Date(data.eventDetails.startDate);
       const endDate = new Date(data.eventDetails.endDate);
-      return endDate >= startDate;
+      return endDate > startDate;
     },
     {
-      message: "End date must be on or after start date",
+      message: "End date must be after start date",
       path: ["eventDetails", "endDate"],
     }
   );

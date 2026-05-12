@@ -231,7 +231,7 @@ function RequestCard({ request, onCreateQuote }: RequestCardProps) {
       <div className="mt-6 grid gap-6 md:grid-cols-[1.5fr_1fr]">
         <div className="space-y-4">
           <div>
-            <p>{request._id}</p>
+            {/* <p>{request._id}</p> */}
             <p className="text-lg font-semibold text-gray-900">{customerName}</p>
             <p className="text-sm text-gray-500">{request.customerId?.email}</p>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -249,8 +249,8 @@ function RequestCard({ request, onCreateQuote }: RequestCardProps) {
               )}
             </div>
             {budget != null && budget > 0 && (
-              <p className="mt-2 text-[14px] font-medium text-[#FF3366]">
-                Budget: ₦{budget.toLocaleString()}
+              <p className="mt-2 text-[14px] font-medium text-primary">
+                Budget: £{budget.toLocaleString()}
               </p>
             )}
           </div>

@@ -364,7 +364,7 @@ export function QuotesDashboard() {
       <div className="flex flex-col items-center justify-between gap-4 rounded-[20px] bg-white p-3 shadow-sm md:flex-row">
         <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row md:items-center">
           {/* Req ID Search */}
-          <div className="relative w-full md:w-[260px]">
+          {/* <div className="relative w-full md:w-[260px]">
             <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-gray-400" />
             <Input
               placeholder="Filter by Request ID..."
@@ -373,7 +373,7 @@ export function QuotesDashboard() {
               onKeyDown={(e) => { if (e.key === "Enter") handleApplyFilters(); }}
               className="h-[42px] w-full rounded-full border border-gray-200 bg-[#FAFAFA] pl-10 pr-4 text-[13.5px] shadow-none focus-visible:ring-1 focus-visible:ring-gray-300"
             />
-          </div>
+          </div> */}
 
           {/* Status Select */}
           <Select
