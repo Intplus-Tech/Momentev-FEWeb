@@ -207,7 +207,6 @@ export function ConfirmedBookingsTable({
         <Table>
           <TableHeader>
             <TableRow className="text-muted-foreground">
-              <TableHead>Booking ID</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Event</TableHead>
               <TableHead>Date</TableHead>
@@ -225,7 +224,7 @@ export function ConfirmedBookingsTable({
                 >
                   No bookings found
                 </TableCell>
-              </TableRow> 
+              </TableRow>
             ) : (
               data.pageItems.map((booking) => {
                 const sc = statusConfig[booking.status] ?? statusConfig.pending;
@@ -234,10 +233,18 @@ export function ConfirmedBookingsTable({
                   "MMM dd, yyyy"
                 );
                 return (
-                  <TableRow key={booking._id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {booking._id}
-                    </TableCell>
+                  <TableRow
+                    key={booking._id}
+                    className="cursor-pointer"
+                    tabIndex={0}
+                    onClick={() => router.push(`/vendor/bookings/${booking._id}`)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        router.push(`/vendor/bookings/${booking._id}`);
+                      }
+                    }}
+                  >
                     <TableCell className="font-medium text-foreground">
                       {getClientName(booking)}
                     </TableCell>
@@ -257,7 +264,9 @@ export function ConfirmedBookingsTable({
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <BookingActions booking={booking} router={router} />
+                      <div onClick={(event) => event.stopPropagation()}>
+                        <BookingActions booking={booking} router={router} />
+                      </div>
                     </TableCell>
                   </TableRow>
                 );
@@ -337,7 +346,7 @@ function BookingActions({ booking, router }: { booking: BookingResponse, router:
         <DropdownMenuItem onClick={() => handleDecision("confirmed")} className="cursor-pointer whitespace-nowrap">
           Confirm Booking
         </DropdownMenuItem>
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={() => handleDecision("rejected")}
           className="text-red-600 focus:text-red-50 focus:bg-red-600 cursor-pointer whitespace-nowrap"
         >
