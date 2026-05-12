@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getUserProfile } from "@/lib/actions/user";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import type {
@@ -209,30 +209,30 @@ export async function submitBusinessInformation(
     // an address here.
     let addressId: string | undefined = existingAddressId;
 
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      console.error('❌ [Step 1 Submission] No access token found');
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
     const payload = transformFormToPayload(formData, vendorId, addressId, documents);
     console.log('🔄 [Step 1 Submission] Transformed payload:', JSON.stringify(redactSensitiveFields(payload), null, 2));
 
     console.log(`🌐 [Step 1 Submission] Sending POST request to ${API_URL}/api/v1/business-profiles`);
 
-    const response = await fetch(`${API_URL}/api/v1/business-profiles`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+    const { response, error, token } = await fetchWithAuthRetry((authToken) =>
+      fetch(`${API_URL}/api/v1/business-profiles`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      })
+    );
+
+    if (!response) {
+      console.error('❌ [Step 1 Submission] Authentication failed:', error);
+      return {
+        success: false,
+        error: error || "Authentication required",
+      };
+    }
 
     console.log(`📡 [Step 1 Submission] Response status: ${response.status} ${response.statusText}`);
 
@@ -271,7 +271,7 @@ export async function submitBusinessInformation(
     console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
     const stageUpdateResult = await updateVendorOnboardingStage(1, {
       vendorId,
-      accessToken,
+      accessToken: token,
     });
 
     if (!stageUpdateResult.success) {

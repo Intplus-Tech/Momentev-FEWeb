@@ -143,7 +143,7 @@ export function UpcomingEvents({ events, isLoading }: UpcomingEventsProps) {
 
                     <div className="flex flex-col gap-2 text-sm md:items-end">
                       <Button variant="outline" size="sm" asChild>
-                        <Link href="/client/bookings">View Booking</Link>
+                        <Link href={`/client/bookings/${booking._id}`}>View Booking</Link>
                       </Button>
                     </div>
                   </div>
@@ -213,7 +213,7 @@ export function UpcomingEvents({ events, isLoading }: UpcomingEventsProps) {
 
                       <div className="flex flex-col gap-2 text-sm">
                         <Button className="mt-1 w-full" asChild>
-                          <Link href="/client/bookings">View Booking</Link>
+                          <Link href={`/client/bookings/${booking._id}`}>View Booking</Link>
                         </Button>
                       </div>
                     </div>

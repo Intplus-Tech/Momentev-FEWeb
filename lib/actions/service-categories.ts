@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import type {
   ServiceCategory,
   ServiceSpecialty,
@@ -69,25 +69,19 @@ export async function fetchServiceSpecialtiesByCategory(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/v1/service-specialties/by-category/${categoryId}`,
-      {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/service-specialties/by-category/${categoryId}`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         cache: "no-store", // Let TanStack Query handle caching
-      },
+      })
     );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -127,25 +121,19 @@ export async function fetchSuggestedTags(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/v1/service-categories/${categoryId}/suggested-tags`,
-      {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/service-categories/${categoryId}/suggested-tags`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         cache: "no-store", // Let TanStack Query handle caching
-      },
+      })
     );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     if (!response.ok) {
       if (response.status === 401) {

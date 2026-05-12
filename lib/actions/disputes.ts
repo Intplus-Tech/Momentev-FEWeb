@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 
 const API_URL = process.env.BACKEND_URL;
 
@@ -39,23 +39,26 @@ export async function createDispute(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/disputes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+    );
 
-    const response = await fetch(`${API_URL}/api/v1/disputes`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
-      
+
       // Handle validation errors from backend
       if (data.errors?.body?.fieldErrors) {
         const fieldErrors = data.errors.body.fieldErrors;
@@ -65,9 +68,9 @@ export async function createDispute(
         }
       }
 
-      return { 
-        success: false, 
-        error: data.message || `Failed to create dispute (${response.status})` 
+      return {
+        success: false,
+        error: data.message || `Failed to create dispute (${response.status})`
       };
     }
 
@@ -179,9 +182,6 @@ export async function getClientDisputes(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
-
     const queryParams = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
@@ -191,21 +191,27 @@ export async function getClientDisputes(
       queryParams.append("status", status);
     }
 
-    const response = await fetch(`${API_URL}/api/v1/disputes/me?${queryParams.toString()}`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: "no-store", // Prevent caching so we get fresh data
-    });
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/disputes/me?${queryParams.toString()}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store", // Prevent caching so we get fresh data
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
-      return { 
-        success: false, 
-        error: data.message || `Failed to fetch disputes (${response.status})` 
+      return {
+        success: false,
+        error: data.message || `Failed to fetch disputes (${response.status})`
       };
     }
 
@@ -229,23 +235,26 @@ export async function cancelDispute(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/disputes/${disputeId}/cancel`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    );
 
-    const response = await fetch(`${API_URL}/api/v1/disputes/${disputeId}/cancel`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
-      return { 
-        success: false, 
-        error: data.message || `Failed to cancel dispute (${response.status})` 
+      return {
+        success: false,
+        error: data.message || `Failed to cancel dispute (${response.status})`
       };
     }
 

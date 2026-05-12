@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import type { ServiceSpecialty, SingleResponse } from "@/types/service";
 
 const API_URL = process.env.BACKEND_URL;
@@ -21,22 +21,19 @@ export async function fetchServiceSpecialtyById(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const accessToken = await getAccessToken();
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/service-specialties/${id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      })
+    );
 
-    if (!accessToken) {
-      return {
-        success: false,
-        error: "Authentication required",
-      };
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
     }
-
-    const response = await fetch(`${API_URL}/api/v1/service-specialties/${id}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: "no-store",
-    });
 
     if (!response.ok) {
       if (response.status === 401) {

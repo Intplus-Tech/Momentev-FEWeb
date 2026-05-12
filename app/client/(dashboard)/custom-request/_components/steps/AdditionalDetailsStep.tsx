@@ -31,9 +31,8 @@ export function AdditionalDetailsStep() {
     return base.map((_, idx) => existing[idx] || null);
   });
 
-  const requiredUploadCount = 3;
+  const maxUploadCount = 3;
   const completedUploadCount = uploads.filter(Boolean).length;
-  const isStepComplete = completedUploadCount === requiredUploadCount;
 
   // Sync FROM store when draft data loads (only once, only if not already initialized)
   useEffect(() => {
@@ -57,13 +56,13 @@ export function AdditionalDetailsStep() {
 
     const validFiles = uploads.filter((u): u is UploadedFile => u !== null);
     setAdditionalDetails({ uploadedFiles: validFiles });
-    setIsAdditionalDetailsValid(validFiles.length === requiredUploadCount);
+    setIsAdditionalDetailsValid(true);
     // isLocalChange is reset in the "sync from store" effect above
-  }, [uploads, requiredUploadCount, setAdditionalDetails, setIsAdditionalDetailsValid]);
+  }, [uploads, setAdditionalDetails, setIsAdditionalDetailsValid]);
 
   useEffect(() => {
-    setIsAdditionalDetailsValid(isStepComplete);
-  }, [isStepComplete, setIsAdditionalDetailsValid]);
+    setIsAdditionalDetailsValid(true);
+  }, [setIsAdditionalDetailsValid]);
 
   const handleUploadComplete = useCallback(
     (index: number, file: UploadedFile) => {
@@ -93,18 +92,18 @@ export function AdditionalDetailsStep() {
         <div className="bg-primary/10 px-4 py-2">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
             <span className="text-sm font-semibold text-primary">
-              Upload Visual Inspiration
+              Upload Visual Inspiration (Optional)
             </span>
             <span className="text-xs font-medium text-primary/80">
-              3 images required
+              Up to {maxUploadCount} images
             </span>
           </div>
         </div>
         <div className="p-4 space-y-4">
           <div className="rounded-lg border border-dashed border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
-            Upload all 3 inspiration images before continuing. You have uploaded{" "}
+            Upload up to {maxUploadCount} inspiration images. You have uploaded{" "}
             <span className="font-semibold text-foreground">
-              {completedUploadCount}/{requiredUploadCount}
+              {completedUploadCount}/{maxUploadCount}
             </span>
             .
           </div>
@@ -113,8 +112,8 @@ export function AdditionalDetailsStep() {
               <div
                 key={idx}
                 className={`rounded-lg border p-3 transition-colors ${file
-                    ? "border-emerald-200 bg-emerald-50/40"
-                    : "border-red-200 bg-red-50/30"
+                  ? "border-emerald-200 bg-emerald-50/40"
+                  : "border-red-200 bg-red-50/30"
                   }`}
               >
                 <div className="mb-3 flex items-center justify-between gap-3">
@@ -123,16 +122,16 @@ export function AdditionalDetailsStep() {
                       Inspiration Image {idx + 1}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Required {idx + 1} of {requiredUploadCount}
+                      Optional slot {idx + 1} of {maxUploadCount}
                     </p>
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-semibold ${file
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-red-100 text-red-800"
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-slate-100 text-slate-700"
                       }`}
                   >
-                    {file ? "Uploaded" : "Required"}
+                    {file ? "Uploaded" : "Optional"}
                   </span>
                 </div>
                 <FileUploadCard
@@ -153,11 +152,6 @@ export function AdditionalDetailsStep() {
               </div>
             ))}
           </div>
-          {!isStepComplete && (
-            <p className="text-sm text-destructive">
-              All 3 inspiration images are required to continue.
-            </p>
-          )}
         </div>
       </div>
     </div>

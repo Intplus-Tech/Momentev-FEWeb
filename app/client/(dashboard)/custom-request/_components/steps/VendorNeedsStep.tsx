@@ -90,7 +90,7 @@ export function VendorNeedsStep() {
       <div className="rounded-lg overflow-hidden border border-primary/20">
         <div className="bg-primary/10 px-4 py-2">
           <span className="text-sm font-semibold text-primary">
-            Select a Vendor Category (Single Selection)
+            Select a Vendor Category (Single Selection, Required)
           </span>
         </div>
         <div className="p-4">
@@ -115,19 +115,17 @@ export function VendorNeedsStep() {
                   className={`
                     cursor-pointer p-3 rounded-md border text-sm font-medium transition-colors
                     flex items-center gap-2
-                    ${
-                      selectedCategory?._id === category._id
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-background hover:bg-muted border-input"
+                    ${selectedCategory?._id === category._id
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background hover:bg-muted border-input"
                     }
                   `}
                 >
                   <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      selectedCategory?._id === category._id
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${selectedCategory?._id === category._id
                         ? "border-primary-foreground"
                         : "border-primary"
-                    }`}
+                      }`}
                   >
                     {selectedCategory?._id === category._id && (
                       <div className="w-2 h-2 rounded-full bg-primary-foreground" />
@@ -146,7 +144,7 @@ export function VendorNeedsStep() {
         <div className="rounded-lg overflow-hidden border border-primary/20 animate-in fade-in slide-in-from-top-2">
           <div className="bg-primary/10 px-4 py-2">
             <span className="text-sm font-semibold text-primary">
-              Select Services for {selectedCategory.name}
+              Select Services for {selectedCategory.name} (Required)
             </span>
           </div>
           <div className="p-4">

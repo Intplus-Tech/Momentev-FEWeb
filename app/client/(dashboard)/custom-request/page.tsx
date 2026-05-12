@@ -1,12 +1,12 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ProgressBar } from "./_components/ProgressBar";
 import { useCustomRequestStore } from "./_store/customRequestStore";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { saveAsDraft, submitCustomRequest } from "@/lib/actions/custom-request";
+import { eventBasicSchema } from "./_schemas/eventBasicSchema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -80,22 +80,12 @@ export default function CustomRequestPage() {
   const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [showMissingDialog, setShowMissingDialog] = useState(false);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
 
   // Store state (only subscribe to what drives rendering)
   const currentStep = useCustomRequestStore((state) => state.currentStep);
   const isSubmitting = useCustomRequestStore((state) => state.isSubmitting);
-  const isEventBasicValid = useCustomRequestStore(
-    (state) => state.isEventBasicValid,
-  );
-  const isVendorNeedsValid = useCustomRequestStore(
-    (state) => state.isVendorNeedsValid,
-  );
-  const isBudgetPlanningValid = useCustomRequestStore(
-    (state) => state.isBudgetPlanningValid,
-  );
-  const isAdditionalDetailsValid = useCustomRequestStore(
-    (state) => state.isAdditionalDetailsValid,
-  );
 
   // Actions
   const setCurrentStep = useCustomRequestStore((state) => state.setCurrentStep);
@@ -225,20 +215,81 @@ export default function CustomRequestPage() {
 
   const currentStepInfo = STEPS.find((s) => s.id === currentStep);
 
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1:
-        return isEventBasicValid;
-      case 2:
-        return isVendorNeedsValid;
-      case 3:
-        return isBudgetPlanningValid;
-      case 4:
-        return isAdditionalDetailsValid;
-      case 5:
-        return true;
+  const showMissingFieldsDialog = (fields: string[]) => {
+    setMissingFields(fields);
+    setShowMissingDialog(true);
+  };
+
+  const getMissingFieldsForStep = (step: number) => {
+    const { eventBasic, vendorNeeds, budgetPlanning } =
+      useCustomRequestStore.getState();
+
+    switch (step) {
+      case 1: {
+        const result = eventBasicSchema.safeParse(eventBasic ?? {});
+        if (result.success) return [];
+
+        const fieldLabels: Record<string, string> = {
+          eventName: "Event Name",
+          eventDescription: "Event Description",
+          eventDate: "Start Date & Time",
+          endDate: "End Date & Time",
+          guestCount: "Guest Count",
+          location: "Location",
+        };
+
+        const missing = new Set<string>();
+        for (const issue of result.error.issues) {
+          const fieldKey = issue.path[0];
+          if (typeof fieldKey === "string" && fieldLabels[fieldKey]) {
+            missing.add(fieldLabels[fieldKey]);
+          }
+        }
+
+        return Array.from(missing);
+      }
+      case 2: {
+        const missing: string[] = [];
+        if (!vendorNeeds?.selectedCategory?._id) {
+          missing.push("Service Category");
+        }
+        if (!vendorNeeds?.selectedSpecialties?.length) {
+          missing.push("At least one Service");
+        }
+        return missing;
+      }
+      case 3: {
+        const missing: string[] = [];
+        const selectedSpecialties = vendorNeeds?.selectedSpecialties || [];
+
+        if (selectedSpecialties.length === 0) {
+          missing.push("At least one Service");
+          return missing;
+        }
+
+        const budgets = budgetPlanning?.budgetPerSpecialty || {};
+        for (const specialty of selectedSpecialties) {
+          if ((budgets[specialty._id] || 0) <= 0) {
+            missing.push(`Budget for ${specialty.name}`);
+          }
+        }
+
+        return missing;
+      }
+      case 4: {
+        return [];
+      }
+      case 5: {
+        const missing = new Set<string>();
+        for (const stepIndex of [1, 2, 3, 4]) {
+          for (const field of getMissingFieldsForStep(stepIndex)) {
+            missing.add(field);
+          }
+        }
+        return Array.from(missing);
+      }
       default:
-        return false;
+        return [];
     }
   };
 
@@ -247,12 +298,13 @@ export default function CustomRequestPage() {
       return;
     }
 
-    if (!canProceed()) {
-      toast.error("Please complete all required fields");
+    commitRef.current?.();
+
+    const missing = getMissingFieldsForStep(currentStep);
+    if (missing.length > 0) {
+      showMissingFieldsDialog(missing);
       return;
     }
-
-    commitRef.current?.();
 
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1);
@@ -273,31 +325,24 @@ export default function CustomRequestPage() {
     }
 
     commitRef.current?.();
-    setIsSubmitting(true);
 
     // Read latest state at submit time (no subscription needed)
-    const { eventBasic, vendorNeeds, budgetPlanning } =
-      useCustomRequestStore.getState();
+    const { vendorNeeds } = useCustomRequestStore.getState();
 
     if (status === "draft") {
       if (!vendorNeeds?.selectedCategory?._id) {
         toast.error("Please select a service category before saving as draft");
-        setIsSubmitting(false);
         return;
       }
     } else {
-      // Pending Approval validation
-      if (
-        !eventBasic ||
-        !vendorNeeds ||
-        !budgetPlanning ||
-        !isAdditionalDetailsValid
-      ) {
-        toast.error("Missing required event information");
-        setIsSubmitting(false);
+      const missing = getMissingFieldsForStep(5);
+      if (missing.length > 0) {
+        showMissingFieldsDialog(missing);
         return;
       }
     }
+
+    setIsSubmitting(true);
 
     try {
       const payload = buildPayload();
@@ -390,7 +435,7 @@ export default function CustomRequestPage() {
           {currentStep < 5 ? (
             <Button
               onClick={handleNext}
-              disabled={isSubmitting || !canProceed()}
+              disabled={isSubmitting}
             >
               Next →
             </Button>
@@ -447,6 +492,29 @@ export default function CustomRequestPage() {
               }}
             >
               {isSavingDraft ? "Saving..." : "Save & Leave"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showMissingDialog} onOpenChange={setShowMissingDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Missing Required Fields</AlertDialogTitle>
+            <AlertDialogDescription>
+              Please complete the following fields before continuing:
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="rounded-md border border-border bg-muted/30 px-4 py-3">
+            <ul className="list-disc space-y-1 pl-5 text-sm text-foreground">
+              {missingFields.map((field) => (
+                <li key={field}>{field}</li>
+              ))}
+            </ul>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowMissingDialog(false)}>
+              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

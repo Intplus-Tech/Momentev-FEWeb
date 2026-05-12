@@ -1,6 +1,6 @@
 "use server";
 
-import { getAccessToken } from "@/lib/session";
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getUserProfile } from "./user";
 
 const API_URL = process.env.BACKEND_URL;
@@ -82,16 +82,6 @@ export async function submitVendorProfile(
 
     console.log(`🎫 [Step 4 Submission] Vendor ID: ${vendorId}`);
 
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      console.error("❌ [Step 4 Submission] No access token found");
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
     const payload: VendorProfilePayload = {
       profilePhoto: data.profilePhoto,
       ...(data.coverPhoto ? { coverPhoto: data.coverPhoto } : {}),
@@ -110,15 +100,25 @@ export async function submitVendorProfile(
     console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
     console.log("📦 [Step 4 Submission] Full payload:", JSON.stringify(payload, null, 2));
 
-    const response = await fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+    const { response, error } = await fetchWithAuthRetry((authToken) =>
+      fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
+        cache: "no-store",
+      })
+    );
+
+    if (!response) {
+      console.error("❌ [Step 4 Submission] Authentication failed:", error);
+      return {
+        success: false,
+        error: error || "Authentication required",
+      };
+    }
 
     console.log(`📡 [Step 4 Submission] Response status: ${response.status} ${response.statusText}`);
 
@@ -203,31 +203,33 @@ export async function updateVendorOnboardingStage(
       };
     }
 
-    const accessToken = options?.accessToken || await getAccessToken();
-
-    if (!accessToken) {
-      console.error("❌ [Onboarding] No access token found");
-      return {
-        success: false,
-        error: "Authentication required",
-      };
-    }
-
     const payload = {
       onBoardingStage: newStage,
     };
 
     console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
 
-    const response = await fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
-      method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+    const { response, error } = await fetchWithAuthRetry(
+      (authToken) =>
+        fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authToken}`,
+          },
+          body: JSON.stringify(payload),
+          cache: "no-store",
+        }),
+      { token: options?.accessToken }
+    );
+
+    if (!response) {
+      console.error("❌ [Onboarding] Authentication failed:", error);
+      return {
+        success: false,
+        error: error || "Authentication required",
+      };
+    }
 
     console.log(`📡 [Onboarding] Response status: ${response.status} ${response.statusText}`);
 

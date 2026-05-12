@@ -1,5 +1,6 @@
 "use server";
 
+import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import type {
   CreateBookingPayload,
@@ -108,27 +109,30 @@ export async function createBookingFromQuote(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const accessToken = await getAccessToken();
-    if (!accessToken) return { success: false, error: "Authentication required" };
-
     const body = location ? JSON.stringify({ location: { addressText: location } }) : undefined;
 
-    const response = await fetch(`${API_URL}/api/v1/bookings/from-quote/${quoteId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body,
-    });
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/from-quote/${quoteId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body,
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
-      return { 
-        success: false, 
-        error: data.message || `Failed to create booking from quote (${response.status})` 
+      return {
+        success: false,
+        error: data.message || `Failed to create booking from quote (${response.status})`,
       };
     }
 
@@ -155,22 +159,19 @@ export async function fetchBookings(
   }
 
   try {
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      return { success: false, error: "Authentication required" };
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/v1/bookings?page=${page}&limit=${limit}`,
-      {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings?page=${page}&limit=${limit}`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      })
     );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -209,19 +210,19 @@ export async function fetchBookingById(
   }
 
   try {
-    const accessToken = await getAccessToken();
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/${bookingId}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      })
+    );
 
-    if (!accessToken) {
-      return { success: false, error: "Authentication required" };
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
     }
-
-    const response = await fetch(`${API_URL}/api/v1/bookings/${bookingId}`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      cache: "no-store",
-    });
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -312,22 +313,19 @@ export async function fetchVendorBookings(
   }
 
   try {
-    const accessToken = await getAccessToken();
-
-    if (!accessToken) {
-      return { success: false, error: "Authentication required" };
-    }
-
-    const response = await fetch(
-      `${API_URL}/api/v1/bookings/vendor/me?page=${page}&limit=${limit}`,
-      {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/vendor/me?page=${page}&limit=${limit}`, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${token}`,
         },
         cache: "no-store",
-      }
+      })
     );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
 
     if (!response.ok) {
       if (response.status === 401) {

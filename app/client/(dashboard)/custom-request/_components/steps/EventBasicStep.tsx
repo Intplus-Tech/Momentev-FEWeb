@@ -92,7 +92,7 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field>
                 <FloatingLabelInput
-                  label="Event Name"
+                  label="Event Name (Required)"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -110,7 +110,7 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field>
                 <FloatingLabelTextarea
-                  label="Event Description"
+                  label="Event Description (Required)"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
@@ -140,7 +140,7 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field className="w-full">
                 <FieldLabel htmlFor="event-start-date">
-                  Start Date &amp; Time
+                  Start Date &amp; Time (Required)
                 </FieldLabel>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -274,7 +274,7 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field>
                 <FloatingLabelInput
-                  label="Guest Count"
+                  label="Guest Count (Required)"
                   type="number"
                   min={1}
                   value={field.value || ""}
@@ -296,7 +296,7 @@ export function EventBasicStep({
             render={({ field }) => (
               <Field>
                 <FloatingLabelInput
-                  label="Location"
+                  label="Location (Required)"
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}

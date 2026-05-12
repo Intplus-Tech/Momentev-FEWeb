@@ -93,7 +93,7 @@ export function BudgetPlanningStep() {
       <div className="rounded-lg overflow-hidden border border-primary/20">
         <div className="bg-primary/10 px-4 py-2">
           <span className="text-sm font-semibold text-primary">
-            Allocate Budget per Service
+            Allocate Budget per Service (Required)
           </span>
         </div>
         <div className="p-4">
@@ -117,7 +117,7 @@ export function BudgetPlanningStep() {
                 >
                   <span className="text-sm">{specialty.name}</span>
                   <FloatingLabelInput
-                    label="Amount (GBP)"
+                    label="Amount (GBP) (Required)"
                     type="text"
                     inputMode="numeric"
                     value={inputValues[specialty._id] || ""}
