@@ -29,6 +29,8 @@ import { clientNavItems } from "@/constants/client";
 import { cn } from "@/lib/utils";
 import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
+import { useSearchSuggestions } from "@/hooks/api/use-search-suggestions";
+import { addRecentSearch } from "@/lib/search/recent-searches";
 
 export const ClientSidebar = () => {
   const pathname = usePathname();
@@ -36,12 +38,31 @@ export const ClientSidebar = () => {
   const router = useRouter();
   const { unreadCount } = useUnreadBadgeCount("user");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const authLogout = useAuthLogout();
+  const {
+    suggestions,
+    isLoading: isSuggestionsLoading,
+    refreshRecentSearches,
+  } = useSearchSuggestions(searchQuery);
 
   const handleSearch = () => {
     const q = searchQuery.trim();
     if (!q) return;
+    addRecentSearch(q);
+    refreshRecentSearches();
     router.push(`/search?q=${encodeURIComponent(q)}&page=1`);
+  };
+
+  const handleSuggestionSelect = (value: string) => {
+    const nextQuery = value.trim();
+    if (!nextQuery) return;
+
+    setSearchQuery(nextQuery);
+    addRecentSearch(nextQuery);
+    refreshRecentSearches();
+    setShowSuggestions(false);
+    router.push(`/search?q=${encodeURIComponent(nextQuery)}&page=1`);
   };
 
   return (
@@ -64,8 +85,44 @@ export const ClientSidebar = () => {
             onKeyDown={(e) => {
               if (e.key === "Enter") handleSearch();
             }}
+            onFocus={() => setShowSuggestions(true)}
+            onBlur={() => {
+              window.setTimeout(() => setShowSuggestions(false), 120);
+            }}
             className="rounded-full border border-border bg-background/80 pl-9 text-sm placeholder:text-muted-foreground"
           />
+          {showSuggestions && searchQuery.trim().length > 0 && (
+            <div className="absolute top-[calc(100%+8px)] left-0 z-50 w-full rounded-lg border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+              <div className="max-h-72 overflow-y-auto py-1">
+                {isSuggestionsLoading && suggestions.length === 0 ? (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">
+                    Loading suggestions...
+                  </p>
+                ) : suggestions.length > 0 ? (
+                  suggestions.map((suggestion) => (
+                    <button
+                      key={`${suggestion.source}-${suggestion.value}`}
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted transition-colors"
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleSuggestionSelect(suggestion.value);
+                      }}
+                    >
+                      <span>{suggestion.value}</span>
+                      <span className="ml-2 text-xs text-muted-foreground capitalize">
+                        {suggestion.source}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-2 text-sm text-muted-foreground">
+                    No suggestions yet.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </SidebarHeader>
 
