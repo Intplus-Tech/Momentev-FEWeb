@@ -77,6 +77,7 @@ function VendorSettingsContent() {
       initials:
         `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
         "?",
+      avatar: r.reviewer?.avatar,
       date: new Date(r.createdAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",

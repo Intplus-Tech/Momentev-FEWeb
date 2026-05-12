@@ -94,17 +94,14 @@ export async function getClientReviews(customerId: string, page = 1, limit = 20)
  */
 export type VendorReview = {
   _id: string;
-  vendorId: string;
-  customerId: {
-    _id: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  reviewer: {
     firstName: string;
     lastName: string;
-    avatar?: string;
+    avatar: string;
   };
-  rating: number;
-  review: string;
-  createdAt: string;
-  updatedAt: string;
 };
 
 export type GetVendorReviewsResponse = {

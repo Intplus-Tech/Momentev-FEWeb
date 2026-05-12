@@ -4,6 +4,11 @@ import { useState } from "react";
 import { Star, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -17,6 +22,7 @@ interface Review {
   id: string;
   author: string;
   initials: string;
+  avatar?: string;
   date: string;
   rawDate: string; // Used for accurate date sorting
   rating: number;
@@ -79,11 +85,10 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
             {[...Array(5)].map((_, i) => (
               <Star
                 key={i}
-                className={`w-5 h-5 ${
-                  i < Math.floor(stats.average)
+                className={`w-5 h-5 ${i < Math.floor(stats.average)
                     ? "fill-yellow-400 text-yellow-400"
                     : "fill-muted text-muted"
-                }`}
+                  }`}
               />
             ))}
           </div>
@@ -101,13 +106,11 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
               </span>
               <div className="flex-1 h-2.5 bg-muted rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${
-                    item.stars >= 4 ? "bg-primary" : "bg-yellow-400"
-                  }`}
+                  className={`h-full rounded-full ${item.stars >= 4 ? "bg-primary" : "bg-yellow-400"
+                    }`}
                   style={{
-                    width: `${
-                      maxCount > 0 ? (item.count / maxCount) * 100 : 0
-                    }%`,
+                    width: `${maxCount > 0 ? (item.count / maxCount) * 100 : 0
+                      }%`,
                   }}
                 />
               </div>
@@ -169,37 +172,37 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
                 key={review.id}
                 className={`${idx > 0 ? "border-t pt-6" : "pt-2"}`}
               >
-              <div className="flex items-center gap-1 mb-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < review.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-muted text-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                {review.date}
-              </p>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium text-primary">
-                  {review.initials}
+                <div className="flex items-center gap-1 mb-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${i < review.rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "fill-muted text-muted"
+                        }`}
+                    />
+                  ))}
                 </div>
-                <span className="text-sm font-medium">{review.author}</span>
-              </div>
-              {review.category && (
-                <p className="text-xs text-muted-foreground mb-2">
-                  {review.category}
+                <p className="text-xs text-muted-foreground mb-3">
+                  {review.date}
                 </p>
-              )}
-              <p className="text-sm text-foreground leading-relaxed">
-                {review.content}
-              </p>
-            </div>
-          ))
+                <div className="flex items-center gap-2 mb-3">
+                  <Avatar size="sm" className="h-8 w-8">
+                    <AvatarImage src={review.avatar} alt={review.author} />
+                    <AvatarFallback>{review.initials}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium">{review.author}</span>
+                </div>
+                {review.category && (
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {review.category}
+                  </p>
+                )}
+                <p className="text-sm text-foreground leading-relaxed">
+                  {review.content}
+                </p>
+              </div>
+            ))
         ) : (
           <div className="flex flex-col gap-2 text-sm text-muted-foreground">
             <p>This vendor has no reviews yet.</p>

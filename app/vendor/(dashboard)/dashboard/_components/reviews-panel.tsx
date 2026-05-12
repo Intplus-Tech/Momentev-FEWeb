@@ -3,6 +3,11 @@ import type { VendorReview } from "@/lib/actions/reviews";
 import { format } from "date-fns";
 import { Star } from "lucide-react";
 
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -31,22 +36,26 @@ export function ReviewsPanel({ reviews }: { reviews: VendorReview[] }) {
           </p>
         ) : (
           reviews.map((review) => {
-            const author =
-              typeof review.customerId === "object"
-                ? `${review.customerId.firstName} ${review.customerId.lastName}`.trim()
-                : "Client";
+            const author = `${review.reviewer.firstName} ${review.reviewer.lastName}`.trim() || "Client";
+            const initials = `${review.reviewer.firstName?.[0] || ""}${review.reviewer.lastName?.[0] || ""}`.toUpperCase() || "?";
 
             return (
               <div
                 key={review._id}
                 className="flex h-full flex-col rounded-2xl border border-border p-4"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-foreground">{author}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {format(new Date(review.createdAt), "MMM d, yyyy")}
-                    </p>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar size="sm" className="h-9 w-9">
+                      <AvatarImage src={review.reviewer.avatar} alt={author} />
+                      <AvatarFallback>{initials}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold text-foreground">{author}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {format(new Date(review.createdAt), "MMM d, yyyy")}
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-0.5 text-primary">
                     {Array.from({ length: 5 }).map((_, star) => (
@@ -60,7 +69,7 @@ export function ReviewsPanel({ reviews }: { reviews: VendorReview[] }) {
                   </div>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {review.review}
+                  {review.comment}
                 </p>
               </div>
             );
