@@ -4,12 +4,14 @@ import { useState, useCallback, useEffect, useTransition } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 import { fetchVendorQuoteRequests } from "@/lib/actions/quote-requests";
+import { fetchVendorQuotes } from "@/lib/actions/quotes";
 import { queryKeys } from "@/lib/react-query/keys";
 import type {
   QuoteRequestStatus,
   VendorQuoteRequest,
   VendorQuoteRequestFilters,
 } from "@/types/quote-request";
+import type { VendorQuoteResponse } from "@/types/quote";
 import { CreateQuoteModal } from "./create-quote-modal";
 
 import { Button } from "@/components/ui/button";
@@ -97,8 +99,27 @@ const formatRelativeExpiry = (expiryDateString: string) => {
   if (diffHours < 1) return "Expires in less than an hour";
   if (diffHours < 24) return `Expires in ${diffHours} hour${diffHours === 1 ? "" : "s"}`;
   if (diffDays === 1) return "Expires tomorrow";
-  
+
   return `Expires in ${diffDays} day${diffDays === 1 ? "" : "s"}`;
+};
+
+const formatReceivedTime = (createdAtString: string) => {
+  const created = new Date(createdAtString).getTime();
+  const now = Date.now();
+  const diffMs = now - created;
+
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+
+  if (diffHours < 1) return rtf.format(-Math.round(diffMs / (1000 * 60)), "minute");
+  if (diffHours < 24) return rtf.format(-diffHours, "hour");
+  if (diffDays < 7) return rtf.format(-diffDays, "day");
+  if (diffWeeks < 4) return rtf.format(-diffWeeks, "week");
+  return rtf.format(-diffMonths, "month");
 };
 
 const buildPagination = (current: number, total: number) => {
@@ -153,10 +174,12 @@ function RequestCardSkeleton() {
 
 interface RequestCardProps {
   request: VendorQuoteRequest;
+  existingDraft?: VendorQuoteResponse | null;
   onCreateQuote: (request: VendorQuoteRequest) => void;
+  onEditDraft: (draft: VendorQuoteResponse) => void;
 }
 
-function RequestCard({ request, onCreateQuote }: RequestCardProps) {
+function RequestCard({ request, existingDraft, onCreateQuote, onEditDraft }: RequestCardProps) {
   const cr = request.customerRequestId;
   const status = request.status;
   const style = stageStyles[status] ?? {
@@ -200,7 +223,7 @@ function RequestCard({ request, onCreateQuote }: RequestCardProps) {
               Expired
             </span>
           )}
-          {(!isExpiringSoon || isExpired) && (
+          {!isExpiringSoon && !isExpired && (
             <span
               className={cn(
                 "rounded-full px-3 py-1 text-[11px] font-semibold tracking-wide",
@@ -217,14 +240,7 @@ function RequestCard({ request, onCreateQuote }: RequestCardProps) {
           )}
         </div>
         <p className="text-sm text-gray-500">
-          Received{" "}
-          {new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
-            -Math.round(
-              (Date.now() - new Date(request.createdAt).getTime()) /
-                (1000 * 60 * 60)
-            ),
-            "hour"
-          )}
+          Received {formatReceivedTime(request.createdAt)}
         </p>
       </div>
 
@@ -284,21 +300,31 @@ function RequestCard({ request, onCreateQuote }: RequestCardProps) {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {status !== "responded" && (
-          <Button
-            onClick={() => onCreateQuote(request)}
-            className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
-          >
-            Create Quote
-          </Button>
+        {status !== "responded" && !isExpired && (
+          <>
+            {existingDraft ? (
+              <>
+                <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  ✎ Draft in progress
+                </div>
+                <Button
+                  onClick={() => onEditDraft(existingDraft)}
+                  className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
+                >
+                  Continue Draft
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => onCreateQuote(request)}
+                className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
+              >
+                Create Quote
+              </Button>
+            )}
+          </>
         )}
-        {/* <Button
-          variant="outline"
-          className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium border-gray-200 text-gray-700 bg-white hover:bg-gray-50 shadow-none hover:text-gray-900"
-        >
-          Message Client
-        </Button> */}
-        {status !== "responded" && (
+        {status !== "responded" && !isExpired && (
           <Button
             variant="outline"
             className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium border-red-100 bg-red-50 text-red-500 hover:bg-red-100 shadow-none hover:text-red-600 border-none"
@@ -321,6 +347,7 @@ export function RequestsDashboard() {
 
   const [appliedFilters, setAppliedFilters] = useState<VendorQuoteRequestFilters>({});
   const [selectedRequest, setSelectedRequest] = useState<VendorQuoteRequest | null>(null);
+  const [selectedDraft, setSelectedDraft] = useState<VendorQuoteResponse | null>(null);
 
   const hasDateFilter = Boolean(dateFrom || dateTo);
 
@@ -350,6 +377,63 @@ export function RequestsDashboard() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
   const rangeEnd = Math.min(page * PAGE_SIZE, total);
+
+  // Fetch all draft quotes (paged) to show on request cards.
+  // Some backends enforce a max `limit`, so we avoid asking for a huge page size.
+  const { data: draftQuotes = [] } = useQuery({
+    queryKey: [...queryKeys.quotes.all, "draftLookup"] as const,
+    queryFn: async () => {
+      const limit = 50;
+      let page = 1;
+      const all: VendorQuoteResponse[] = [];
+
+      // Safety cap to avoid infinite loops if the API returns inconsistent totals.
+      while (page <= 50) {
+        const result = await fetchVendorQuotes(page, limit, { status: "draft" });
+        if (!result.success || !result.data) return all;
+
+        const batch = result.data.data ?? [];
+        all.push(...batch);
+
+        const totalDrafts = result.data.total ?? all.length;
+        if (all.length >= totalDrafts) return all;
+        if (batch.length < limit) return all;
+
+        page += 1;
+      }
+
+      return all;
+    },
+    staleTime: 30_000,
+  });
+
+  // Create maps for quick lookup:
+  // - by vendor quote-request id (preferred)
+  // - by customer request id (fallback)
+  const draftsByRequestId = new Map<string, VendorQuoteResponse>();
+  const draftsByCustomerRequestId = new Map<string, VendorQuoteResponse>();
+
+  const upsertLatestDraft = (
+    map: Map<string, VendorQuoteResponse>,
+    key: string | undefined,
+    quote: VendorQuoteResponse
+  ) => {
+    if (!key) return;
+    const prev = map.get(key);
+    if (!prev) {
+      map.set(key, quote);
+      return;
+    }
+
+    const prevUpdated = new Date(prev.updatedAt).getTime();
+    const nextUpdated = new Date(quote.updatedAt).getTime();
+    if (nextUpdated >= prevUpdated) map.set(key, quote);
+  };
+
+  draftQuotes.forEach((quote) => {
+    upsertLatestDraft(draftsByRequestId, quote.quoteRequestId?._id, quote);
+    upsertLatestDraft(draftsByCustomerRequestId, quote.customerRequestId, quote);
+  });
 
   const paginationSlots = buildPagination(page, totalPages);
 
@@ -458,7 +542,7 @@ export function RequestsDashboard() {
               className="w-full border border-transparent bg-[#f5f7fb] pl-10 text-sm text-foreground shadow-inner focus:border-[#5565ff] focus:bg-white"
             />
           </div>
-          <Button 
+          <Button
             onClick={handleApplyFilters}
             disabled={isFetching}
             className="bg-[#2F6BFF] text-white hover:bg-[#1e4dcc]"
@@ -501,7 +585,12 @@ export function RequestsDashboard() {
             <RequestCard
               key={request._id}
               request={request}
+              existingDraft={
+                draftsByRequestId.get(request._id) ??
+                draftsByCustomerRequestId.get(request.customerRequestId?._id)
+              }
               onCreateQuote={setSelectedRequest}
+              onEditDraft={setSelectedDraft}
             />
           ))
         )}
@@ -557,10 +646,17 @@ export function RequestsDashboard() {
       </div>
 
       <CreateQuoteModal
-        open={!!selectedRequest}
-        onOpenChange={(open) => { if (!open) setSelectedRequest(null); }}
+        open={!!selectedRequest || !!selectedDraft}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedRequest(null);
+            setSelectedDraft(null);
+          }
+        }}
         request={selectedRequest}
+        draftQuote={selectedDraft}
       />
     </section>
   );
 }
+

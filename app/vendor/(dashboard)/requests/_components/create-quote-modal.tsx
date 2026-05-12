@@ -96,15 +96,25 @@ function LineItemRow({ item, index, canRemove, onChange, onRemove }: LineItemRow
         onChange={(e) => handleField("hours", e.target.value)}
         className="text-sm text-center"
       />
-      <Input
-        type="number"
-        min={0}
-        step={0.01}
-        placeholder="Rate"
-        value={item.rate}
-        onChange={(e) => handleField("rate", e.target.value)}
-        className="text-sm text-right"
-      />
+      <div className="relative">
+        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400">
+          £
+        </span>
+        <Input
+          type="text"
+          inputMode="decimal"
+          placeholder="0.00"
+          value={item.rate || ""}
+          onChange={(e) => {
+            const val = e.target.value;
+            const num = val === "" ? 0 : Number(val);
+            if (!isNaN(num) && num >= 0) {
+              handleField("rate", String(num));
+            }
+          }}
+          className="pl-6 text-sm text-right"
+        />
+      </div>
       <div className="text-right text-sm font-medium text-gray-700 pr-1">
         {formatGBP(item.subtotal)}
       </div>
@@ -171,19 +181,14 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
     []
   );
 
-  const handleDepositChange = (value: string) => {
-    const n = Math.min(100, Math.max(0, Number(value)));
-    setDepositPercent(n);
-  };
-
   const resetForm = useCallback(() => {
     if (draftQuote) {
       setLineItems(draftQuote.lineItems?.length ? draftQuote.lineItems : [emptyLineItem()]);
       setDepositPercent(draftQuote.paymentTerms?.depositPercent ?? 50);
       setValidityDuration(draftQuote.validityDuration ?? "7_days");
       setCustomExpiryDate(
-        draftQuote.customExpiryDate 
-          ? new Date(draftQuote.customExpiryDate).toISOString().slice(0, 16) 
+        draftQuote.customExpiryDate
+          ? new Date(draftQuote.customExpiryDate).toISOString().slice(0, 16)
           : ""
       );
       setPersonalMessage(draftQuote.personalMessage ?? "");
@@ -255,12 +260,14 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
       }
 
       if (result.data?._id) setDraftId(result.data._id);
-      
+
       // Invalidate relevant queries to fetch fresh data
       queryClient.invalidateQueries({ queryKey: queryKeys.quotes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quoteRequests.all });
-      
+
       toast.success("Draft saved successfully.");
+      onOpenChange(false);
+      resetForm();
     } finally {
       setSavingDraft(false);
     }
@@ -319,10 +326,10 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
         toast.error(result.error ?? "Failed to submit revision.");
         return;
       }
-      
+
       queryClient.invalidateQueries({ queryKey: queryKeys.quotes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quoteRequests.all });
-      
+
       toast.success("Revision sent successfully!");
       onOpenChange(false);
       resetForm();
@@ -338,20 +345,20 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
-  const activeEvent = request?.customerRequestId?.eventDetails 
+  const activeEvent = request?.customerRequestId?.eventDetails
     || draftQuote?.quoteRequestId?.customerRequestId?.eventDetails;
-  
+
   const customerDoc = request?.customerId || draftQuote?.quoteRequestId?.customerRequestId?.customerId;
-  
+
   const eventTitle = activeEvent?.title ?? "Quote Request";
   const customerName = customerDoc ? [
     // @ts-expect-error Types might miss firstName/lastName based on population depth
-      customerDoc.firstName,
+    customerDoc.firstName,
     // @ts-expect-error
-      customerDoc.lastName,
-    ]
-      .filter(Boolean)
-      .join(" ") 
+    customerDoc.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ")
     : "Customer";
 
   return (
@@ -434,11 +441,17 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
                 <Label htmlFor={`${uid}-deposit`}>Deposit (%)</Label>
                 <Input
                   id={`${uid}-deposit`}
-                  type="number"
-                  min={0}
-                  max={100}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="0"
                   value={depositPercent}
-                  onChange={(e) => handleDepositChange(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const num = val === "" ? 0 : Number(val);
+                    if (!isNaN(num) && num >= 0 && num <= 100) {
+                      setDepositPercent(num);
+                    }
+                  }}
                 />
               </div>
               <div className="space-y-2">
