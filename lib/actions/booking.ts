@@ -44,7 +44,7 @@ export async function createBooking(
     });
 
     const data = await response.json();
-    console.log("[DEBUG] createBooking Data:", JSON.stringify(data, null, 2));
+
 if (!response.ok) {
       // Handle token expiration with retry
       if (response.status === 401) {
@@ -61,7 +61,7 @@ if (!response.ok) {
           });
 
           const retryData = await retryResponse.json();
-          console.log("[DEBUG] createBooking Retry Data:", JSON.stringify(retryData, null, 2));
+
 
           if (retryResponse.ok) {
             return { success: true, data: retryData.data };
@@ -128,7 +128,7 @@ export async function createBookingFromQuote(
     }
 
     const data = await response.json().catch(() => ({}));
-    console.log("[DEBUG] createBookingFromQuote Data:", JSON.stringify(data, null, 2));
+
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };

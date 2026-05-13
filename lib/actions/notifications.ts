@@ -42,15 +42,15 @@ export async function fetchNotifications(
       })
     );
 
-    console.log("[DEBUG] fetchNotifications Response Object:", response?.status, response?.ok);
+
 
     if (!response) {
-      console.log("[DEBUG] fetchNotifications No Response:", error);
+
       return { success: false, error: error || "Authentication required" };
     }
 
     if (!response.ok) {
-      console.error("[DEBUG] fetchNotifications Error Status:", response.status, response.statusText);
+
       if (response.status === 401) return { success: false, error: "Session expired" };
       return {
         success: false,
@@ -59,7 +59,7 @@ export async function fetchNotifications(
     }
 
     const data = await response.json();
-    console.log("[DEBUG] fetchNotifications Data:", JSON.stringify(data, null, 2));
+
     return { success: true, data: data.data };
   } catch (error) {
     console.error("Error fetching notifications:", error);
@@ -88,15 +88,15 @@ export async function fetchUnreadCount(): Promise<ActionResponse<{ count: number
       })
     );
 
-    console.log("[DEBUG] fetchUnreadCount Response Object:", response?.status, response?.ok);
+
 
     if (!response) {
-      console.log("[DEBUG] fetchUnreadCount No Response:", error);
+
       return { success: false, error: error || "Authentication required" };
     }
 
     if (!response.ok) {
-      console.error("[DEBUG] fetchUnreadCount Error Status:", response.status, response.statusText);
+
       if (response.status === 401) return { success: false, error: "Session expired" };
       return {
         success: false,
@@ -105,7 +105,7 @@ export async function fetchUnreadCount(): Promise<ActionResponse<{ count: number
     }
 
     const data = await response.json();
-    console.log("[DEBUG] fetchUnreadCount Data:", JSON.stringify(data, null, 2));
+
     return { success: true, data: data.data };
   } catch (error) {
     console.error("Error fetching unread count:", error);
