@@ -71,7 +71,7 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
   changes_requested: { bg: "bg-amber-50", text: "text-amber-700", label: "Changes Requested" },
   revised: { bg: "bg-blue-50", text: "text-blue-700", label: "Revised" },
   expired: { bg: "bg-red-50", text: "text-red-700", label: "Expired" },
-  withdrawn: { bg: "bg-gray-100", text: "text-gray-500", label: "Withdrawn" },
+  withdrawn: { bg: "bg-red-100", text: "text-red-700", label: "Withdrawn" },
   converted: { bg: "bg-green-100", text: "text-green-800", label: "Converted" },
 };
 
@@ -109,7 +109,7 @@ interface QuoteCardProps {
 }
 
 function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: QuoteCardProps) {
-  console.log("Quote data:", JSON.stringify(quote, null, 2));
+  // console.log("Quote data:", JSON.stringify(quote, null, 2));
 
   const customerReq = quote.quoteRequestId?.customerRequestId;
   const event = customerReq?.eventDetails;
