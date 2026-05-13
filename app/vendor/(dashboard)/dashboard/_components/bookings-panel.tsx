@@ -61,9 +61,10 @@ export function BookingsPanel({ bookings }: { bookings: BookingResponse[] }) {
             const avatar = customer?.avatar;
 
             return (
-              <div
+              <Link
                 key={booking._id}
-                className="flex flex-wrap items-center gap-4 rounded-md border border-border px-4 py-3"
+                href={`/vendor/bookings/${booking._id}`}
+                className="flex flex-wrap items-center gap-4 rounded-md border border-border px-4 py-3 transition-colors hover:border-primary/30 hover:bg-muted/40"
               >
                 <div className="flex items-center gap-3">
                   <div className="size-12 overflow-hidden rounded-full border border-border bg-muted">
@@ -109,7 +110,7 @@ export function BookingsPanel({ bookings }: { bookings: BookingResponse[] }) {
                   {booking.currency === "GBP" ? "£" : "$"}
                   {booking.amounts.total.toLocaleString()}
                 </p>
-              </div>
+              </Link>
             );
           })
         )}

@@ -61,10 +61,17 @@ const DashboardPage = async () => {
     (b) => b.status === "pending" || b.status === "pending_payment",
   ).length;
 
+
   // Rating from vendor profile (populated via getUserProfile)
   const vendorData = profile?.vendor as PopulatedVendor | undefined;
-  const avgRating = vendorData?.rate ?? 0;
+  const reviewAverage =
+    reviews.length > 0
+      ? reviews.reduce((sum, review) => sum + (review.rating ?? 0), 0) /
+      reviews.length
+      : 0;
+  const avgRating = reviewAverage;
   const reviewCount = vendorData?.reviewCount ?? 0;
+
 
   const stats: DashboardStat[] = [
     {

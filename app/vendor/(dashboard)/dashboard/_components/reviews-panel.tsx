@@ -16,6 +16,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import Link from "next/link";
 
 export function ReviewsPanel({ reviews }: { reviews: VendorReview[] }) {
   return (
@@ -25,8 +26,10 @@ export function ReviewsPanel({ reviews }: { reviews: VendorReview[] }) {
           <CardTitle>Recent Reviews</CardTitle>
           <CardDescription>What clients are saying</CardDescription>
         </div>
-        <Button variant="ghost" size="sm" className="text-primary">
+        <Button asChild variant="ghost" size="sm" className="text-primary">
+          <Link href="/vendor/settings?tab=reviews">
           View All
+          </Link>
         </Button>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
