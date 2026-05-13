@@ -60,7 +60,9 @@ export function BudgetPlanningStep() {
       const numericValue = parseGBP(rawValue);
       const newBudget = { ...budgetPerSpecialty, [specialtyId]: numericValue };
 
-      setInputValues((prev) => ({ ...prev, [specialtyId]: rawValue }));
+      const sanitizedValue = rawValue.replace(/[^0-9£,]/g, "");
+
+      setInputValues((prev) => ({ ...prev, [specialtyId]: sanitizedValue }));
       setBudgetPerSpecialty(newBudget);
 
       const newTotal = Object.values(newBudget).reduce(

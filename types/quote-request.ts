@@ -34,13 +34,27 @@ export interface EventDetails {
   description: string;
 }
 
+export interface RequestAttachment {
+  _id: string;
+  originalName?: string;
+  mimeType?: string;
+  size?: number;
+  url: string;
+  extension?: string;
+  provider?: string;
+  uploadedBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
 export interface CustomerRequestRef {
   _id: string;
   serviceCategoryId: ServiceCategoryRef;
   customerId: CustomerRef;
   eventDetails: EventDetails;
   budgetAllocations: BudgetAllocation[];
-  attachments: string[];
+  attachments: Array<string | RequestAttachment>;
   status: string;
   createdAt: string;
   updatedAt: string;

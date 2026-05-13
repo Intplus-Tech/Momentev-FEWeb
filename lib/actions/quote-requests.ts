@@ -2,7 +2,6 @@
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import {
-  VendorQuoteRequest,
   VendorQuoteRequestFilters,
   VendorQuoteRequestListResponse,
 } from "@/types/quote-request";

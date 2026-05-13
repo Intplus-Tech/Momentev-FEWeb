@@ -354,7 +354,7 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
   const customerName = customerDoc ? [
     // @ts-expect-error Types might miss firstName/lastName based on population depth
     customerDoc.firstName,
-    // @ts-expect-error
+    // @ts-expect-error Types might miss firstName/lastName based on population depth
     customerDoc.lastName,
   ]
     .filter(Boolean)

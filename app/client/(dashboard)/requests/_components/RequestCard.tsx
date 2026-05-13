@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { format } from "date-fns";
+import { ExternalLink, FileText } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +67,8 @@ export function RequestCard({ request }: RequestCardProps) {
     0,
   ) || 0;
 
+  const attachments = request.attachments ?? [];
+
   return (
     <Card className="border">
       <CardContent className="space-y-4 p-6">
@@ -116,6 +119,31 @@ export function RequestCard({ request }: RequestCardProps) {
             />
           </div>
         </div>
+
+        {attachments.length > 0 && (
+          <div className="rounded-lg border border-dashed border-border/70 bg-muted/30 p-4">
+            <p className="mb-3 flex items-center gap-2 text-sm font-medium text-foreground">
+              <FileText className="h-4 w-4 text-muted-foreground" />
+              Attachments
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {attachments.map((attachment) => (
+                <a
+                  key={attachment._id}
+                  href={attachment.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-between rounded-md border border-border bg-background px-3 py-2 text-sm text-foreground transition-colors hover:bg-muted"
+                >
+                  <span className="truncate pr-3">
+                    {attachment.originalName || "Attachment"}
+                  </span>
+                  <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         <Separator />
 
