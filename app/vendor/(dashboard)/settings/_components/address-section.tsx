@@ -68,7 +68,7 @@ export const AddressSection = () => {
             </p>
             <p>{address.country}</p>
           </div>
-          <PermissionActionGate module="manage_business_profile" action="write">
+          <PermissionActionGate module="business_profile" action="write">
             <Button onClick={handleSync} size="sm" disabled={isSyncing}>
               {isSyncing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Sync Address to Profile

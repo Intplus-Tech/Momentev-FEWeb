@@ -230,7 +230,7 @@ export const TeamSection = () => {
                         {member.permissions.length} Permissions
                       </TableCell>
                       <TableCell className="text-right">
-                        <PermissionActionGate module="manage_team" action="write" visualIndication={false}>
+                        <PermissionActionGate module="manage_staff" action="write" visualIndication={false}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
@@ -403,7 +403,7 @@ export const TeamSection = () => {
           </Table>
         </div>
 
-        <PermissionActionGate module="manage_team" action="write">
+        <PermissionActionGate module="manage_staff" action="write">
           <Button variant={"link"} onClick={() => setIsAddMemberOpen(true)}>
             + Add Another Member
           </Button>

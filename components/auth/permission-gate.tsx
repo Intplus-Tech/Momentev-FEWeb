@@ -34,9 +34,9 @@ const getFriendlyModuleName = (moduleName: string) => {
     view_orders: "Bookings & Quotes",
     manage_schedule: "the Calendar",
     chat: "Messages",
-    financial_overview: "Financials",
-    manage_team: "Team Settings",
-    manage_business_profile: "the Business Profile"
+    finance: "Financials",
+    manage_staff: "Team Settings",
+    business_profile: "the Business Profile"
   };
   return map[moduleName] || moduleName.replace(/_/g, " ");
 };

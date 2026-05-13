@@ -214,7 +214,7 @@ export function AddressForm({ address }: AddressFormProps) {
           )}
         </div>
         <div className="flex justify-start p-4 bg-muted/30">
-          <PermissionActionGate module="manage_business_profile" action="write">
+          <PermissionActionGate module="business_profile" action="write">
             <Button
               type="button"
               variant="outline"
@@ -367,7 +367,7 @@ export function AddressForm({ address }: AddressFormProps) {
         </div>
 
         <div className="flex gap-2">
-          <PermissionActionGate module="manage_business_profile" action="write">
+          <PermissionActionGate module="business_profile" action="write">
             <Button
               type="submit"
               disabled={!isDirty || isSubmitting}

@@ -304,7 +304,7 @@ export const ProfileSection = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <PermissionActionGate module="manage_business_profile" action="write">
+              <PermissionActionGate module="business_profile" action="write">
                 <Button
                   type="submit"
                   className="px-6"
