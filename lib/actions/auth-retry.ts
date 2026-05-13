@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 

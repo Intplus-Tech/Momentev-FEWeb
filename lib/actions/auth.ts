@@ -331,6 +331,18 @@ export async function resetPassword(token: string, newPassword: string) {
  * Logout - clears auth cookies and redirects to login page
  */
 export async function logout(redirectTo: string = '/client/auth/log-in') {
+  const refreshToken = await getRefreshToken();
+  
+  if (refreshToken && process.env.BACKEND_URL) {
+    // Fire and forget backend revocation
+    fetch(`${process.env.BACKEND_URL}/api/v1/auth/logout`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+      cache: 'no-store'
+    }).catch(console.error);
+  }
+
   await clearAuthCookies();
   redirect(redirectTo);
 }

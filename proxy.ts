@@ -46,11 +46,14 @@ function getLoginRedirect(pathname: string): string {
   return '/client/auth/log-in';
 }
 
-function getDashboardRedirect(role: UserRole): string {
+function getDashboardRedirect(role: UserRole | null): string {
   if (role === 'vendor' || role === 'vendorstaff') {
     return '/vendor/dashboard';
   }
-  return '/client/dashboard';
+  if (role === 'customer') {
+    return '/client/dashboard';
+  }
+  return '/client/auth/log-in?error=unauthorized_role';
 }
 
 /**
@@ -68,7 +71,8 @@ function decodeToken(token: string): JWTPayload | null {
 /**
  * Check if user role matches the route they're trying to access
  */
-function isRoleAllowedForRoute(role: UserRole, pathname: string): boolean {
+function isRoleAllowedForRoute(role: UserRole | null, pathname: string): boolean {
+  if (!role) return false;
   if (pathname.startsWith('/client') && role === 'customer') {
     return true;
   }
@@ -128,13 +132,20 @@ export async function proxy(request: NextRequest) {
             res.cookies.set(AUTH_TOKEN_KEY, newToken, {
               httpOnly: true,
               secure: process.env.NODE_ENV === 'production',
-              sameSite: 'lax',
+              sameSite: 'strict',
               path: '/',
               maxAge: 60 * 60, // 1 hour
             });
 
             // Check role after getting new token
-            if (userRole && !isRoleAllowedForRoute(userRole, pathname)) {
+            if (!isRoleAllowedForRoute(userRole, pathname)) {
+              if (!userRole || userRole === 'admin' || userRole === 'auditor') {
+                const loginUrl = new URL(getDashboardRedirect(userRole), request.url);
+                const redirectRes = NextResponse.redirect(loginUrl);
+                redirectRes.cookies.delete(AUTH_TOKEN_KEY);
+                redirectRes.cookies.delete(REFRESH_TOKEN_KEY);
+                return redirectRes;
+              }
               const correctDashboard = new URL(getDashboardRedirect(userRole), request.url);
               return NextResponse.redirect(correctDashboard);
             }
@@ -158,7 +169,15 @@ export async function proxy(request: NextRequest) {
     }
 
     // Check if user role matches the route
-    if (userRole && !isRoleAllowedForRoute(userRole, pathname)) {
+    if (!isRoleAllowedForRoute(userRole, pathname)) {
+      if (!userRole || userRole === 'admin' || userRole === 'auditor') {
+        const loginUrl = new URL(getDashboardRedirect(userRole), request.url);
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.delete(AUTH_TOKEN_KEY);
+        res.cookies.delete(REFRESH_TOKEN_KEY);
+        return res;
+      }
+      
       // Redirect to the correct dashboard for their role
       const correctDashboard = new URL(getDashboardRedirect(userRole), request.url);
       return NextResponse.redirect(correctDashboard);

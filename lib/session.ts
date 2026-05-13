@@ -24,7 +24,7 @@ export async function setAuthCookies(
   const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax' as const,
+    sameSite: 'strict' as const,
     path: '/',
   };
 
@@ -102,49 +102,63 @@ export async function clearAuthCookies(): Promise<void> {
   cookieStore.delete(REFRESH_TOKEN_KEY);
 }
 
+// Global map to store pending refresh promises keyed by the refresh token
+const activeRefreshes = new Map<string, Promise<{ success: boolean; token?: string; error?: string }>>();
+
 /**
  * Refresh the access token using the refresh token
  */
 export async function refreshAccessToken(refreshToken: string): Promise<{ success: boolean; token?: string; error?: string }> {
-  try {
-    if (!process.env.BACKEND_URL) {
-      return { success: false, error: 'Backend not configured' };
-    }
-
-    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/refresh-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ refreshToken }),
-      cache: 'no-store',
-    });
-
-    const data = await response.json().catch(() => null) as RefreshResponse | null;
-
-    if (!response.ok) {
-      return { success: false, error: 'Token refresh failed' };
-    }
-
-    const newToken = data?.data?.token;
-    if (!newToken) {
-      return { success: false, error: 'No token in response' };
-    }
-
-    // Update the access token cookie
-    const cookieStore = await cookies();
-    cookieStore.set(AUTH_TOKEN_KEY, newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: ACCESS_TOKEN_MAX_AGE,
-    });
-
-    return { success: true, token: newToken };
-  } catch {
-    return { success: false, error: 'Token refresh failed' };
+  if (activeRefreshes.has(refreshToken)) {
+    return activeRefreshes.get(refreshToken)!;
   }
+
+  const refreshPromise = (async () => {
+    try {
+      if (!process.env.BACKEND_URL) {
+        return { success: false, error: 'Backend not configured' };
+      }
+
+      const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/refresh-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ refreshToken }),
+        cache: 'no-store',
+      });
+
+      const data = await response.json().catch(() => null) as RefreshResponse | null;
+
+      if (!response.ok) {
+        return { success: false, error: 'Token refresh failed' };
+      }
+
+      const newToken = data?.data?.token;
+      if (!newToken) {
+        return { success: false, error: 'No token in response' };
+      }
+
+      // Update the access token cookie
+      const cookieStore = await cookies();
+      cookieStore.set(AUTH_TOKEN_KEY, newToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: ACCESS_TOKEN_MAX_AGE,
+      });
+
+      return { success: true, token: newToken };
+    } catch {
+      return { success: false, error: 'Token refresh failed' };
+    } finally {
+      activeRefreshes.delete(refreshToken);
+    }
+  })();
+
+  activeRefreshes.set(refreshToken, refreshPromise);
+  return refreshPromise;
 }
 
 /**

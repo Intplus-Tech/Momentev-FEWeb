@@ -44,8 +44,7 @@ export async function createBooking(
     });
 
     const data = await response.json();
-
-    if (!response.ok) {
+if (!response.ok) {
       // Handle token expiration with retry
       if (response.status === 401) {
         const refreshResult = await tryRefreshToken();
@@ -111,7 +110,7 @@ export async function createBookingFromQuote(
   try {
     const body = location ? JSON.stringify({ location: { addressText: location } }) : undefined;
 
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/from-quote/${quoteId}`, {
         method: "POST",
         headers: {
@@ -127,8 +126,7 @@ export async function createBookingFromQuote(
     }
 
     const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
+if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
       return {
         success: false,
@@ -159,7 +157,7 @@ export async function fetchBookings(
   }
 
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings?page=${page}&limit=${limit}`, {
         headers: {
           "Content-Type": "application/json",
@@ -172,8 +170,7 @@ export async function fetchBookings(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-
-    if (!response.ok) {
+if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -210,7 +207,7 @@ export async function fetchBookingById(
   }
 
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/${bookingId}`, {
         headers: {
           "Content-Type": "application/json",
@@ -223,8 +220,7 @@ export async function fetchBookingById(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-
-    if (!response.ok) {
+if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -280,8 +276,7 @@ export async function cancelBooking(
         },
       }
     );
-
-    if (!response.ok) {
+if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       return {
         success: false,
@@ -313,7 +308,7 @@ export async function fetchVendorBookings(
   }
 
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/vendor/me?page=${page}&limit=${limit}`, {
         headers: {
           "Content-Type": "application/json",
@@ -326,8 +321,7 @@ export async function fetchVendorBookings(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-
-    if (!response.ok) {
+if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -382,8 +376,7 @@ export async function decideVendorBooking(
         body: JSON.stringify({ decision }),
       }
     );
-
-    if (!response.ok) {
+if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       // Need to handle error response safely
       const errorMsg = data.message || (data.errors?.body?.fieldErrors?.decision?.[0]) || `Failed to process decision (${response.status})`;

@@ -21,7 +21,7 @@ export async function fetchServiceCategoryById(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/service-categories/${id}`, {
         headers: {
           "Content-Type": "application/json",
@@ -34,6 +34,13 @@ export async function fetchServiceCategoryById(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) {

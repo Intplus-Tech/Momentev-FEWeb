@@ -100,7 +100,7 @@ export async function submitVendorProfile(
     console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
     console.log("📦 [Step 4 Submission] Full payload:", JSON.stringify(payload, null, 2));
 
-    const { response, error } = await fetchWithAuthRetry((authToken) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((authToken) =>
       fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
         method: "PATCH",
         headers: {
@@ -121,6 +121,13 @@ export async function submitVendorProfile(
     }
 
     console.log(`📡 [Step 4 Submission] Response status: ${response.status} ${response.statusText}`);
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -209,7 +216,7 @@ export async function updateVendorOnboardingStage(
 
     console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
 
-    const { response, error } = await fetchWithAuthRetry(
+    const { response, error, errorCode } = await fetchWithAuthRetry(
       (authToken) =>
         fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
           method: "PATCH",
@@ -232,6 +239,13 @@ export async function updateVendorOnboardingStage(
     }
 
     console.log(`📡 [Onboarding] Response status: ${response.status} ${response.statusText}`);
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) {

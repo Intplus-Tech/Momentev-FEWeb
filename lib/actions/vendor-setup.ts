@@ -214,7 +214,7 @@ export async function submitBusinessInformation(
 
     console.log(`🌐 [Step 1 Submission] Sending POST request to ${API_URL}/api/v1/business-profiles`);
 
-    const { response, error, token } = await fetchWithAuthRetry((authToken) =>
+    const { response, error, errorCode, token } = await fetchWithAuthRetry((authToken) =>
       fetch(`${API_URL}/api/v1/business-profiles`, {
         method: "POST",
         headers: {
@@ -235,6 +235,13 @@ export async function submitBusinessInformation(
     }
 
     console.log(`📡 [Step 1 Submission] Response status: ${response.status} ${response.statusText}`);
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) {

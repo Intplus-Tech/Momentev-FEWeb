@@ -39,7 +39,7 @@ export async function createDispute(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/disputes`, {
         method: "POST",
         headers: {
@@ -55,6 +55,13 @@ export async function createDispute(
     }
 
     const data = await response.json().catch(() => ({}));
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
@@ -191,7 +198,7 @@ export async function getClientDisputes(
       queryParams.append("status", status);
     }
 
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/disputes/me?${queryParams.toString()}`, {
         method: "GET",
         headers: {
@@ -206,6 +213,13 @@ export async function getClientDisputes(
     }
 
     const data = await response.json().catch(() => ({}));
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
@@ -235,7 +249,7 @@ export async function cancelDispute(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
-    const { response, error } = await fetchWithAuthRetry((token) =>
+    const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/disputes/${disputeId}/cancel`, {
         method: "PATCH",
         headers: {
@@ -249,6 +263,13 @@ export async function cancelDispute(
     }
 
     const data = await response.json().catch(() => ({}));
+
+    if (errorCode === 'FORBIDDEN') {
+
+      return { success: false, error: "You do not have permission to perform this action." };
+
+    }
+
 
     if (!response.ok) {
       if (response.status === 401) return { success: false, error: "Session expired" };
