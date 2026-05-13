@@ -1,5 +1,5 @@
 
-export type UserRole = 'CUSTOMER' | 'VENDOR' | 'ADMIN';
+export type UserRole = 'CUSTOMER' | 'VENDOR' | 'VENDORSTAFF' | 'ADMIN' | 'AUDITOR';
 
 /**
  * Error classification for auth operations
@@ -84,6 +84,24 @@ export interface Vendor {
   businessProfile?: any; // Detailed business profile
 }
 
+/**
+ * A single permission entry embedded in the JWT payload for vendorstaff.
+ * Shape: { name: PermissionModule, read: boolean, write: boolean }
+ */
+export interface StaffPermission {
+  name: string;
+  read: boolean;
+  write: boolean;
+}
+
+/**
+ * The vendorStaff object embedded inside the JWT for vendorstaff role.
+ */
+export interface VendorStaffJWTData {
+  vendorId: string;
+  permissions: StaffPermission[];
+}
+
 export interface UserProfile {
   _id: string;
   firstName: string;
@@ -104,6 +122,10 @@ export interface UserProfile {
   stripeCustomerId?: string | null;
   hasPassword?: boolean;
   vendor?: Vendor;
+  /** Populated for vendorstaff role — the vendor they belong to */
+  vendorId?: string;
+  /** Populated for vendorstaff role — their assigned permission set */
+  staffPermissions?: StaffPermission[];
 }
 
 export interface LoginResponse {
@@ -135,4 +157,6 @@ export interface JWTPayload {
   exp: number;
   aud: string;
   iss: string;
+  /** Present only when role === 'VENDORSTAFF' */
+  vendorStaff?: VendorStaffJWTData;
 }

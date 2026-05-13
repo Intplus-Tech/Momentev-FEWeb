@@ -1,12 +1,16 @@
 import { Metadata } from "next";
 import { QuotesDashboard } from "./_components/quotes-dashboard";
+import { checkPageAccess } from "@/lib/actions/staff";
+import { NotAuthorized } from "@/components/vendor/NotAuthorized";
 
 export const metadata: Metadata = {
   title: "My Quotes | Momentev",
   description: "Manage your submitted quotes",
 };
 
-export default function VendorQuotesPage() {
+export default async function VendorQuotesPage() {
+  const { allowed } = await checkPageAccess("view_orders", "read");
+  if (!allowed) return <NotAuthorized module="view_orders" />;
   return (
     <div className="flex h-full flex-col">
       <header className="flex h-[72px] items-center justify-between border-b border-gray-100 bg-white px-8">

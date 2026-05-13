@@ -26,6 +26,7 @@ import { navItems } from "@/constants/vendor";
 import { cn } from "@/lib/utils";
 import { useAuthLogout } from "@/hooks/use-auth-logout";
 import { useUnreadBadgeCount } from "@/hooks/api/use-chat";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 
 export const VendorSidebar = () => {
   const pathname = usePathname();
@@ -34,6 +35,20 @@ export const VendorSidebar = () => {
   const { unreadCount } = useUnreadBadgeCount("vendor");
   const [searchQuery, setSearchQuery] = useState("");
   const authLogout = useAuthLogout();
+  const { role, permissions } = usePermissionsContext();
+
+  // Vendor owners (role === 'VENDOR') see every item.
+  // VendorStaff only see items whose permissionModule they have read access to.
+  // Items with no permissionModule (e.g. Dashboard) are always visible.
+  const visibleNavItems = navItems.filter((item) => {
+    if (!item.permissionModule) return true;              // always-visible item
+    if (role === "VENDOR" || role === "ADMIN") return true; // owner bypass
+    if (role !== "VENDORSTAFF") return false;              // unknown role
+    const perm = permissions.find(
+      (p) => p.name.toLowerCase() === item.permissionModule!.toLowerCase()
+    );
+    return perm?.read === true;
+  });
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -70,7 +85,7 @@ export const VendorSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-4">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = pathname === item.href;
 
                 return (
@@ -101,10 +116,6 @@ export const VendorSidebar = () => {
                     {item.label === "Messages" && unreadCount > 0 ? (
                       <SidebarMenuBadge className="bg-primary text-primary-foreground">
                         {unreadCount}
-                      </SidebarMenuBadge>
-                    ) : "badge" in item && (item as any).badge ? (
-                      <SidebarMenuBadge className="bg-primary text-primary-foreground">
-                        {(item as any).badge as React.ReactNode}
                       </SidebarMenuBadge>
                     ) : undefined}
                   </SidebarMenuItem>

@@ -80,7 +80,14 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
       toast.success("Login successful.");
       form.reset();
 
-      // Check onboarding status and redirect accordingly
+      // If the server returned an explicit redirect (e.g. for vendorstaff),
+      // honour it directly — no onboarding check needed for staff accounts.
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+        return;
+      }
+
+      // Check onboarding status for vendor owners and redirect accordingly
       const profileResult = await getUserProfile();
       if (profileResult.success && profileResult.data?.vendor) {
         const { vendor } = profileResult.data;
@@ -106,7 +113,7 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
         }
       }
 
-      // Vendor is onboarded, go to dashboard
+      // Vendor owner is onboarded — go to dashboard
       router.push("/vendor/dashboard");
     } catch (error) {
       const message =

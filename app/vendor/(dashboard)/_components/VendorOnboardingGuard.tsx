@@ -29,8 +29,16 @@ export function VendorOnboardingGuard({
 
         if (!result.success || !result.data) {
           // Not authenticated - redirect to login
-
           router.replace("/vendor/auth/login");
+          return;
+        }
+
+        const userRole = result.data.role?.toUpperCase();
+
+        // VendorStaff bypass — they don't have their own vendor profile and
+        // should never be sent through the vendor onboarding wizard.
+        if (userRole === "VENDORSTAFF") {
+          setIsOnboarded(true);
           return;
         }
 
@@ -86,6 +94,7 @@ export function VendorOnboardingGuard({
         setIsChecking(false);
       }
     }
+
 
     checkOnboardingStatus();
   }, [router, pathname]);

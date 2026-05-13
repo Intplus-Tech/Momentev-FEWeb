@@ -28,6 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronDown, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { decideVendorBooking } from "@/lib/actions/booking";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 const PAGE_SIZE = 5;
 
@@ -331,28 +332,30 @@ function BookingActions({ booking, router }: { booking: BookingResponse, router:
   }
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
-          <span className="sr-only">Open menu</span>
-          {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-          ) : (
-            <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-          )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => handleDecision("confirmed")} className="cursor-pointer whitespace-nowrap">
-          Confirm Booking
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => handleDecision("rejected")}
-          className="text-red-600 focus:text-red-50 focus:bg-red-600 cursor-pointer whitespace-nowrap"
-        >
-          Reject Booking
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <PermissionActionGate module="view_orders" action="write" visualIndication={false}>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
+            <span className="sr-only">Open menu</span>
+            {isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+            )}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => handleDecision("confirmed")} className="cursor-pointer whitespace-nowrap">
+            Confirm Booking
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDecision("rejected")}
+            className="text-red-600 focus:text-red-50 focus:bg-red-600 cursor-pointer whitespace-nowrap"
+          >
+            Reject Booking
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </PermissionActionGate>
   );
 }

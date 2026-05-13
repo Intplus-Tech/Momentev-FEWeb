@@ -37,6 +37,7 @@ import {
   PopoverTrigger,
 } from "../../../../../components/ui/popover";
 import { cn } from "@/lib/utils";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 import { SectionShell } from "./section-shell";
 
@@ -303,20 +304,22 @@ export const ProfileSection = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              <Button
-                type="submit"
-                className="px-6"
-                disabled={!isDirty || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating...
-                  </>
-                ) : (
-                  "Update Profile"
-                )}
-              </Button>
+              <PermissionActionGate module="manage_business_profile" action="write">
+                <Button
+                  type="submit"
+                  className="px-6"
+                  disabled={!isDirty || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    "Update Profile"
+                  )}
+                </Button>
+              </PermissionActionGate>
               {isDirty && (
                 <Button
                   type="button"

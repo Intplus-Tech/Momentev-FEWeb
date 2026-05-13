@@ -52,6 +52,10 @@ export type LoginInput = {
   email: string;
   password: string;
   remember?: boolean;
+  /**
+   * The portal this login form belongs to.
+   * 'VENDOR' also accepts VENDORSTAFF tokens — both operate in /vendor/*.
+   */
   expectedRole?: 'CUSTOMER' | 'VENDOR';
 };
 
@@ -108,19 +112,44 @@ export async function login(input: LoginInput) {
       return { success: false, error: 'Failed to decode authentication token' };
     }
 
-    // Validate user role if expectedRole is provided (case-insensitive comparison)
-    if (input.expectedRole && tokenRole.toUpperCase() !== input.expectedRole) {
-      const roleLabel = input.expectedRole === 'VENDOR' ? 'vendor' : 'client';
-      const correctPage = input.expectedRole === 'VENDOR' ? '/client/auth/log-in' : '/vendor/auth/log-in';
-      return {
-        success: false,
-        error: `This account is not registered as a ${roleLabel}. Please use the correct login page.`,
-        redirectTo: correctPage
-      };
+    // Validate user role if expectedRole is provided.
+    // The vendor login page passes expectedRole: 'VENDOR' and must also
+    // accept VENDORSTAFF tokens, since both roles operate in /vendor/*.
+    if (input.expectedRole) {
+      const vendorZoneRoles = ['VENDOR', 'VENDORSTAFF'];
+      const customerZoneRoles = ['CUSTOMER'];
+
+      const isVendorPortal = input.expectedRole === 'VENDOR';
+      const isCustomerPortal = input.expectedRole === 'CUSTOMER';
+      const upperRole = tokenRole.toUpperCase();
+
+      if (isVendorPortal && !vendorZoneRoles.includes(upperRole)) {
+        return {
+          success: false,
+          error: 'This account is not registered as a vendor. Please use the correct login page.',
+          redirectTo: '/client/auth/log-in',
+        };
+      }
+
+      if (isCustomerPortal && !customerZoneRoles.includes(upperRole)) {
+        return {
+          success: false,
+          error: 'This account is not registered as a client. Please use the correct login page.',
+          redirectTo: '/vendor/auth/log-in',
+        };
+      }
     }
 
     // Store tokens in HTTP-only cookies (only after all validations pass)
     await setAuthCookies(token, refreshToken, input.remember ?? false);
+
+    // For vendorstaff: signal the redirect target so the login form
+    // can skip the vendor onboarding check (staff bypass).
+    const upperTokenRole = tokenRole.toUpperCase();
+    if (upperTokenRole === 'VENDORSTAFF') {
+      return { success: true, data, redirectTo: '/vendor/dashboard' };
+    }
+
     return { success: true, data };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';

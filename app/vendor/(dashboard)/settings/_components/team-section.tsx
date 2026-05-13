@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, useMemo, Fragment } from "react";
 import { Loader2, MoreHorizontal, Trash2, Pencil } from "lucide-react";
 import { toast } from "sonner";
@@ -5,6 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -145,11 +148,13 @@ export const TeamSection = () => {
 
     const permissionsPayload: VendorPermissionInput[] = Object.entries(
       editedPermissions,
-    ).map(([name, access]) => ({
-      name,
-      read: access.read,
-      write: access.write,
-    }));
+    )
+      .filter(([_, access]) => access.read || access.write)
+      .map(([name, access]) => ({
+        name,
+        read: access.read,
+        write: access.write,
+      }));
 
     try {
       await updateStaffMutation.mutateAsync({
@@ -225,42 +230,44 @@ export const TeamSection = () => {
                         {member.permissions.length} Permissions
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-fit">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleMember(member._id);
-                              }}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              {openMemberId === member._id
-                                ? "Close Details"
-                                : "Edit Permissions"}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600 focus:text-red-600"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMember(member);
-                              }}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <PermissionActionGate module="manage_team" action="write" visualIndication={false}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-fit">
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleMember(member._id);
+                                }}
+                              >
+                                <Pencil className="mr-2 h-4 w-4" />
+                                {openMemberId === member._id
+                                  ? "Close Details"
+                                  : "Edit Permissions"}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteMember(member);
+                                }}
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </PermissionActionGate>
                       </TableCell>
                     </TableRow>
 
@@ -396,9 +403,11 @@ export const TeamSection = () => {
           </Table>
         </div>
 
-        <Button variant={"link"} onClick={() => setIsAddMemberOpen(true)}>
-          + Add Another Member
-        </Button>
+        <PermissionActionGate module="manage_team" action="write">
+          <Button variant={"link"} onClick={() => setIsAddMemberOpen(true)}>
+            + Add Another Member
+          </Button>
+        </PermissionActionGate>
 
         <AddMemberModal
           open={isAddMemberOpen}

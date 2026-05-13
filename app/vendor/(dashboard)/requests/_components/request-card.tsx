@@ -26,6 +26,7 @@ import {
   isQuoteRequestExpired,
   isQuoteRequestExpiringSoon,
 } from "./requests-utils";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 const stageStyles: Record<QuoteRequestStatus, { label: string; className: string }> = {
   new: {
@@ -252,30 +253,36 @@ export function RequestCard({
                 <div className="flex items-center gap-2 text-xs text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
                   ✎ Draft in progress
                 </div>
-                <Button
-                  onClick={() => onEditDraft(existingDraft)}
-                  className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
-                >
-                  Continue Draft
-                </Button>
+                <PermissionActionGate module="view_orders" action="write">
+                  <Button
+                    onClick={() => onEditDraft(existingDraft)}
+                    className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
+                  >
+                    Continue Draft
+                  </Button>
+                </PermissionActionGate>
               </>
             ) : (
-              <Button
-                onClick={() => onCreateQuote(request)}
-                className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
-              >
-                Create Quote
-              </Button>
+              <PermissionActionGate module="view_orders" action="write">
+                <Button
+                  onClick={() => onCreateQuote(request)}
+                  className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] shadow-none"
+                >
+                  Create Quote
+                </Button>
+              </PermissionActionGate>
             )}
           </>
         )}
         {status !== "responded" && !isExpired && (
-          <Button
-            variant="outline"
-            className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium border-red-100 bg-red-50 text-red-500 hover:bg-red-100 shadow-none hover:text-red-600 border-none"
-          >
-            Decline
-          </Button>
+          <PermissionActionGate module="view_orders" action="write">
+            <Button
+              variant="outline"
+              className="rounded-full px-6 py-2 h-auto text-[13.5px] font-medium border-red-100 bg-red-50 text-red-500 hover:bg-red-100 shadow-none hover:text-red-600 border-none"
+            >
+              Decline
+            </Button>
+          </PermissionActionGate>
         )}
       </div>
     </Card>

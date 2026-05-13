@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -268,28 +269,34 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
       {/* Actions */}
       <div className="mt-6 flex flex-wrap gap-3">
         {quote.status === "draft" && (
-          <Button
-            onClick={() => onEditDraft(quote)}
-            variant={"secondary"}
-          >
-            Edit Draft
-          </Button>
+          <PermissionActionGate module="view_orders" action="write">
+            <Button
+              onClick={() => onEditDraft(quote)}
+              variant={"secondary"}
+            >
+              Edit Draft
+            </Button>
+          </PermissionActionGate>
         )}
         {(quote.status === "sent" || quote.status === "changes_requested") && (
-          <Button
-            onClick={() => onRevise(quote)}
+          <PermissionActionGate module="view_orders" action="write">
+            <Button
+              onClick={() => onRevise(quote)}
 
-          >
-            Revise Quote
-          </Button>
+            >
+              Revise Quote
+            </Button>
+          </PermissionActionGate>
         )}
         {quote.status === "sent" && (
-          <Button
-            variant="destructive"
-            onClick={() => onWithdraw(quote._id)}
-          >
-            Withdraw
-          </Button>
+          <PermissionActionGate module="view_orders" action="write">
+            <Button
+              variant="destructive"
+              onClick={() => onWithdraw(quote._id)}
+            >
+              Withdraw
+            </Button>
+          </PermissionActionGate>
         )}
         <Button
           variant="outline"

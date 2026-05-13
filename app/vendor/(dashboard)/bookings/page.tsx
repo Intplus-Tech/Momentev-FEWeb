@@ -2,6 +2,8 @@ import { CalendarDays, ClipboardList, Coins, GaugeCircle } from "lucide-react";
 import { AlertCircle } from "lucide-react";
 
 import { fetchVendorBookings } from "@/lib/actions/booking";
+import { checkPageAccess } from "@/lib/actions/staff";
+import { NotAuthorized } from "@/components/vendor/NotAuthorized";
 
 export const dynamic = "force-dynamic";
 import { BookingStats } from "./_components/booking-stats";
@@ -11,6 +13,9 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { BookingStat } from "./data";
 
 export default async function VendorBookingsPage() {
+  const { allowed } = await checkPageAccess("view_orders", "read");
+  if (!allowed) return <NotAuthorized module="view_orders" />;
+
   const response = await fetchVendorBookings(1, 50);
 
   if (!response.success || !response.data) {

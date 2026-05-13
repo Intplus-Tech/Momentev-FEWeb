@@ -1,8 +1,12 @@
 import { StripeConnectCard } from "./_components/stripe-connect-card";
 import { PaymentContent } from "./_components/payment-content";
 import { PaymentModelCard } from "./_components/payment-model-card";
+import { checkPageAccess } from "@/lib/actions/staff";
+import { NotAuthorized } from "@/components/vendor/NotAuthorized";
 
-export default function VendorPaymentPage() {
+export default async function VendorPaymentPage() {
+  const { allowed } = await checkPageAccess("finance", "read");
+  if (!allowed) return <NotAuthorized module="finance" />;
   return (
     <section className="space-y-8">
       <div className="space-y-2">

@@ -5,13 +5,18 @@ import { decodeJwt } from 'jose';
 const AUTH_TOKEN_KEY = 'auth-token';
 const REFRESH_TOKEN_KEY = 'refresh-token';
 
-type UserRole = 'customer' | 'vendor';
+type UserRole = 'customer' | 'vendor' | 'vendorstaff' | 'admin' | 'auditor';
 
 interface JWTPayload {
   userId: string;
   email: string;
   role: UserRole;
   exp: number;
+  /** Present only when role === 'vendorstaff' */
+  vendorStaff?: {
+    vendorId: string;
+    permissions: Array<{ name: string; read: boolean; write: boolean }>;
+  };
 }
 
 // Routes that require authentication
@@ -42,7 +47,7 @@ function getLoginRedirect(pathname: string): string {
 }
 
 function getDashboardRedirect(role: UserRole): string {
-  if (role === 'vendor') {
+  if (role === 'vendor' || role === 'vendorstaff') {
     return '/vendor/dashboard';
   }
   return '/client/dashboard';
@@ -67,7 +72,8 @@ function isRoleAllowedForRoute(role: UserRole, pathname: string): boolean {
   if (pathname.startsWith('/client') && role === 'customer') {
     return true;
   }
-  if (pathname.startsWith('/vendor') && role === 'vendor') {
+  // Both vendor owners and their staff operate within /vendor/*
+  if (pathname.startsWith('/vendor') && (role === 'vendor' || role === 'vendorstaff')) {
     return true;
   }
   return false;

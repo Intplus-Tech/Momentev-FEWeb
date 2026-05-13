@@ -517,6 +517,8 @@ export async function updateVendorStaff(staffId: string, input: UpdateVendorStaf
     }
     const vendorId = profileResult.data.vendor._id;
 
+    console.log('[updateVendorStaff] Payload:', JSON.stringify(input, null, 2));
+
     const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
       method: 'PATCH',
       headers: {
@@ -528,6 +530,8 @@ export async function updateVendorStaff(staffId: string, input: UpdateVendorStaf
     });
 
     const data = await response.json().catch(() => null);
+    
+    console.log(`[updateVendorStaff] Response status: ${response.status}`, JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -551,8 +555,37 @@ export async function updateVendorStaff(staffId: string, input: UpdateVendorStaf
         return { success: false, error: 'Session expired. Please login again.' };
       }
 
-      const message = data?.message;
-      return { success: false, error: message || `Failed to update staff (${response.status})` };
+      const errorData = data as any;
+      let message = errorData?.message || `Failed to update staff (${response.status})`;
+
+      // Extract specific validation errors if available
+      if (errorData?.errors) {
+        let validationMessages: string[] = [];
+
+        if (Array.isArray(errorData.errors)) {
+          validationMessages = errorData.errors.map((e: any) => e.msg || e.message);
+        } else if (errorData.errors?.body?.fieldErrors) {
+          const fieldErrors = errorData.errors.body.fieldErrors;
+          Object.keys(fieldErrors).forEach(field => {
+            const msgs = fieldErrors[field];
+            if (Array.isArray(msgs)) {
+              validationMessages.push(...msgs);
+            } else if (typeof msgs === 'string') {
+              validationMessages.push(msgs);
+            }
+          });
+        }
+
+        if (validationMessages.length > 0) {
+          if (message === 'Validation failed') {
+            message = validationMessages.join(', ');
+          } else {
+            message += `: ${validationMessages.join(', ')}`;
+          }
+        }
+      }
+
+      return { success: false, error: message };
     }
 
     return { success: true, data: data?.data };

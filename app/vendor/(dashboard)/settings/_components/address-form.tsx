@@ -21,6 +21,7 @@ import { createAddress, updateAddress } from "@/lib/actions/address";
 import { updateUserProfile } from "@/lib/actions/user";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 const addressSchema = z.object({
   street: z.string().min(1, "Street is required"),
@@ -213,15 +214,17 @@ export function AddressForm({ address }: AddressFormProps) {
           )}
         </div>
         <div className="flex justify-start p-4 bg-muted/30">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setIsEditing(true)}
-            className="gap-2"
-          >
-            <Pencil className="h-4 w-4" />
-            Edit Address
-          </Button>
+          <PermissionActionGate module="manage_business_profile" action="write">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditing(true)}
+              className="gap-2"
+            >
+              <Pencil className="h-4 w-4" />
+              Edit Address
+            </Button>
+          </PermissionActionGate>
         </div>
       </div>
     );
@@ -364,14 +367,16 @@ export function AddressForm({ address }: AddressFormProps) {
         </div>
 
         <div className="flex gap-2">
-          <Button
-            type="submit"
-            disabled={!isDirty || isSubmitting}
-            className="px-6"
-          >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {address ? "Update Address" : "Create Address"}
-          </Button>
+          <PermissionActionGate module="manage_business_profile" action="write">
+            <Button
+              type="submit"
+              disabled={!isDirty || isSubmitting}
+              className="px-6"
+            >
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {address ? "Update Address" : "Create Address"}
+            </Button>
+          </PermissionActionGate>
           {address && (
             <Button
               type="button"

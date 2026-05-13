@@ -58,12 +58,10 @@ import {
   deleteVendorSpecialty,
   createVendorSpecialty,
 } from "@/lib/actions/vendor-specialties";
-import {
-  updateVendorService,
-  deleteVendorService,
-} from "@/lib/actions/vendor-services";
+import { updateVendorService, deleteVendorService } from "@/lib/actions/vendor-services";
 import { useServiceSpecialties } from "@/hooks/api/use-service-categories";
 import { toast } from "sonner";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 
 const formatCurrency = (value: number | string) => {
   const num = Number(value);
@@ -225,14 +223,16 @@ export function ServiceCard({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h4 className="font-semibold text-foreground">Specialties</h4>
-              <AddSpecialtyDialog
-                vendorId={vendorId}
-                categoryId={service.serviceCategory?._id}
-                existingSpecialtyIds={specialties
-                  .map((s) => s.serviceSpecialty?._id)
-                  .filter(Boolean)}
-                onCreated={onRefreshAll}
-              />
+              <PermissionActionGate module="manage_services" action="write">
+                <AddSpecialtyDialog
+                  vendorId={vendorId}
+                  categoryId={service.serviceCategory?._id}
+                  existingSpecialtyIds={specialties
+                    .map((s) => s.serviceSpecialty?._id)
+                    .filter(Boolean)}
+                  onCreated={onRefreshAll}
+                />
+              </PermissionActionGate>
             </div>
             {specialties.length > 0 ? (
               <div className="rounded-xl border border-border overflow-hidden">
@@ -270,14 +270,18 @@ export function ServiceCard({
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <EditSpecialtyDialog
-                              specialty={spec}
-                              onUpdate={onRefreshAll}
-                            />
-                            <DeleteSpecialtyAlert
-                              specialty={spec}
-                              onUpdate={onRefreshAll}
-                            />
+                            <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
+                              <EditSpecialtyDialog
+                                specialty={spec}
+                                onUpdate={onRefreshAll}
+                              />
+                            </PermissionActionGate>
+                            <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
+                              <DeleteSpecialtyAlert
+                                specialty={spec}
+                                onUpdate={onRefreshAll}
+                              />
+                            </PermissionActionGate>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -330,7 +334,9 @@ export function ServiceCard({
           </div>
 
           <div className="flex flex-wrap gap-3 pt-2">
-            <EditServiceDialog service={service} onUpdated={onRefreshAll} />
+            <PermissionActionGate module="manage_services" action="write">
+              <EditServiceDialog service={service} onUpdated={onRefreshAll} />
+            </PermissionActionGate>
             {/* <DeleteServiceAlert
               serviceId={service._id}
               serviceName={service.serviceCategory?.name}

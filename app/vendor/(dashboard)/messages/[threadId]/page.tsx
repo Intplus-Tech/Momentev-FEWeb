@@ -23,6 +23,7 @@ import {
   MessageComposer,
   type PendingAttachment,
 } from "../_components/message-composer";
+import { PermissionActionGate } from "@/components/auth/permission-gate";
 import {
   MessageHistory,
   type UploadingMessage,
@@ -223,15 +224,17 @@ const VendorThreadPage = () => {
           counterpartyLastReadAt={conversation?.userLastReadAt}
           uploadingMessage={uploadingMessage}
         />
-        <MessageComposer
-          value={messageText}
-          onChange={setMessageText}
-          onSend={handleSend}
-          pendingAttachment={pendingAttachment}
-          onFileSelect={handleFileSelect}
-          onRemoveAttachment={handleRemoveAttachment}
-          isUploading={isUploading}
-        />
+        <PermissionActionGate module="chat" action="write" wrapperClassName="w-full shrink-0">
+          <MessageComposer
+            value={messageText}
+            onChange={setMessageText}
+            onSend={handleSend}
+            pendingAttachment={pendingAttachment}
+            onFileSelect={handleFileSelect}
+            onRemoveAttachment={handleRemoveAttachment}
+            isUploading={isUploading}
+          />
+        </PermissionActionGate>
       </div>
     </div>
   );
