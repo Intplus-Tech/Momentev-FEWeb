@@ -50,14 +50,28 @@ export function NotificationItem({ notification, onClosePopover }: NotificationI
     if (shouldRoute) {
       let finalUrl = notification.redirectUrl!;
       
-      // If the backend doesn't provide the role prefix, infer it from current route
-      if (!finalUrl.startsWith('/client') && !finalUrl.startsWith('/vendor') && !finalUrl.startsWith('/admin')) {
-        const rolePrefix = pathname.startsWith("/vendor") 
-          ? "/vendor" 
-          : pathname.startsWith("/admin") 
-            ? "/admin" 
-            : "/client";
-            
+      // Determine the active role prefix
+      const isClient = pathname.startsWith("/client");
+      const isVendor = pathname.startsWith("/vendor");
+      const isAdmin = pathname.startsWith("/admin");
+      
+      const rolePrefix = isVendor ? "/vendor" : isAdmin ? "/admin" : isClient ? "/client" : "";
+
+      // Frontend route translation map for Client side
+      // The backend returns raw entity paths (e.g. /customer-requests/123), 
+      // but the Client UI uses specific dashboard paths without [id] routes.
+      if (isClient) {
+        if (finalUrl.startsWith("/customer-requests")) {
+          finalUrl = "/requests"; // Routes to /client/requests
+        } else if (finalUrl.startsWith("/quotes")) {
+          finalUrl = "/requests/quotes"; // Routes to /client/requests/quotes (Quotes Inbox)
+        } else if (finalUrl.startsWith("/quote-requests")) {
+          finalUrl = "/quote-requests"; // Routes to /client/quote-requests
+        }
+      }
+      
+      // Prepend the role prefix if it doesn't already exist
+      if (rolePrefix && !finalUrl.startsWith(rolePrefix)) {
         finalUrl = `${rolePrefix}${finalUrl.startsWith('/') ? '' : '/'}${finalUrl}`;
       }
 
