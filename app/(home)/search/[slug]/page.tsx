@@ -254,8 +254,8 @@ export default function VendorPage() {
         }));
 
         return {
-            average: displayRating,
-            total: displayReviewCount,
+          average: displayRating,
+          total: displayReviewCount,
           distribution,
         };
       })(),
