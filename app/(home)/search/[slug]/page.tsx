@@ -41,6 +41,33 @@ function getImageUrl(
   return photo.url;
 }
 
+const LEAD_TIME_PRIORITY: Record<string, number> = {
+  flexible: 0,
+  a_week: 7,
+  one_week: 7,
+  two_weeks: 14,
+  four_weeks: 28,
+};
+
+function getVendorLeadTimeRequired(
+  services?: { leadTimeRequired?: string | null }[],
+): string | undefined {
+  const values = services
+    ?.map((service) => service.leadTimeRequired)
+    .filter((value): value is string => !!value);
+
+  if (!values?.length) {
+    return undefined;
+  }
+
+  return values.reduce((current, next) => {
+    const currentPriority = LEAD_TIME_PRIORITY[current] ?? 0;
+    const nextPriority = LEAD_TIME_PRIORITY[next] ?? 0;
+
+    return nextPriority > currentPriority ? next : current;
+  });
+}
+
 export default function VendorPage() {
   const params = useParams();
   const vendorId = params.slug as string;
@@ -56,6 +83,9 @@ export default function VendorPage() {
 
   // Fallback to mock data if API fails or while loading
   const mockVendor = getVendorBySlug(vendorId);
+  const vendorLeadTimeRequired = getVendorLeadTimeRequired(
+    servicesData?.data?.data,
+  );
 
   // Show loading state
   if (isLoading) {
@@ -71,6 +101,19 @@ export default function VendorPage() {
 
   // Use API data if available, otherwise fall back to mock
   const vendorData = apiVendor?.data;
+
+  const reviews = reviewsData?.data?.data || [];
+  const totalReviewCount = reviews.length;
+  const calculatedAverageRating =
+    totalReviewCount > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviewCount
+      : 0;
+  const displayRating =
+    totalReviewCount > 0
+      ? Number(calculatedAverageRating.toFixed(1))
+      : vendorData?.rate || 0;
+  const displayReviewCount =
+    totalReviewCount > 0 ? totalReviewCount : vendorData?.reviewCount || 0;
 
 
   // Build services list from services and specialties
@@ -88,11 +131,11 @@ export default function VendorPage() {
   const titleCase = (value?: string | null) =>
     value
       ? value
-          .replace(/_/g, " ")
-          .split(" ")
-          .filter(Boolean)
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ")
+        .replace(/_/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
       : undefined;
 
   if (servicesData?.data?.data?.length) {
@@ -136,92 +179,87 @@ export default function VendorPage() {
   // Transform API data to component format, or use mock
   const vendor = vendorData
     ? {
-        id: vendorData._id,
-        name: vendorData.businessProfile?.businessName || "Unknown Vendor",
-        rating: vendorData.rate || 0,
-        reviewCount: vendorData.reviewCount || 0,
-        logo: getImageUrl(vendorData.profilePhoto),
-        gallery: (() => {
-          // Extract URLs from portfolioGallery (can be strings or objects with url)
-          const galleryUrls = vendorData.portfolioGallery
-            .map(getImageUrl)
-            .filter((url): url is string => url !== null);
+      id: vendorData._id,
+      name: vendorData.businessProfile?.businessName || "Unknown Vendor",
+      rating: displayRating,
+      reviewCount: displayReviewCount,
+      logo: getImageUrl(vendorData.profilePhoto),
+      gallery: (() => {
+        // Extract URLs from portfolioGallery (can be strings or objects with url)
+        const galleryUrls = vendorData.portfolioGallery
+          .map(getImageUrl)
+          .filter((url): url is string => url !== null);
 
-          if (galleryUrls.length > 0) return galleryUrls;
+        if (galleryUrls.length > 0) return galleryUrls;
 
-          // Fallback to coverPhoto
-          const coverUrl = getImageUrl(vendorData.coverPhoto);
-          if (coverUrl) return [coverUrl];
+        // Fallback to coverPhoto
+        const coverUrl = getImageUrl(vendorData.coverPhoto);
+        if (coverUrl) return [coverUrl];
 
-          // Final fallback
-          return [
-            "https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800",
-          ];
-        })(),
-        about:
-          vendorData.businessProfile?.businessDescription ||
-          "No description available.",
-        // Extract website from social media links if exists
-        website:
-          vendorData.socialMediaLinks?.find(
-            (s) => s.name.toLowerCase() === "website",
-          )?.link || "",
-        email: vendorData.businessProfile?.contactInfo?.emailAddress || "",
-        phone: vendorData.businessProfile?.contactInfo?.phoneNumber || "",
-        contactName:
-          vendorData.businessProfile?.contactInfo?.primaryContactName || "",
-        address: vendorData.businessProfile?.contactInfo?.addressId
-          ? `${vendorData.businessProfile.contactInfo.addressId.street}, ${vendorData.businessProfile.contactInfo.addressId.city}, ${vendorData.businessProfile.contactInfo.addressId.state} ${vendorData.businessProfile.contactInfo.addressId.postalCode}, ${vendorData.businessProfile.contactInfo.addressId.country}`
-          : vendorData.businessProfile?.serviceArea?.areaNames
-            ? vendorData.businessProfile.serviceArea.areaNames
-                .map((a) => `${a.city}, ${a.state}`)
-                .join(" | ")
-            : "Address not available",
-        social: Object.fromEntries(
-          vendorData.socialMediaLinks?.map((s) => [s.name, s.link]) || [],
-        ),
-        workdays: formatWorkdaysSummary(vendorData.businessProfile?.workdays),
-        // Map services and specialties to services section
-        servicesList,
-        // Map reviews from API
-        reviews:
-          reviewsData?.data?.data?.map((r) => ({
-            id: r._id,
-            author:
-              `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
-              "Anonymous",
-            initials:
-              `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
-              "?",
-            date: new Date(r.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-            rawDate: r.createdAt,
-            rating: r.rating,
-            category: "",
-            content: r.comment,
-          })) || [],
-        // Calculate real star distribution from reviews
-        reviewStats: (() => {
-          const reviews = reviewsData?.data?.data || [];
-          const distribution = [5, 4, 3, 2, 1].map((stars) => ({
-            stars,
-            count: reviews.filter((r) => Math.round(r.rating) === stars).length,
-          }));
-          
-          const totalCalculated = reviews.length;
-          const sumRating = reviews.reduce((acc, r) => acc + r.rating, 0);
-          const averageCalculated = totalCalculated > 0 ? sumRating / totalCalculated : 0;
+        // Final fallback
+        return [
+          "https://images.pexels.com/photos/3993449/pexels-photo-3993449.jpeg?auto=compress&cs=tinysrgb&w=800",
+        ];
+      })(),
+      about:
+        vendorData.businessProfile?.businessDescription ||
+        "No description available.",
+      // Extract website from social media links if exists
+      website:
+        vendorData.socialMediaLinks?.find(
+          (s) => s.name.toLowerCase() === "website",
+        )?.link || "",
+      email: vendorData.businessProfile?.contactInfo?.emailAddress || "",
+      phone: vendorData.businessProfile?.contactInfo?.phoneNumber || "",
+      contactName:
+        vendorData.businessProfile?.contactInfo?.primaryContactName || "",
+      address: vendorData.businessProfile?.contactInfo?.addressId
+        ? `${vendorData.businessProfile.contactInfo.addressId.street}, ${vendorData.businessProfile.contactInfo.addressId.city}, ${vendorData.businessProfile.contactInfo.addressId.state} ${vendorData.businessProfile.contactInfo.addressId.postalCode}, ${vendorData.businessProfile.contactInfo.addressId.country}`
+        : vendorData.businessProfile?.serviceArea?.areaNames
+          ? vendorData.businessProfile.serviceArea.areaNames
+            .map((a) => `${a.city}, ${a.state}`)
+            .join(" | ")
+          : "Address not available",
+      social: Object.fromEntries(
+        vendorData.socialMediaLinks?.map((s) => [s.name, s.link]) || [],
+      ),
+      workdays: formatWorkdaysSummary(vendorData.businessProfile?.workdays),
+      // Map services and specialties to services section
+      servicesList,
+      // Map reviews from API
+      reviews:
+        reviewsData?.data?.data?.map((r) => ({
+          id: r._id,
+          author:
+            `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
+            "Anonymous",
+          initials:
+            `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
+            "?",
+          date: new Date(r.createdAt).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+          rawDate: r.createdAt,
+          rating: r.rating,
+          category: "",
+          content: r.comment,
+        })) || [],
+      // Calculate real star distribution from reviews
+      reviewStats: (() => {
+        const distribution = [5, 4, 3, 2, 1].map((stars) => ({
+          stars,
+          count: reviews.filter((r) => Math.round(r.rating) === stars).length,
+        }));
 
-          return {
-            average: vendorData.rate || Number(averageCalculated.toFixed(1)) || 0,
-            total: vendorData.reviewCount || totalCalculated,
-            distribution,
-          };
-        })(),
-      }
+        return {
+            average: displayRating,
+            total: displayReviewCount,
+          distribution,
+        };
+      })(),
+    }
     : mockVendor!;
 
   return (
@@ -295,11 +333,13 @@ export default function VendorPage() {
 
       {/* Booking Modal */}
       <BookingModal
+        key={`${vendorId}-${vendorLeadTimeRequired ?? "flexible"}`}
         open={isBookingModalOpen}
         onOpenChange={setIsBookingModalOpen}
         vendorId={vendorId}
         vendorName={vendor.name}
         specialties={specialtiesData?.data?.data}
+        vendorLeadTimeRequired={vendorLeadTimeRequired}
       />
     </div>
   );

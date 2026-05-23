@@ -50,7 +50,24 @@ interface BookingModalProps {
   vendorId: string;
   vendorName: string;
   specialties: VendorSpecialtyItem[] | undefined;
+  vendorLeadTimeRequired?: string;
 }
+
+const LEAD_TIME_TO_DAYS: Record<string, number> = {
+  flexible: 0,
+  a_week: 7,
+  one_week: 7,
+  two_weeks: 14,
+  four_weeks: 28,
+};
+
+const LEAD_TIME_LABELS: Record<string, string> = {
+  flexible: "Flexible",
+  a_week: "1 week",
+  one_week: "1 week",
+  two_weeks: "2 weeks",
+  four_weeks: "4 weeks",
+};
 
 function LabeledFormLabel({
   children,
@@ -109,21 +126,50 @@ const getStartOfDay = (date: Date) => {
   return nextDate;
 };
 
+const getMinimumBookingDate = (leadTimeRequired?: string) => {
+  const leadTimeDays = leadTimeRequired ? LEAD_TIME_TO_DAYS[leadTimeRequired] : 0;
+
+  if (!leadTimeDays) {
+    return undefined;
+  }
+
+  const minimumDate = getStartOfDay(new Date());
+  minimumDate.setDate(minimumDate.getDate() + leadTimeDays);
+  return minimumDate;
+};
+
+const formatLeadTimeLabel = (leadTimeRequired?: string) => {
+  if (!leadTimeRequired) {
+    return null;
+  }
+
+  return LEAD_TIME_LABELS[leadTimeRequired] ?? leadTimeRequired.replace(/_/g, " ");
+};
+
 export function BookingModal({
   open,
   onOpenChange,
   vendorId,
   vendorName,
   specialties = [],
+  vendorLeadTimeRequired,
 }: BookingModalProps) {
   const router = useRouter();
   const createBookingMutation = useCreateBooking();
   const [selectedSpecialties, setSelectedSpecialties] = React.useState<
     Map<string, number>
   >(new Map());
+  const minimumBookingDate = React.useMemo(
+    () => getMinimumBookingDate(vendorLeadTimeRequired),
+    [vendorLeadTimeRequired],
+  );
+  const bookingSchema = React.useMemo(
+    () => createBookingSchema(minimumBookingDate),
+    [minimumBookingDate],
+  );
 
   const form = useForm<CreateBookingFormValues>({
-    resolver: zodResolver(createBookingSchema),
+    resolver: zodResolver(bookingSchema),
     defaultValues: {
       vendorId,
       eventDetails: {
@@ -202,6 +248,10 @@ export function BookingModal({
       0,
     );
   };
+
+  const minimumStartDateLabel = minimumBookingDate
+    ? format(minimumBookingDate, "PPP")
+    : null;
 
   const onSubmit = async (values: CreateBookingFormValues) => {
     try {
@@ -300,6 +350,12 @@ export function BookingModal({
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
                       <LabeledFormLabel>Start Date & Time</LabeledFormLabel>
+                      {minimumStartDateLabel && (
+                        <p className="-mt-2 text-xs text-muted-foreground">
+                          Earliest booking date: {minimumStartDateLabel}
+                          {vendorLeadTimeRequired ? ` (${formatLeadTimeLabel(vendorLeadTimeRequired)})` : ""}
+                        </p>
+                      )}
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -332,7 +388,9 @@ export function BookingModal({
                                 field.onChange(date.toISOString());
                               }
                             }}
-                            disabled={(date) => date < getStartOfDay(new Date())}
+                            disabled={(date) =>
+                              date < (minimumBookingDate ?? getStartOfDay(new Date()))
+                            }
                             initialFocus
                           />
                           {field.value && (

@@ -35,6 +35,7 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
 
   const rating = vendor.rate ?? 0;
   const totalReviews = vendor.totalReviews ?? vendor.reviewCount ?? 0;
+  const hasRating = rating > 0;
 
   // Workdays summary — join first 3 day names
   const workdaysSummary = (() => {
@@ -86,11 +87,12 @@ export function VendorListCard({ vendor }: VendorListCardProps) {
               </p>
             )}
             <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-sm">
-              <div className="flex items-center gap-1">
-                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                <span className="font-medium">{rating} Stars</span>
-              </div>
-              <span className="text-muted-foreground">•</span>
+              {hasRating && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <span className="font-medium">{rating} Stars</span>
+                </div>
+              )}
               <span className="text-muted-foreground mr-auto">
                 {totalReviews} Reviews
               </span>
