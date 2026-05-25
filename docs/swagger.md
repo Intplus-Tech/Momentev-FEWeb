@@ -1,3 +1,4 @@
+
 window.onload = function() {
   // Build a system
   var url = window.location.search.match(/url=([^&]+)/);
@@ -6371,6 +6372,488 @@ window.onload = function() {
           }
         }
       },
+      "/api/v1/admin/reviews": {
+        "get": {
+          "tags": [
+            "Admin - Reviews"
+          ],
+          "summary": "List all reviews (admin)",
+          "description": "Returns a paginated list of all reviews across the platform.\nSupports filtering by vendor, reviewer, flag status, and rating range.\n\n- Caller must be authenticated with a valid JWT and hold the `admin` role.\n- Results are ordered by `createdAt` descending.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "query",
+              "name": "page",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 1
+              },
+              "description": "Page number (1-based)",
+              "example": 1
+            },
+            {
+              "in": "query",
+              "name": "limit",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 100,
+                "default": 20
+              },
+              "description": "Number of results per page",
+              "example": 20
+            },
+            {
+              "in": "query",
+              "name": "vendorId",
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$"
+              },
+              "description": "Filter by vendor ObjectId",
+              "example": "64f0c2f7a2b6c1a9b3d2eaaa"
+            },
+            {
+              "in": "query",
+              "name": "reviewerUserId",
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$"
+              },
+              "description": "Filter by reviewer user ObjectId",
+              "example": "64f0c2f7a2b6c1a9b3d2eddd"
+            },
+            {
+              "in": "query",
+              "name": "isFlagged",
+              "schema": {
+                "type": "string",
+                "enum": [
+                  true,
+                  false
+                ]
+              },
+              "description": "Filter by flag status",
+              "example": "true"
+            },
+            {
+              "in": "query",
+              "name": "minRating",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "description": "Minimum star rating (inclusive)",
+              "example": 3
+            },
+            {
+              "in": "query",
+              "name": "maxRating",
+              "schema": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 5
+              },
+              "description": "Maximum star rating (inclusive)",
+              "example": 5
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Reviews retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "reviews": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "#/components/schemas/Review"
+                            }
+                          },
+                          "total": {
+                            "type": "integer"
+                          },
+                          "page": {
+                            "type": "integer"
+                          },
+                          "limit": {
+                            "type": "integer"
+                          },
+                          "totalPages": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Reviews retrieved successfully",
+                    "data": {
+                      "reviews": [
+                        {
+                          "_id": "64f0c2f7a2b6c1a9b3d2eccc",
+                          "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                          "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                          "reviewerUserId": "64f0c2f7a2b6c1a9b3d2eddd",
+                          "rating": 2,
+                          "comment": "Service was below expectations.",
+                          "isEdited": false,
+                          "isFlagged": true,
+                          "createdAt": "2024-01-15T10:00:00.000Z",
+                          "updatedAt": "2024-01-15T10:00:00.000Z"
+                        }
+                      ],
+                      "total": 1,
+                      "page": 1,
+                      "limit": 20,
+                      "totalPages": 1
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error (invalid query params)"
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — admin role required"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        }
+      },
+      "/api/v1/admin/reviews/{reviewId}/flag": {
+        "patch": {
+          "tags": [
+            "Admin - Reviews"
+          ],
+          "summary": "Flag or unflag a review (admin)",
+          "description": "Set the `isFlagged` status on a review.\n\n- Caller must be authenticated with a valid JWT and hold the `admin` role.\n- The `adminUserId` performing the action is derived from the JWT and recorded in the audit log.\n- A flagged review remains visible but can be used to filter in the admin list view.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "reviewId",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$",
+                "example": "64f0c2f7a2b6c1a9b3d2eccc"
+              },
+              "description": "The MongoDB ObjectId of the review"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "isFlagged"
+                  ],
+                  "properties": {
+                    "isFlagged": {
+                      "type": "boolean",
+                      "description": "True to flag the review; false to unflag it"
+                    }
+                  }
+                },
+                "example": {
+                  "isFlagged": true
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Review flag status updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Review"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Review flag status updated successfully",
+                    "data": {
+                      "_id": "64f0c2f7a2b6c1a9b3d2eccc",
+                      "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                      "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                      "reviewerUserId": "64f0c2f7a2b6c1a9b3d2eddd",
+                      "rating": 2,
+                      "comment": "Service was below expectations.",
+                      "isEdited": false,
+                      "isFlagged": true,
+                      "createdAt": "2024-01-15T10:00:00.000Z",
+                      "updatedAt": "2024-01-16T08:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error (invalid reviewId or body)"
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — admin role required"
+            },
+            "404": {
+              "description": "Review not found"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        }
+      },
+      "/api/v1/admin/reviews/{reviewId}": {
+        "delete": {
+          "tags": [
+            "Admin - Reviews"
+          ],
+          "summary": "Delete a review (admin)",
+          "description": "Permanently remove a review from the platform regardless of ownership.\n\n- Caller must be authenticated with a valid JWT and hold the `admin` role.\n- After deletion the vendor's `rate` field is recalculated immediately.\n- The action is logged to the audit log with the `adminUserId` derived from the JWT.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "reviewId",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$",
+                "example": "64f0c2f7a2b6c1a9b3d2eccc"
+              },
+              "description": "The MongoDB ObjectId of the review to delete"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Review deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Review deleted successfully"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — admin role required"
+            },
+            "404": {
+              "description": "Review not found"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        }
+      },
+      "/api/v1/admin-management/roles-and-permissions": {
+        "get": {
+          "tags": [
+            "AdminManagement"
+          ],
+          "summary": "List all roles and permissions",
+          "description": "Returns the complete catalog of user roles supported by the system and the\nvendor-staff permission names that can be granted (each with the supported\naccess modes: `read` and `write`).\n\nUse this to populate role/permission selectors in admin UIs. Requires ADMIN role.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Roles and permissions retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Roles and permissions retrieved successfully"
+                      },
+                      "data": {
+                        "type": "object",
+                        "properties": {
+                          "roles": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "enum": [
+                                "admin",
+                                "customer",
+                                "user",
+                                "auditor",
+                                "vendor",
+                                "vendorstaff"
+                              ]
+                            },
+                            "example": [
+                              "admin",
+                              "customer",
+                              "user",
+                              "auditor",
+                              "vendor",
+                              "vendorstaff"
+                            ]
+                          },
+                          "vendorPermissions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "example": "view_orders"
+                                },
+                                "modes": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "read",
+                                      "write"
+                                    ]
+                                  },
+                                  "example": [
+                                    "read",
+                                    "write"
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Roles and permissions retrieved successfully",
+                    "data": {
+                      "roles": [
+                        "admin",
+                        "customer",
+                        "user",
+                        "auditor",
+                        "vendor",
+                        "vendorstaff"
+                      ],
+                      "vendorPermissions": [
+                        {
+                          "name": "chat",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "manage_services",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "view_orders",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "manage_staff",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "view_reports",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "finance",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        },
+                        {
+                          "name": "business_profile",
+                          "modes": [
+                            "read",
+                            "write"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "Forbidden – requires ADMIN role"
+            }
+          }
+        }
+      },
       "/api/v1/admin-management": {
         "get": {
           "tags": [
@@ -8714,6 +9197,289 @@ window.onload = function() {
             },
             "401": {
               "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/api/v1/bookings/unified": {
+        "post": {
+          "tags": [
+            "Bookings"
+          ],
+          "summary": "Step 1 - Customer Starts Unified Booking",
+          "description": "**Flow context — Direct unified booking flow:** Customer starts the booking process by providing event details and choosing a pricing type (hourly rate, package pricing, or custom quote).\n\n**What this endpoint does:**\nCreates a new booking request in `pending` status. No payment happens yet.\nSaves the details, calculates the initial subtotal, and sends a notification to the vendor.\n\n**Previous steps:** None (initial step).\n**Next step:** Vendor confirms availability via `PATCH /api/v1/bookings/{bookingId}/unified-status`.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "vendorId",
+                    "serviceCategoryId",
+                    "eventDetails",
+                    "location",
+                    "pricingType"
+                  ],
+                  "properties": {
+                    "vendorId": {
+                      "type": "string",
+                      "example": "64f0c2f7a2b6c1a9b3d2e555"
+                    },
+                    "serviceCategoryId": {
+                      "type": "string",
+                      "example": "64f0c2f7a2b6c1a9b3d2e666"
+                    },
+                    "eventDetails": {
+                      "type": "object",
+                      "properties": {
+                        "title": {
+                          "type": "string",
+                          "example": "Wedding Reception"
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-08-15T14:00:00.000Z"
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date-time",
+                          "example": "2026-08-15T20:00:00.000Z"
+                        },
+                        "guestCount": {
+                          "type": "number",
+                          "example": 150
+                        },
+                        "description": {
+                          "type": "string",
+                          "example": "Our wedding reception dinner"
+                        }
+                      }
+                    },
+                    "location": {
+                      "type": "object",
+                      "properties": {
+                        "addressText": {
+                          "type": "string",
+                          "example": "123 Grand Hall, London"
+                        }
+                      }
+                    },
+                    "currency": {
+                      "type": "string",
+                      "example": "GBP"
+                    },
+                    "pricingType": {
+                      "type": "string",
+                      "enum": [
+                        "hourly_rate",
+                        "package_pricing",
+                        "custom_quotes"
+                      ],
+                      "example": "hourly_rate"
+                    },
+                    "estimatedServiceHours": {
+                      "type": "number",
+                      "description": "Required if pricingType is hourly_rate",
+                      "example": 6
+                    },
+                    "vendorSpecialtyId": {
+                      "type": "string",
+                      "description": "Required if pricingType is hourly_rate or package_pricing",
+                      "example": "64f0c2f7a2b6c1a9b3d2e777"
+                    },
+                    "budget": {
+                      "type": "number",
+                      "description": "Required if pricingType is custom_quotes (in normal currency units)",
+                      "example": 1500
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Booking request created successfully in PENDING status.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "Unified booking request created successfully"
+                      },
+                      "data": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error"
+            },
+            "401": {
+              "description": "Unauthorized"
+            }
+          }
+        }
+      },
+      "/api/v1/bookings/{bookingId}/unified-status": {
+        "patch": {
+          "tags": [
+            "Bookings"
+          ],
+          "summary": "Step 2a - Vendor Confirms Availability",
+          "description": "**Flow context:** Vendor receives the unified booking request and confirms availability for the date.\n\n**What this endpoint does:**\nUpdates the booking status to `reviewing`.\nSends a notification to the customer letting them know the vendor is available.\n\n**Previous steps:** Customer created request (`POST /api/v1/bookings/unified`).\n**Next step:** Vendor adjusts the pricing details to match reality via `PUT /api/v1/bookings/{bookingId}/unified-adjust`.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "bookingId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Status updated to REVIEWING successfully."
+            },
+            "400": {
+              "description": "Validation error (booking not in pending status, etc.)"
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "Forbidden (not the assigned vendor)"
+            }
+          }
+        }
+      },
+      "/api/v1/bookings/{bookingId}/unified-adjust": {
+        "put": {
+          "tags": [
+            "Bookings"
+          ],
+          "summary": "Step 2b - Vendor Adjusts Pricing Details",
+          "description": "**Flow context:** Vendor adjusts the pricing parameters to reflect actual prep/execution, extra items, or custom quote.\n\n**What this endpoint does:**\nUpdates the booking's pricing details and recalculates the subtotal/total. Status remains `reviewing`.\n- For `hourly_rate`: updates `actualServiceHours`.\n- For `package_pricing`: updates `extraLineItems` (adds fees like transport fee).\n- For `custom_quotes`: updates `finalPrice`.\n\n**Previous steps:** Vendor confirmed availability (`PATCH /api/v1/bookings/{bookingId}/unified-status`).\n**Next step:** Vendor approves and sends invoice via `POST /api/v1/bookings/{bookingId}/unified-send-invoice`.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "bookingId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "actualServiceHours": {
+                      "type": "number",
+                      "description": "Required for hourly_rate bookings.",
+                      "example": 8
+                    },
+                    "extraLineItems": {
+                      "type": "array",
+                      "description": "Required for package_pricing bookings.",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "description",
+                          "amount"
+                        ],
+                        "properties": {
+                          "description": {
+                            "type": "string",
+                            "example": "Transport Fee"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "example": 75.5
+                          }
+                        }
+                      }
+                    },
+                    "finalPrice": {
+                      "type": "number",
+                      "description": "Required for custom_quotes bookings.",
+                      "example": 1800
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Pricing details updated successfully."
+            },
+            "400": {
+              "description": "Validation error"
+            },
+            "403": {
+              "description": "Forbidden"
+            }
+          }
+        }
+      },
+      "/api/v1/bookings/{bookingId}/unified-send-invoice": {
+        "post": {
+          "tags": [
+            "Bookings"
+          ],
+          "summary": "Step 3 - Vendor Sends Invoice",
+          "description": "**Flow context:** Vendor finalizes and locks in pricing.\n\n**What this endpoint does:**\nLocks the final total on the backend, calculates platform commissions, and updates status to `awaiting_payment`.\nSends a notification or email with the invoice details to the customer.\n\n**Previous steps:** Vendor adjusted pricing (`PUT /api/v1/bookings/{bookingId}/unified-adjust`).\n**Next step:** Customer completes checkout via existing Stripe flow:\n  1. Create Stripe payment intent: `POST /api/v1/bookings/{bookingId}/payment-intent`\n  2. Complete Stripe checkout on client.\n  3. Confirm payment: `POST /api/v1/bookings/{bookingId}/confirm-payment` -> status becomes `booked`.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "bookingId",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Invoice approved and sent to client. Status transitioned to AWAITING_PAYMENT."
+            },
+            "400": {
+              "description": "Validation error"
+            },
+            "403": {
+              "description": "Forbidden"
             }
           }
         }
@@ -14513,7 +15279,7 @@ window.onload = function() {
             "Reviews"
           ],
           "summary": "Create a review for a vendor",
-          "description": "Submit a review for a vendor.\n\n**Notification side effects:** Creates a `review.created` notification for the vendor team.\n",
+          "description": "Submit a star-rating and optional comment for a vendor after a **completed** booking.\n\n- `reviewerUserId` is derived from the authenticated user's JWT.\n- The booking must belong to the caller, reference the same vendor, and have `status = completed`.\n- Only one review is allowed per booking (duplicate attempts return 409).\n- The vendor's `rate` field is recalculated immediately after creation.\n\n**Notification side effects:** Creates a `review.created` notification for the vendor team.\n",
           "security": [
             {
               "BearerAuth": []
@@ -14524,31 +15290,13 @@ window.onload = function() {
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "vendorId",
-                    "rating"
-                  ],
-                  "properties": {
-                    "vendorId": {
-                      "type": "string",
-                      "description": "The vendor's ID",
-                      "example": "64f0c2f7a2b6c1a9b3d2eaaa"
-                    },
-                    "rating": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 5,
-                      "description": "Rating from 1 to 5",
-                      "example": 5
-                    },
-                    "comment": {
-                      "type": "string",
-                      "maxLength": 2000,
-                      "description": "Optional review comment",
-                      "example": "Fantastic experience, highly recommend!"
-                    }
-                  }
+                  "$ref": "#/components/schemas/CreateReviewRequest"
+                },
+                "example": {
+                  "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                  "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                  "rating": 5,
+                  "comment": "Fantastic experience — punctual, professional, and great value."
                 }
               }
             }
@@ -14562,47 +15310,270 @@ window.onload = function() {
                     "type": "object",
                     "properties": {
                       "message": {
-                        "type": "string",
-                        "example": "Review created successfully"
+                        "type": "string"
                       },
                       "data": {
-                        "type": "object",
-                        "properties": {
-                          "_id": {
-                            "type": "string"
-                          },
-                          "vendorId": {
-                            "type": "string"
-                          },
-                          "reviewerUserId": {
-                            "type": "string"
-                          },
-                          "rating": {
-                            "type": "integer"
-                          },
-                          "comment": {
-                            "type": "string"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          },
-                          "updatedAt": {
-                            "type": "string",
-                            "format": "date-time"
-                          }
-                        }
+                        "$ref": "#/components/schemas/Review"
                       }
+                    }
+                  },
+                  "example": {
+                    "message": "Review created successfully",
+                    "data": {
+                      "_id": "64f0c2f7a2b6c1a9b3d2eccc",
+                      "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                      "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                      "reviewerUserId": "64f0c2f7a2b6c1a9b3d2eddd",
+                      "rating": 5,
+                      "comment": "Fantastic experience — punctual, professional, and great value.",
+                      "isEdited": false,
+                      "isFlagged": false,
+                      "createdAt": "2024-01-15T10:00:00.000Z",
+                      "updatedAt": "2024-01-15T10:00:00.000Z"
                     }
                   }
                 }
               }
             },
             "400": {
-              "description": "Validation error"
+              "description": "Validation error (missing fields, invalid rating, comment too short/long)"
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — no completed booking found for this vendor"
             },
             "404": {
               "description": "Vendor not found"
+            },
+            "409": {
+              "description": "Conflict — a review for this booking already exists"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        }
+      },
+      "/api/v1/reviews/{reviewId}": {
+        "get": {
+          "tags": [
+            "Reviews"
+          ],
+          "summary": "Get a review by ID",
+          "description": "Retrieve a single review document by its ID.\nThe `reviewerUserId` field is populated with the reviewer's `firstName`, `lastName`, and `profilePhoto`.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "reviewId",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$",
+                "example": "64f0c2f7a2b6c1a9b3d2eccc"
+              },
+              "description": "The MongoDB ObjectId of the review"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Review retrieved successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Review"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Review retrieved successfully",
+                    "data": {
+                      "_id": "64f0c2f7a2b6c1a9b3d2eccc",
+                      "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                      "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                      "reviewerUserId": {
+                        "_id": "64f0c2f7a2b6c1a9b3d2eddd",
+                        "firstName": "Alice",
+                        "lastName": "Smith",
+                        "profilePhoto": "https://cdn.example.com/photos/alice.jpg"
+                      },
+                      "rating": 5,
+                      "comment": "Fantastic experience!",
+                      "isEdited": false,
+                      "isFlagged": false,
+                      "createdAt": "2024-01-15T10:00:00.000Z",
+                      "updatedAt": "2024-01-15T10:00:00.000Z"
+                    }
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "404": {
+              "description": "Review not found"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        },
+        "patch": {
+          "tags": [
+            "Reviews"
+          ],
+          "summary": "Update a review",
+          "description": "Update the `rating` and/or `comment` on an existing review.\n\n- Only the original reviewer (identified via JWT `userId`) may edit their own review.\n- At least one of `rating` or `comment` must be provided.\n- After a successful update the review's `isEdited` flag is set to `true`.\n- If the `rating` is changed, the vendor's `rate` field is recalculated immediately.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "reviewId",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$",
+                "example": "64f0c2f7a2b6c1a9b3d2eccc"
+              },
+              "description": "The MongoDB ObjectId of the review to update"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateReviewRequest"
+                },
+                "example": {
+                  "rating": 4,
+                  "comment": "Good service, but arrived a bit late."
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Review updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      },
+                      "data": {
+                        "$ref": "#/components/schemas/Review"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Review updated successfully",
+                    "data": {
+                      "_id": "64f0c2f7a2b6c1a9b3d2eccc",
+                      "vendorId": "64f0c2f7a2b6c1a9b3d2eaaa",
+                      "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
+                      "reviewerUserId": "64f0c2f7a2b6c1a9b3d2eddd",
+                      "rating": 4,
+                      "comment": "Good service, but arrived a bit late.",
+                      "isEdited": true,
+                      "isFlagged": false,
+                      "createdAt": "2024-01-15T10:00:00.000Z",
+                      "updatedAt": "2024-01-15T12:30:00.000Z"
+                    }
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Validation error — must provide rating or comment; comment length constraints"
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — you can only edit your own reviews"
+            },
+            "404": {
+              "description": "Review not found"
+            },
+            "500": {
+              "description": "Internal server error"
+            }
+          }
+        },
+        "delete": {
+          "tags": [
+            "Reviews"
+          ],
+          "summary": "Delete a review",
+          "description": "Permanently delete a review.\n\n- Only the original reviewer (identified via JWT `userId`) may delete their own review.\n- After deletion the vendor's `rate` field is recalculated immediately.\n- The action is logged to the audit log.\n",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "reviewId",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "pattern": "^[0-9a-fA-F]{24}$",
+                "example": "64f0c2f7a2b6c1a9b3d2eccc"
+              },
+              "description": "The MongoDB ObjectId of the review to delete"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Review deleted successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Review deleted successfully"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized — valid JWT required"
+            },
+            "403": {
+              "description": "Forbidden — you can only delete your own reviews"
+            },
+            "404": {
+              "description": "Review not found"
+            },
+            "500": {
+              "description": "Internal server error"
             }
           }
         }
@@ -20602,7 +21573,9 @@ window.onload = function() {
       }
     }
   },
-  "customOptions": {}
+  "customOptions": {
+    "docExpansion": "none"
+  }
 };
   url = options.swaggerUrl || url
   var urls = options.swaggerUrls
