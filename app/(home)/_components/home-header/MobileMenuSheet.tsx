@@ -121,13 +121,14 @@ export function MobileMenuSheet({
           <nav className="flex-1 p-4 space-y-1">
             {(!user || isClient) && (
               !user ? (
-                <button
-                  onClick={() => openAuthModalFromMobile("post-request")}
+                <Link
+                  href="/client/auth/log-in"
+                  onClick={() => onOpenChange(false)}
                   className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium hover:bg-muted transition-colors w-full"
                 >
                   <FileText className="w-5 h-5 text-muted-foreground" />
                   Post A Request
-                </button>
+                </Link>
               ) : (
                 <Link
                   href="/client/custom-request"
@@ -221,10 +222,15 @@ export function MobileMenuSheet({
                   Sign in / Sign up
                 </Button>
                 <Button
+                  asChild
                   className="w-full"
-                  onClick={() => openAuthModalFromMobile("list-business")}
                 >
-                  List your Business
+                  <Link
+                    href="/vendor/auth/log-in"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    List your Business
+                  </Link>
                 </Button>
               </div>
             )}

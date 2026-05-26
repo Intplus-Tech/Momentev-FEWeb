@@ -34,9 +34,10 @@ function cents(amount: number) {
 }
 
 function formatCurrency(amount: number, currency: string) {
-  return new Intl.NumberFormat("en-US", {
+  // Always display amounts in British pounds for the vendor dashboard
+  return new Intl.NumberFormat("en-GB", {
     style: "currency",
-    currency: currency.toUpperCase(),
+    currency: "GBP",
     minimumFractionDigits: 2,
   }).format(amount);
 }
@@ -65,20 +66,21 @@ export function PaymentContent() {
 
   // ── Summary metrics ──
   const summaryMetrics: SummaryMetric[] = useMemo(() => {
-    const cur = balance.data?.currency ?? "usd";
+    // Force GBP for display regardless of underlying currency data
+    const cur = balance.data?.currency ?? "gbp";
     const availableBal = cents(balance.data?.available ?? 0);
     const pendingBal = cents(balance.data?.pending ?? 0);
 
     const totalEarnings = earnings.data?.earnings
       ? cents(
-          earnings.data.earnings.reduce((sum, e) => sum + e.amount, 0),
-        )
+        earnings.data.earnings.reduce((sum, e) => sum + e.amount, 0),
+      )
       : 0;
 
     const totalPayouts = payouts.data?.payouts
       ? cents(
-          payouts.data.payouts.reduce((sum, p) => sum + p.amount, 0),
-        )
+        payouts.data.payouts.reduce((sum, p) => sum + p.amount, 0),
+      )
       : 0;
 
     return [
@@ -112,7 +114,8 @@ export function PaymentContent() {
   // ── Transaction rows (from earnings) ──
   const transactionRows: TransactionRow[] = useMemo(() => {
     if (!earnings.data?.earnings) return [];
-    const cur = earnings.data.earnings[0]?.currency ?? "usd";
+    // Force GBP for display regardless of underlying currency data
+    const cur = earnings.data.earnings[0]?.currency ?? "gbp";
 
     return earnings.data.earnings.map((e) => ({
       id: e.id,
@@ -139,7 +142,8 @@ export function PaymentContent() {
   // ── Payout rows (from payouts) ──
   const payoutRows: PayoutHistoryRow[] = useMemo(() => {
     if (!payouts.data?.payouts) return [];
-    const cur = payouts.data.payouts[0]?.currency ?? "usd";
+    // Force GBP for display regardless of underlying currency data
+    const cur = payouts.data.payouts[0]?.currency ?? "gbp";
 
     return payouts.data.payouts.map((p) => ({
       date: formatDate(p.arrival_date),
@@ -164,7 +168,7 @@ export function PaymentContent() {
           <span className="text-sm text-muted-foreground">
             Loading payment data…
           </span>
-         </div>
+        </div>
       </Card>
     );
   }
@@ -195,7 +199,7 @@ export function PaymentContent() {
           paymentMethods={paymentMethodsData.data.paymentMethods}
         />
       )}
-        <PaymentModelCard />
+      <PaymentModelCard />
       <TransactionHistoryTable rows={transactionRows} meta={transactionMeta} />
       <PayoutHistoryTable rows={payoutRows} />
     </div>

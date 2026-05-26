@@ -187,13 +187,11 @@ export function ComplexHeader({
             <>
               {(!user || isClient) && (
                 !user ? (
-                  <Button
-                    variant="ghost"
-                    className="gap-2"
-                    onClick={() => onOpenAuthModal("post-request")}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Post A Request
+                  <Button variant="ghost" className="gap-2" asChild>
+                    <Link href="/client/auth/log-in">
+                      <FileText className="w-4 h-4" />
+                      Post A Request
+                    </Link>
                   </Button>
                 ) : (
                   <Button variant="ghost" className="gap-2" asChild>
@@ -216,8 +214,10 @@ export function ComplexHeader({
                     <CircleUserIcon className="w-4 h-4" />
                     Sign in
                   </Button>
-                  <Button onClick={() => onOpenAuthModal("list-business")}>
-                    List your Business
+                  <Button asChild>
+                    <Link href="/vendor/auth/log-in">
+                      List your Business
+                    </Link>
                   </Button>
                 </>
               )}

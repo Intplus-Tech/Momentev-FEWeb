@@ -39,6 +39,10 @@ function isAuthRoute(pathname: string): boolean {
   return authPatterns.some(pattern => pattern.test(pathname));
 }
 
+function isVendorRole(role: UserRole | null): boolean {
+  return role === 'vendor' || role === 'vendorstaff';
+}
+
 function getLoginRedirect(pathname: string): string {
   if (pathname.startsWith('/vendor')) {
     return '/vendor/auth/log-in';
@@ -97,6 +101,56 @@ export async function proxy(request: NextRequest) {
     const payload = decodeToken(authToken);
     if (payload) {
       userRole = payload.role;
+    }
+  }
+
+  // Authenticated vendors should not remain on the home page.
+  if (pathname === '/') {
+    // If we already have an access token and it's a vendor, redirect immediately.
+    if (hasValidAuth && isVendorRole(userRole)) {
+      const dashboardUrl = new URL('/vendor/dashboard', request.url);
+      return NextResponse.redirect(dashboardUrl);
+    }
+
+    // If we don't have an access token but have a refresh token, try refreshing.
+    if (!authToken && refreshToken && process.env.BACKEND_URL) {
+      try {
+        const response = await fetch(`${process.env.BACKEND_URL}/api/v1/auth/refresh-token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const newToken = data?.data?.token;
+
+          if (newToken) {
+            const payload = decodeToken(newToken);
+            const res = NextResponse.next();
+
+            // Persist the refreshed access token for subsequent requests.
+            res.cookies.set(AUTH_TOKEN_KEY, newToken, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === 'production',
+              sameSite: 'strict',
+              path: '/',
+              maxAge: 60 * 60,
+            });
+
+            // If the refreshed token belongs to a vendor, redirect to dashboard.
+            if (payload && isVendorRole(payload.role)) {
+              const dashboardUrl = new URL('/vendor/dashboard', request.url);
+              return NextResponse.redirect(dashboardUrl);
+            }
+
+            // Otherwise allow the request to continue (non-vendor user stays on home).
+            return res;
+          }
+        }
+      } catch {
+        // Ignore refresh errors for the home route and allow rendering the homepage.
+      }
     }
   }
 
@@ -177,7 +231,7 @@ export async function proxy(request: NextRequest) {
         res.cookies.delete(REFRESH_TOKEN_KEY);
         return res;
       }
-      
+
       // Redirect to the correct dashboard for their role
       const correctDashboard = new URL(getDashboardRedirect(userRole), request.url);
       return NextResponse.redirect(correctDashboard);
@@ -197,6 +251,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/',
     '/client/:path*',
     '/vendor/:path*',
   ],

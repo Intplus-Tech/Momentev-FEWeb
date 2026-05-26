@@ -187,7 +187,12 @@ export default async function BookingDetailPage({
         <div className="space-y-6 bg-muted/50 p-4 rounded-xl border">
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground border-b pb-2">Vendor</h2>
-            <p className="font-medium text-foreground">{vendorBusinessName}</p>
+            <Link
+              href={`/search/${vendorId}`}
+              className="font-medium text-foreground hover:text-primary hover:underline underline-offset-4"
+            >
+              {vendorBusinessName}
+            </Link>
             {vendorRating > 0 && (
               <p className="text-sm text-muted-foreground">
                 Rating: {vendorRating.toFixed(1)} ⭐

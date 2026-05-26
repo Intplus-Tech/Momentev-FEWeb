@@ -86,12 +86,18 @@ function buildUnifiedBookingEventDetailsSchema(minimumStartDate?: Date) {
         { message: "Invalid end date" },
       ),
     guestCount: z
-      .number({
-        message: "Guest count is required and must be a number",
+      .union([z.number(), z.string()])
+      .transform((val) => {
+        if (val === "" || val === undefined) return 1;
+        return typeof val === "string" ? parseInt(val, 10) : val;
       })
-      .int("Guest count must be a whole number")
-      .positive("Guest count must be at least 1")
-      .max(10000, "Guest count cannot exceed 10,000"),
+      .pipe(
+        z
+          .number()
+          .int("Guest count must be a whole number")
+          .positive("Guest count must be at least 1")
+          .max(10000, "Guest count cannot exceed 10,000"),
+      ),
     description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
   });
 }

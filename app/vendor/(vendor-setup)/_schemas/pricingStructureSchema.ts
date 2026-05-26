@@ -18,7 +18,7 @@ export const pricingStructureSchema = z.object({
 
   // Transport Fee (Compulsory)
   transportFee: z.object({
-    type: z.enum(["flat_50", "per_mile_1", "custom"], {
+    type: z.enum(["flat_50", "per_mile_1", "not_applicable", "custom"], {
       message: "Please select a transport fee option",
     }),
     amount: z.string().optional(),

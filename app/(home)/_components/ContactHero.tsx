@@ -88,7 +88,7 @@ export default function ContactHero() {
           <div className="space-y-8">
             <div className="space-y-3">
               <h1 className="text-2xl md:text-3xl font-semibold text-foreground">
-                Let&apos;s Talk
+                Get in Touch
               </h1>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed">
                 Have a question, suggestion, or need support? Reach out to us
@@ -194,11 +194,10 @@ export default function ContactHero() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="message">Message</Label>
                   <span
-                    className={`text-xs ${
-                      wordCount >= MIN_WORD_COUNT
+                    className={`text-xs ${wordCount >= MIN_WORD_COUNT
                         ? "text-green-600"
                         : "text-muted-foreground"
-                    }`}
+                      }`}
                   >
                     {wordCount} / {MIN_WORD_COUNT} words minimum
                   </span>

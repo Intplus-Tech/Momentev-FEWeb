@@ -31,6 +31,7 @@ const FEE_CATEGORIES = [
 const TRANSPORT_FEE_OPTIONS = [
   { value: "flat_50", label: "£50 flat fee" },
   { value: "per_mile_1", label: "£1/mile" },
+  { value: "not_applicable", label: "Not applicable" },
   { value: "custom", label: "Custom Amount" },
 ];
 
@@ -113,7 +114,13 @@ export function PricingStructureForm() {
     if (isUpdatingFromContext.current) return;
 
     const subscription = watch((formData) => {
-      updatePricingStructure(formData as Partial<PricingStructureFormData>);
+      // If transport fee is marked 'not_applicable', explicitly clear it in the saved draft
+      const dataToSave = { ...formData } as Partial<PricingStructureFormData>;
+      if (dataToSave.transportFee?.type === "not_applicable") {
+        dataToSave.transportFee = undefined as any;
+      }
+
+      updatePricingStructure(dataToSave as Partial<PricingStructureFormData>);
     });
 
     return () => subscription.unsubscribe();

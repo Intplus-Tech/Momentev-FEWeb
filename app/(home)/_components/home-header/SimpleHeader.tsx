@@ -42,29 +42,25 @@ export function SimpleHeader({
           <div className="hidden lg:flex items-center">
             {isUserLoading ? (
               <Skeleton className="h-8 w-28 bg-white/20" />
-            ) : (
-              (!user || isClient) && (
-                !user ? (
-                  <Button
-                    variant="link"
-                    onClick={() => onOpenAuthModal("post-request")}
-                  >
-                    <span className="text-sm text-white/95 hover:text-white transition-colors duration-200">
-                      Post A Request
-                    </span>
-                  </Button>
-                ) : (
-                  <Button asChild variant="link">
-                    <Link
-                      href="/client/custom-request"
-                      className="text-sm text-white/95 hover:text-white transition-colors duration-200"
-                    >
-                      Post A Request
-                    </Link>
-                  </Button>
-                )
-              )
-            )}
+            ) : !user ? (
+              <Button asChild variant="link">
+                <Link
+                  href="/client/auth/log-in"
+                  className="text-sm text-white/95 hover:text-white transition-colors duration-200"
+                >
+                  Post A Request
+                </Link>
+              </Button>
+            ) : isClient ? (
+              <Button asChild variant="link">
+                <Link
+                  href="/client/custom-request"
+                  className="text-sm text-white/95 hover:text-white transition-colors duration-200"
+                >
+                  Post A Request
+                </Link>
+              </Button>
+            ) : null}
           </div>
 
           <div className="hidden lg:flex items-center gap-3 xl:gap-4 text-white">
@@ -85,12 +81,8 @@ export function SimpleHeader({
                 >
                   Sign In
                 </Button>
-                <Button
-                  size="lg"
-                  className="rounded-l-md rounded-r-4xl pr-4"
-                  onClick={() => onOpenAuthModal("list-business")}
-                >
-                  List Your Business
+                <Button asChild size="lg" className="rounded-l-md rounded-r-4xl pr-4">
+                  <Link href="/vendor/auth/log-in">List Your Business</Link>
                 </Button>
               </>
             )}

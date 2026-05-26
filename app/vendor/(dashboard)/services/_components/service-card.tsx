@@ -253,7 +253,7 @@ export function ServiceCard({
                         {/* <TableCell className="font-medium text-foreground text-xs">
                           {spec._id}
                         </TableCell> */}
-                        <TableCell className="font-medium text-foreground">
+                        <TableCell className="font-medium capitalize text-foreground">
                           {spec.serviceSpecialty?.name}
                         </TableCell>
                         <TableCell
