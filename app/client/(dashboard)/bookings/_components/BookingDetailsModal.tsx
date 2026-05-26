@@ -14,11 +14,19 @@ import { cn } from "@/lib/utils";
 
 const statusConfig = {
   pending: {
-    label: "Pending",
+    label: "Pending Vendor Confirmation",
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  },
+  reviewing: {
+    label: "Reviewing",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
   pending_payment: {
     label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
+  awaiting_payment: {
+    label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
@@ -63,12 +71,12 @@ export function BookingDetailsModal({
   formattedTotal,
 }: BookingDetailsModalProps) {
   const status = statusConfig[booking.status] || statusConfig.pending;
-  
+
   const formattedStartDate = format(
     new Date(booking.eventDetails.startDate),
     "MMM dd, yyyy"
   );
-  
+
   const formattedEndDate = format(
     new Date(booking.eventDetails.endDate),
     "MMM dd, yyyy"
@@ -103,12 +111,12 @@ export function BookingDetailsModal({
                     <p>{format(new Date(booking.eventDetails.startDate), "h:mm a")} - {format(new Date(booking.eventDetails.endDate), "h:mm a")}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 shrink-0" />
                   <p><span className="font-medium text-foreground">Guests:</span> {booking.eventDetails.guestCount}</p>
                 </div>
-                
+
                 <div className="flex items-start gap-2">
                   <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
@@ -148,7 +156,7 @@ export function BookingDetailsModal({
                   const specialty = allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
                   const rawId = specialty?.serviceSpecialty;
                   const readableName = (rawId && serviceNamesMap[rawId]) || rawId || `Service ${idx + 1}`;
-                  
+
                   const budgetFormatted = new Intl.NumberFormat("en-GB", {
                     style: "currency",
                     currency: booking.currency || "GBP",

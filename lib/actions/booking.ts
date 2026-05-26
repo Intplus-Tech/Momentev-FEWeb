@@ -6,6 +6,8 @@ import type {
   CreateBookingPayload,
   BookingResponse,
   BookingListResponse,
+  CreateUnifiedBookingInput,
+  AdjustUnifiedBookingInput,
 } from "@/types/booking";
 
 const API_URL = process.env.BACKEND_URL;
@@ -45,7 +47,7 @@ export async function createBooking(
 
     const data = await response.json();
 
-if (!response.ok) {
+    if (!response.ok) {
       // Handle token expiration with retry
       if (response.status === 401) {
         const refreshResult = await tryRefreshToken();
@@ -174,7 +176,7 @@ export async function fetchBookings(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-if (!response.ok) {
+    if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -224,7 +226,7 @@ export async function fetchBookingById(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-if (!response.ok) {
+    if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -280,7 +282,7 @@ export async function cancelBooking(
         },
       }
     );
-if (!response.ok) {
+    if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       return {
         success: false,
@@ -325,7 +327,7 @@ export async function fetchVendorBookings(
     if (!response) {
       return { success: false, error: error || "Authentication required" };
     }
-if (!response.ok) {
+    if (!response.ok) {
       if (response.status === 401) {
         return { success: false, error: "Session expired" };
       }
@@ -380,7 +382,7 @@ export async function decideVendorBooking(
         body: JSON.stringify({ decision }),
       }
     );
-if (!response.ok) {
+    if (!response.ok) {
       const data = await response.json().catch(() => ({}));
       // Need to handle error response safely
       const errorMsg = data.message || (data.errors?.body?.fieldErrors?.decision?.[0]) || `Failed to process decision (${response.status})`;
@@ -394,6 +396,181 @@ if (!response.ok) {
     return { success: true, data: data.data };
   } catch (error) {
     console.error("Error processing booking decision:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Create a unified booking request
+ * POST /api/v1/bookings/unified
+ */
+export async function createUnifiedBooking(
+  payload: CreateUnifiedBookingInput
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/unified`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || `Failed to create unified booking (${response.status})`,
+      };
+    }
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("❌ Error creating unified booking:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Advance unified booking status
+ * PATCH /api/v1/bookings/{bookingId}/unified-status
+ */
+export async function updateUnifiedBookingStatus(
+  bookingId: string
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/${bookingId}/unified-status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || `Failed to update unified booking status (${response.status})`,
+      };
+    }
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("❌ Error updating unified booking status:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Adjust unified booking pricing
+ * PUT /api/v1/bookings/{bookingId}/unified-adjust
+ */
+export async function adjustUnifiedBooking(
+  bookingId: string,
+  payload: AdjustUnifiedBookingInput
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/${bookingId}/unified-adjust`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || `Failed to adjust unified booking (${response.status})`,
+      };
+    }
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("❌ Error adjusting unified booking:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+/**
+ * Send unified booking invoice
+ * POST /api/v1/bookings/{bookingId}/unified-send-invoice
+ */
+export async function sendUnifiedBookingInvoice(
+  bookingId: string
+): Promise<ActionResponse<BookingResponse>> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const { response, error } = await fetchWithAuthRetry((token) =>
+      fetch(`${API_URL}/api/v1/bookings/${bookingId}/unified-send-invoice`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data.message || `Failed to send unified booking invoice (${response.status})`,
+      };
+    }
+
+    return { success: true, data: data.data };
+  } catch (error) {
+    console.error("❌ Error sending unified booking invoice:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

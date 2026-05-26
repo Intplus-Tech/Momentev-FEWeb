@@ -35,7 +35,9 @@ const STATUS_VARIANT: Record<BookingStatus, "default" | "secondary" | "destructi
   paid: "default",
   completed: "secondary",
   pending: "outline",
+  reviewing: "outline",
   pending_payment: "outline",
+  awaiting_payment: "outline",
   cancelled: "destructive",
   rejected: "destructive",
 };
@@ -45,7 +47,9 @@ const STATUS_TONE: Record<BookingStatus, string> = {
   paid: "bg-emerald-500",
   completed: "bg-sky-500",
   pending: "bg-amber-500",
+  reviewing: "bg-amber-500",
   pending_payment: "bg-amber-500",
+  awaiting_payment: "bg-amber-500",
   cancelled: "bg-rose-500",
   rejected: "bg-rose-500",
 };

@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   createBooking,
+  createUnifiedBooking,
   fetchBookings,
   fetchBookingById,
   cancelBooking,
@@ -10,6 +11,7 @@ import {
 import { queryKeys } from "@/lib/react-query/keys";
 import type {
   CreateBookingPayload,
+  CreateUnifiedBookingInput,
   BookingResponse,
   BookingListResponse,
 } from "@/types/booking";
@@ -61,6 +63,27 @@ export function useCreateBooking() {
       const result = await createBooking(payload);
       if (!result.success) {
         throw new Error(result.error || "Failed to create booking");
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      // Invalidate bookings list to refetch
+      queryClient.invalidateQueries({ queryKey: queryKeys.bookings.all });
+    },
+  });
+}
+
+/**
+ * Hook to create a new unified booking
+ */
+export function useCreateUnifiedBooking() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: CreateUnifiedBookingInput) => {
+      const result = await createUnifiedBooking(payload);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create unified booking");
       }
       return result.data;
     },

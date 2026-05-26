@@ -20,6 +20,7 @@ import {
   BookingModal,
 } from "../_vendor-components";
 import { getVendorBySlug } from "../_vendor-data/vendorDetails";
+import type { VendorServiceCategory } from "@/types/vendor-services";
 
 // Helper to format workdays from API response
 function formatWorkdaysSummary(
@@ -86,6 +87,14 @@ export default function VendorPage() {
   const vendorLeadTimeRequired = getVendorLeadTimeRequired(
     servicesData?.data?.data,
   );
+  const serviceCategories = (servicesData?.data?.data ?? []).reduce<
+    VendorServiceCategory[]
+  >((acc, service) => {
+    if (!acc.find((category) => category._id === service.serviceCategory._id)) {
+      acc.push(service.serviceCategory);
+    }
+    return acc;
+  }, []);
 
   // Show loading state
   if (isLoading) {
@@ -338,6 +347,7 @@ export default function VendorPage() {
         onOpenChange={setIsBookingModalOpen}
         vendorId={vendorId}
         vendorName={vendor.name}
+        serviceCategories={serviceCategories}
         specialties={specialtiesData?.data?.data}
         vendorLeadTimeRequired={vendorLeadTimeRequired}
       />

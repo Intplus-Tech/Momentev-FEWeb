@@ -40,9 +40,9 @@ export const businessInfoSchema = z.object({
     saturday: z.boolean(),
     sunday: z.boolean(),
   }).refine(
-    (workingDays) => Object.values(workingDays).filter(Boolean).length >= 2,
+    (workingDays) => Object.values(workingDays).filter(Boolean).length >= 1,
     {
-      message: "Please select at least 2 working days",
+      message: "Please select at least 1 working day",
     },
   ),
   workingHoursStart: z.string().min(1, "Please select start time"),

@@ -10,14 +10,23 @@ import { fetchBookingById } from "@/lib/actions/booking";
 import { cn } from "@/lib/utils";
 import type { BookingStatus, PopulatedCustomer, PopulatedVendorSpecialty } from "@/types/booking";
 import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
+import { UnifiedBookingActions } from "./_components/UnifiedBookingActions";
 
 const statusConfig: Record<BookingStatus, { label: string; color: string }> = {
   pending: {
-    label: "Pending",
+    label: "Pending Vendor Confirmation",
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  },
+  reviewing: {
+    label: "Reviewing",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
   pending_payment: {
     label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
+  awaiting_payment: {
+    label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
@@ -139,6 +148,8 @@ export default async function VendorBookingDetailPage({
       </div>
 
       <Separator />
+
+      <UnifiedBookingActions booking={booking} />
 
       <div className="grid gap-6 md:grid-cols-2">
         <div className="space-y-6">

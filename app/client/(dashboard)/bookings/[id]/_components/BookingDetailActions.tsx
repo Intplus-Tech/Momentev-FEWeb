@@ -37,8 +37,10 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
 
-  const showCancelButton = booking.status === "pending_payment";
-  const showPayButton = booking.status === "pending_payment";
+  const requiresPayment =
+    booking.status === "pending_payment" || booking.status === "awaiting_payment";
+  const showCancelButton = requiresPayment;
+  const showPayButton = booking.status === "awaiting_payment";
   const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);
 
   const handleMessageVendor = async () => {
@@ -136,7 +138,7 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
         )}
       </div>
 
-      {showPayButton && booking.status === "pending_payment" && (
+      {requiresPayment && (
         <div className="flex items-center gap-2 rounded-lg bg-orange-500/10 p-3 text-sm text-orange-700 dark:text-orange-400 mt-4">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <p>Payment is required to confirm this booking.</p>

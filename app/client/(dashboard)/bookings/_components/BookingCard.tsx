@@ -42,11 +42,19 @@ type BookingCardProps = {
 
 const statusConfig = {
   pending: {
-    label: "Pending",
+    label: "Pending Vendor Confirmation",
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  },
+  reviewing: {
+    label: "Reviewing",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
   pending_payment: {
     label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
+  awaiting_payment: {
+    label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
@@ -151,8 +159,9 @@ export function BookingCard({
     }
   };
 
-  const showCancelButton = booking.status === "pending_payment";
-  const showPayButton = booking.status === "pending_payment";
+  const requiresPayment = booking.status === "pending_payment" || booking.status === "awaiting_payment";
+  const showCancelButton = requiresPayment;
+  const showPayButton = requiresPayment;
   const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);
 
   // console.log(booking.payment?.status);
@@ -252,7 +261,7 @@ export function BookingCard({
         <div className="grid gap-4 md:grid-cols-[2fr_auto] md:items-end">
           <div className="space-y-1 text-sm text-muted-foreground">
             <p className="font-medium text-foreground">
-             Vendor: {vendorBusinessName || "Vendor"}
+              Vendor: {vendorBusinessName || "Vendor"}
             </p>
             <p>
               Total:{" "}
@@ -326,7 +335,7 @@ export function BookingCard({
           </div>
         </div>
 
-        {booking.status === "pending_payment" && (
+        {requiresPayment && (
           <div className="flex items-center justify-between gap-4 rounded-lg bg-orange-500/10 p-3 text-sm text-orange-700 dark:text-orange-400">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 shrink-0" />

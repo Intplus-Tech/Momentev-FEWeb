@@ -37,11 +37,19 @@ const statusConfig: Record<
   { label: string; color: string }
 > = {
   pending: {
-    label: "Pending",
+    label: "Pending Vendor Confirmation",
     color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  },
+  reviewing: {
+    label: "Reviewing",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
   pending_payment: {
     label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
+  awaiting_payment: {
+    label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
@@ -67,8 +75,10 @@ const statusConfig: Record<
 };
 
 const filterOptions = [
-  { label: "Pending", value: "pending" },
+  { label: "Pending Vendor Confirmation", value: "pending" },
+  { label: "Reviewing", value: "reviewing" },
   { label: "Pending Payment", value: "pending_payment" },
+  { label: "Awaiting Payment", value: "awaiting_payment" },
   { label: "Paid", value: "paid" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Completed", value: "completed" },

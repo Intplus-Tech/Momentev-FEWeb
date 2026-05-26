@@ -33,22 +33,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 import {
-  createBookingSchema,
-  type CreateBookingFormValues,
+  createUnifiedBookingSchema,
+  type CreateUnifiedBookingFormValues,
 } from "@/validation/booking";
-import { useCreateBooking } from "@/hooks/api/use-booking";
-import type { VendorSpecialtyItem } from "@/types/vendor-services";
+import { useCreateUnifiedBooking } from "@/hooks/api/use-booking";
+import type {
+  VendorSpecialtyItem,
+  VendorServiceCategory,
+} from "@/types/vendor-services";
 
 interface BookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   vendorId: string;
   vendorName: string;
+  serviceCategories?: VendorServiceCategory[];
   specialties: VendorSpecialtyItem[] | undefined;
   vendorLeadTimeRequired?: string;
 }
@@ -68,6 +73,24 @@ const LEAD_TIME_LABELS: Record<string, string> = {
   two_weeks: "2 weeks",
   four_weeks: "4 weeks",
 };
+
+const PRICING_TYPE_OPTIONS = [
+  {
+    value: "hourly_rate",
+    label: "Hourly rate",
+    description: "Estimate total hours; final price adjusts by actual hours.",
+  },
+  {
+    value: "package_pricing",
+    label: "Package pricing",
+    description: "Choose a specialty package with a fixed scope.",
+  },
+  {
+    value: "custom_quotes",
+    label: "Custom quote",
+    description: "Provide a budget and receive a tailored invoice.",
+  },
+] as const;
 
 function LabeledFormLabel({
   children,
@@ -151,27 +174,30 @@ export function BookingModal({
   onOpenChange,
   vendorId,
   vendorName,
+  serviceCategories = [],
   specialties = [],
   vendorLeadTimeRequired,
 }: BookingModalProps) {
   const router = useRouter();
-  const createBookingMutation = useCreateBooking();
-  const [selectedSpecialties, setSelectedSpecialties] = React.useState<
-    Map<string, number>
-  >(new Map());
+  const createBookingMutation = useCreateUnifiedBooking();
   const minimumBookingDate = React.useMemo(
     () => getMinimumBookingDate(vendorLeadTimeRequired),
     [vendorLeadTimeRequired],
   );
   const bookingSchema = React.useMemo(
-    () => createBookingSchema(minimumBookingDate),
+    () => createUnifiedBookingSchema(minimumBookingDate),
     [minimumBookingDate],
   );
 
-  const form = useForm<CreateBookingFormValues>({
+  const defaultServiceCategoryId = serviceCategories[0]?._id ?? "";
+  const defaultSpecialtyId = specialties[0]?._id ?? "";
+
+  const form = useForm<CreateUnifiedBookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
       vendorId,
+      serviceCategoryId: defaultServiceCategoryId,
+      pricingType: "package_pricing",
       eventDetails: {
         title: "",
         startDate: "",
@@ -179,7 +205,7 @@ export function BookingModal({
         guestCount: 50,
         description: "",
       },
-      budgetAllocations: [],
+      vendorSpecialtyId: defaultSpecialtyId,
       location: {
         addressText: "",
       },
@@ -192,6 +218,8 @@ export function BookingModal({
     if (open) {
       form.reset({
         vendorId,
+        serviceCategoryId: defaultServiceCategoryId,
+        pricingType: "package_pricing",
         eventDetails: {
           title: "",
           startDate: "",
@@ -199,61 +227,32 @@ export function BookingModal({
           guestCount: 50,
           description: "",
         },
-        budgetAllocations: [],
+        vendorSpecialtyId: defaultSpecialtyId,
         location: {
           addressText: "",
         },
         currency: "GBP",
       });
-      setSelectedSpecialties(new Map());
     }
-  }, [open, vendorId, form]);
+  }, [open, vendorId, defaultServiceCategoryId, defaultSpecialtyId, form]);
 
-  // Update budget allocations when selected specialties change
   React.useEffect(() => {
-    const allocations = Array.from(selectedSpecialties.entries()).map(
-      ([specialtyId, amount]) => ({
-        vendorSpecialtyId: specialtyId,
-        budgetedAmount: amount,
-      }),
-    );
-    form.setValue("budgetAllocations", allocations, { shouldValidate: true });
-  }, [selectedSpecialties, form]);
-
-  const handleSpecialtyToggle = (specialtyId: string, checked: boolean) => {
-    setSelectedSpecialties((prev) => {
-      const next = new Map(prev);
-      if (checked) {
-        next.set(specialtyId, 1000); // Default budget
-      } else {
-        next.delete(specialtyId);
-      }
-      return next;
-    });
-  };
-
-  const handleBudgetChange = (specialtyId: string, amount: number) => {
-    setSelectedSpecialties((prev) => {
-      const next = new Map(prev);
-      if (amount > 0) {
-        next.set(specialtyId, amount);
-      }
-      return next;
-    });
-  };
-
-  const calculateTotalBudget = () => {
-    return Array.from(selectedSpecialties.values()).reduce(
-      (sum, amount) => sum + amount,
-      0,
-    );
-  };
+    if (!form.getValues("serviceCategoryId") && defaultServiceCategoryId) {
+      form.setValue("serviceCategoryId", defaultServiceCategoryId, {
+        shouldValidate: true,
+      });
+    }
+  }, [defaultServiceCategoryId, form]);
 
   const minimumStartDateLabel = minimumBookingDate
     ? format(minimumBookingDate, "PPP")
     : null;
 
-  const onSubmit = async (values: CreateBookingFormValues) => {
+  const pricingType = form.watch("pricingType");
+  const requiresSpecialty =
+    pricingType === "hourly_rate" || pricingType === "package_pricing";
+
+  const onSubmit = async (values: CreateUnifiedBookingFormValues) => {
     try {
       const booking = await createBookingMutation.mutateAsync(values);
       if (!booking?._id) {
@@ -515,51 +514,75 @@ export function BookingModal({
               <FormField
                 control={form.control}
                 name="eventDetails.guestCount"
-                render={({ field }) => (
-                  <FormItem>
-                    <LabeledFormLabel>Number of Guests</LabeledFormLabel>
-                    <FormControl>
-                      <div className="flex items-center gap-3">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() =>
-                            field.onChange(Math.max(1, field.value - 10))
-                          }
-                          disabled={field.value <= 1}
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <div className="flex items-center gap-2 flex-1">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <Input
-                            type="number"
-                            min={1}
-                            max={10000}
-                            className="text-center"
-                            {...field}
-                            onChange={(e) =>
-                              field.onChange(parseInt(e.target.value) || 1)
+                render={({ field }) => {
+                  const numericValue =
+                    typeof field.value === "number" && !Number.isNaN(field.value)
+                      ? field.value
+                      : undefined;
+
+                  return (
+                    <FormItem>
+                      <LabeledFormLabel>Number of Guests</LabeledFormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              field.onChange(Math.max(1, (numericValue ?? 1) - 10))
                             }
-                          />
+                            disabled={numericValue !== undefined && numericValue <= 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <div className="flex items-center gap-2 flex-1">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              ref={field.ref}
+                              name={field.name}
+                              type="number"
+                              min={1}
+                              max={10000}
+                              className="text-center"
+                              value={numericValue ?? ""}
+                              onChange={(e) => {
+                                const nextValue = e.target.value;
+                                if (nextValue === "") {
+                                  field.onChange(undefined);
+                                  return;
+                                }
+
+                                const parsedValue = Number(nextValue);
+                                field.onChange(
+                                  Number.isNaN(parsedValue) ? undefined : parsedValue,
+                                );
+                              }}
+                              onBlur={(event) => {
+                                field.onBlur();
+                                if (event.target.value === "") {
+                                  field.onChange(1);
+                                }
+                              }}
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() =>
+                              field.onChange(Math.min(10000, (numericValue ?? 1) + 10))
+                            }
+                            disabled={numericValue !== undefined && numericValue >= 10000}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="icon"
-                          onClick={() =>
-                            field.onChange(Math.min(10000, field.value + 10))
-                          }
-                          disabled={field.value >= 10000}
-                        >
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Description */}
@@ -568,7 +591,7 @@ export function BookingModal({
                 name="eventDetails.description"
                 render={({ field }) => (
                   <FormItem>
-                    <LabeledFormLabel>Event Description</LabeledFormLabel>
+                    <LabeledFormLabel optional>Event Description</LabeledFormLabel>
                     <FormControl>
                       <Textarea
                         placeholder="Describe your event, special requirements, or any other details the vendor should know..."
@@ -604,116 +627,214 @@ export function BookingModal({
 
             <Separator />
 
-            {/* Services & Budget */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-                  <span>Select Services & Budget</span>
-                  <span className="text-[11px] font-medium uppercase tracking-wide text-destructive">
-                    *
-                  </span>
-                </h3>
-                <div className="text-xs text-muted-foreground">
-                  Currency enforced as GBP
-                </div>
-              </div>
-
-              {specialties.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center bg-muted/50 rounded-lg">
-                  No specialties available for this vendor.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {specialties.map((specialty) => {
-                    const isSelected = selectedSpecialties.has(specialty._id);
-                    const budgetAmount =
-                      selectedSpecialties.get(specialty._id) || 0;
-
-                    return (
-                      <div
-                        key={specialty._id}
-                        className={cn(
-                          "rounded-lg border p-4 transition-colors",
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border",
-                        )}
+            {/* Service Category */}
+            <FormField
+              control={form.control}
+              name="serviceCategoryId"
+              render={({ field }) => (
+                <FormItem>
+                  <LabeledFormLabel>Service Category</LabeledFormLabel>
+                  <FormControl>
+                    {serviceCategories.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-3 text-center bg-muted/50 rounded-lg">
+                        No service categories available for this vendor.
+                      </p>
+                    ) : (
+                      <RadioGroup
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        className="gap-2"
                       >
-                        <div className="flex items-start gap-3">
-                          <Checkbox
-                            id={`specialty-${specialty._id}`}
-                            checked={isSelected}
-                            onCheckedChange={(checked) =>
-                              handleSpecialtyToggle(specialty._id, !!checked)
+                        {serviceCategories.map((category) => (
+                          <div
+                            key={category._id}
+                            className="flex items-start gap-3 rounded-lg border border-border p-3"
+                          >
+                            <RadioGroupItem
+                              value={category._id}
+                              id={`category-${category._id}`}
+                            />
+                            <Label
+                              htmlFor={`category-${category._id}`}
+                              className="cursor-pointer text-sm font-medium"
+                            >
+                              {category.name}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    )}
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Separator />
+
+            {/* Pricing Type */}
+            <FormField
+              control={form.control}
+              name="pricingType"
+              render={({ field }) => (
+                <FormItem>
+                  <LabeledFormLabel>Pricing Type</LabeledFormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      className="gap-2"
+                    >
+                      {PRICING_TYPE_OPTIONS.map((option) => (
+                        <div
+                          key={option.value}
+                          className="flex items-start gap-3 rounded-lg border border-border p-3"
+                        >
+                          <RadioGroupItem
+                            value={option.value}
+                            id={`pricing-${option.value}`}
+                          />
+                          <Label
+                            htmlFor={`pricing-${option.value}`}
+                            className="cursor-pointer space-y-1"
+                          >
+                            <span className="text-sm font-medium">
+                              {option.label}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                              {option.description}
+                            </span>
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {requiresSpecialty && (
+              <>
+                <Separator />
+
+                <FormField
+                  control={form.control}
+                  name="vendorSpecialtyId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <LabeledFormLabel>Specialty</LabeledFormLabel>
+                      <FormControl>
+                        {specialties.length === 0 ? (
+                          <p className="text-sm text-muted-foreground py-3 text-center bg-muted/50 rounded-lg">
+                            No specialties available for this vendor.
+                          </p>
+                        ) : (
+                          <RadioGroup
+                            value={field.value}
+                            onValueChange={field.onChange}
+                            className="gap-2"
+                          >
+                            {specialties.map((specialty) => (
+                              <div
+                                key={specialty._id}
+                                className="flex items-start gap-3 rounded-lg border border-border p-3"
+                              >
+                                <RadioGroupItem
+                                  value={specialty._id}
+                                  id={`specialty-${specialty._id}`}
+                                />
+                                <Label
+                                  htmlFor={`specialty-${specialty._id}`}
+                                  className="cursor-pointer space-y-1"
+                                >
+                                  <span className="text-sm font-medium">
+                                    {specialty.serviceSpecialty.name}
+                                  </span>
+                                  {specialty.serviceSpecialty.description && (
+                                    <span className="block text-xs text-muted-foreground">
+                                      {specialty.serviceSpecialty.description}
+                                    </span>
+                                  )}
+                                  <span className="block text-xs text-muted-foreground">
+                                    Base price: {specialty.price}{" "}
+                                    {specialty.priceCharge?.replace(/_/g, " ")}
+                                  </span>
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                        )}
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {pricingType === "hourly_rate" && (
+              <>
+                <Separator />
+                <FormField
+                  control={form.control}
+                  name="estimatedServiceHours"
+                  render={({ field }) => (
+                    <FormItem>
+                      <LabeledFormLabel>Estimated Service Hours</LabeledFormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min={1}
+                          step={0.5}
+                          placeholder="e.g., 4"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === "" ? undefined : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
+            )}
+
+            {pricingType === "custom_quotes" && (
+              <>
+                <Separator />
+                <FormField
+                  control={form.control}
+                  name="budget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <LabeledFormLabel>Target Budget</LabeledFormLabel>
+                      <FormControl>
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-muted-foreground">
+                            {currencySymbol}
+                          </span>
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder="e.g., 2500"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === "" ? undefined : Number(e.target.value),
+                              )
                             }
                           />
-                          <div className="flex-1 space-y-1">
-                            <label
-                              htmlFor={`specialty-${specialty._id}`}
-                              className="text-sm font-medium cursor-pointer"
-                            >
-                              {specialty.serviceSpecialty.name}
-                            </label>
-                            {specialty.serviceSpecialty.description && (
-                              <p className="text-xs text-muted-foreground">
-                                {specialty.serviceSpecialty.description}
-                              </p>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                              Base price: {specialty.price}{" "}
-                              {specialty.priceCharge?.replace(/_/g, " ")}
-                            </p>
-                          </div>
                         </div>
-
-                        {isSelected && (
-                          <div className="mt-3 pt-3 border-t">
-                            <label className="text-xs text-muted-foreground block mb-2">
-                              Your budget for this service
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">
-                                {currencySymbol}
-                              </span>
-                              <Input
-                                type="number"
-                                min={1}
-                                value={budgetAmount}
-                                onChange={(e) =>
-                                  handleBudgetChange(
-                                    specialty._id,
-                                    parseInt(e.target.value) || 0,
-                                  )
-                                }
-                                className="w-32"
-                              />
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {form.formState.errors.budgetAllocations && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.budgetAllocations.message}
-                </p>
-              )}
-            </div>
-
-            {/* Total Budget Summary */}
-            {selectedSpecialties.size > 0 && (
-              <div className="bg-muted/50 rounded-lg p-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Total Budget</span>
-                  <span className="text-lg font-semibold">
-                    {currencySymbol}
-                    {calculateTotalBudget().toLocaleString()}
-                  </span>
-                </div>
-              </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
 
             <DialogFooter>

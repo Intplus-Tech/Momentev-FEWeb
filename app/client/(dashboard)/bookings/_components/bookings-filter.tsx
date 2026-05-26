@@ -23,8 +23,10 @@ type FilterOption = {
 
 const FILTER_OPTIONS: FilterOption[] = [
   { label: "All Bookings", value: "all" },
-  { label: "Pending", value: "pending" },
+  { label: "Pending Vendor Confirmation", value: "pending" },
+  { label: "Reviewing", value: "reviewing" },
   { label: "Pending Payment", value: "pending_payment" },
+  { label: "Awaiting Payment", value: "awaiting_payment" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Paid", value: "paid" },
   { label: "Completed", value: "completed" },

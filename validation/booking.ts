@@ -68,6 +68,34 @@ function buildBookingEventDetailsSchema(minimumStartDate?: Date) {
   });
 }
 
+function buildUnifiedBookingEventDetailsSchema(minimumStartDate?: Date) {
+  return z.object({
+    title: z
+      .string()
+      .min(1, "Event title is required")
+      .max(100, "Event title must be less than 100 characters"),
+    startDate: buildStartDateSchema(minimumStartDate),
+    endDate: z
+      .string()
+      .min(1, "End date is required")
+      .refine(
+        (date) => {
+          const parsed = new Date(date);
+          return !isNaN(parsed.getTime());
+        },
+        { message: "Invalid end date" },
+      ),
+    guestCount: z
+      .number({
+        message: "Guest count is required and must be a number",
+      })
+      .int("Guest count must be a whole number")
+      .positive("Guest count must be at least 1")
+      .max(10000, "Guest count cannot exceed 10,000"),
+    description: z.string().max(1000, "Description must be less than 1000 characters").optional(),
+  });
+}
+
 export const bookingEventDetailsSchema = buildBookingEventDetailsSchema();
 
 export const bookingBudgetAllocationSchema = z.object({
@@ -110,7 +138,87 @@ export function createBookingSchema(minimumStartDate?: Date) {
     );
 }
 
+const pricingTypeSchema = z.enum(
+  ["hourly_rate", "package_pricing", "custom_quotes"] as const,
+  {
+    message: "Pricing type is required",
+  },
+);
+
+export function createUnifiedBookingSchema(minimumStartDate?: Date) {
+  return z
+    .object({
+      vendorId: z.string().min(1, "Vendor ID is required"),
+      serviceCategoryId: z.string().min(1, "Service category is required"),
+      pricingType: pricingTypeSchema,
+      eventDetails: buildUnifiedBookingEventDetailsSchema(minimumStartDate),
+      location: bookingLocationSchema,
+      currency: z.string().min(1, "Currency is required"),
+      estimatedServiceHours: z
+        .number({
+          message: "Estimated service hours must be a number",
+        })
+        .positive("Estimated service hours must be greater than 0")
+        .optional(),
+      vendorSpecialtyId: z.string().optional(),
+      budget: z
+        .number({
+          message: "Budget must be a number",
+        })
+        .positive("Budget must be greater than 0")
+        .optional(),
+    })
+    .refine(
+      (data) => {
+        const startDate = new Date(data.eventDetails.startDate);
+        const endDate = new Date(data.eventDetails.endDate);
+        return endDate > startDate;
+      },
+      {
+        message: "End date must be after start date",
+        path: ["eventDetails", "endDate"],
+      },
+    )
+    .superRefine((data, ctx) => {
+      if (data.pricingType === "hourly_rate") {
+        if (!data.estimatedServiceHours) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Estimated service hours are required for hourly pricing",
+            path: ["estimatedServiceHours"],
+          });
+        }
+        if (!data.vendorSpecialtyId) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Specialty selection is required for hourly pricing",
+            path: ["vendorSpecialtyId"],
+          });
+        }
+      }
+
+      if (data.pricingType === "package_pricing" && !data.vendorSpecialtyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Specialty selection is required for package pricing",
+          path: ["vendorSpecialtyId"],
+        });
+      }
+
+      if (data.pricingType === "custom_quotes" && !data.budget) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Budget is required for custom quotes",
+          path: ["budget"],
+        });
+      }
+    });
+}
+
 export type CreateBookingFormValues = z.infer<ReturnType<typeof createBookingSchema>>;
+export type CreateUnifiedBookingFormValues = z.infer<
+  ReturnType<typeof createUnifiedBookingSchema>
+>;
 export type BookingEventDetailsFormValues = z.infer<
   typeof bookingEventDetailsSchema
 >;

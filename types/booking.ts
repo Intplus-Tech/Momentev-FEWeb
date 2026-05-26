@@ -129,6 +129,7 @@ export interface BookingResponse {
   currency: string;
   amounts: BookingAmounts;
   paymentModel: string;
+  pricingType?: PricingType;
   status: BookingStatus;
   payment?: BookingPayment;
   createdAt: string;
@@ -138,7 +139,9 @@ export interface BookingResponse {
 
 export type BookingStatus =
   | "pending"
+  | "reviewing"
   | "pending_payment"
+  | "awaiting_payment"
   | "paid"
   | "confirmed"
   | "cancelled"
@@ -150,4 +153,35 @@ export interface BookingListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+export type PricingType = "hourly_rate" | "package_pricing" | "custom_quotes";
+
+export interface CreateUnifiedBookingInput {
+  vendorId: string;
+  serviceCategoryId: string;
+  pricingType: PricingType;
+  eventDetails: {
+    title: string;
+    startDate: string; // ISO 8601 Date string
+    endDate: string; // ISO 8601 Date string
+    guestCount: number;
+    description?: string;
+  };
+  location: {
+    addressText: string;
+  };
+  currency: string; // e.g., 'GBP'
+  estimatedServiceHours?: number; // Required if pricingType is hourly_rate
+  vendorSpecialtyId?: string; // Required if pricingType is hourly_rate or package_pricing
+  budget?: number; // Required if pricingType is custom_quotes
+}
+
+export interface AdjustUnifiedBookingInput {
+  actualServiceHours?: number; // Required for hourly_rate
+  extraLineItems?: Array<{
+    description: string;
+    amount: number;
+  }>; // Required for package_pricing
+  finalPrice?: number; // Required for custom_quotes
 }
