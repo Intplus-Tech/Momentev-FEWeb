@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -78,9 +78,33 @@ export default function VendorPage() {
   const { data: apiVendor, isLoading, isError } = useVendorDetails(vendorId);
 
   // Fetch reviews and services (hooks must be called unconditionally)
-  const { data: reviewsData } = useVendorReviews(vendorId);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const REVIEWS_LIMIT = 10;
+  const { data: reviewsData, isFetching: isFetchingReviews } = useVendorReviews(vendorId, reviewsPage, REVIEWS_LIMIT);
   const { data: servicesData } = useVendorServices(vendorId);
   const { data: specialtiesData } = useVendorSpecialties(vendorId);
+
+  // Accumulate paginated reviews locally — start with first page if available
+  const [accumulatedReviews, setAccumulatedReviews] = useState<any[]>([]);
+
+  // When a new page of reviewsData arrives, append unique items
+  useEffect(() => {
+    if (reviewsData && reviewsData.data && Array.isArray(reviewsData.data.data)) {
+      const incoming = reviewsData.data.data;
+      setAccumulatedReviews((prev) => {
+        const existingIds = new Set(prev.map((r) => r._id));
+        const toAppend = incoming.filter((r: any) => !existingIds.has(r._id));
+        if (toAppend.length === 0) return prev;
+        return [...prev, ...toAppend];
+      });
+    }
+  }, [reviewsData]);
+
+  // Reset accumulated reviews when vendor changes
+  useEffect(() => {
+    setAccumulatedReviews([]);
+    setReviewsPage(1);
+  }, [vendorId]);
 
   // Fallback to mock data if API fails or while loading
   const mockVendor = getVendorBySlug(vendorId);
@@ -111,11 +135,12 @@ export default function VendorPage() {
   // Use API data if available, otherwise fall back to mock
   const vendorData = apiVendor?.data;
 
-  const reviews = reviewsData?.data?.data || [];
-  const totalReviewCount = reviews.length;
+
+  const reviews = accumulatedReviews.length > 0 ? accumulatedReviews : (reviewsData?.data?.data || []);
+  const totalReviewCount = reviewsData?.data?.total ?? reviews.length;
   const calculatedAverageRating =
-    totalReviewCount > 0
-      ? reviews.reduce((acc, review) => acc + review.rating, 0) / totalReviewCount
+    reviews.length > 0
+      ? reviews.reduce((acc, review) => acc + review.rating, 0) / reviews.length
       : 0;
   const displayRating =
     totalReviewCount > 0
@@ -235,26 +260,25 @@ export default function VendorPage() {
       workdays: formatWorkdaysSummary(vendorData.businessProfile?.workdays),
       // Map services and specialties to services section
       servicesList,
-      // Map reviews from API
-      reviews:
-        reviewsData?.data?.data?.map((r) => ({
-          id: r._id,
-          author:
-            `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
-            "Anonymous",
-          initials:
-            `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
-            "?",
-          date: new Date(r.createdAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          }),
-          rawDate: r.createdAt,
-          rating: r.rating,
-          category: "",
-          content: r.comment,
-        })) || [],
+      // Map reviews from accumulated paginated data
+      reviews: reviews.map((r) => ({
+        id: r._id,
+        author:
+          `${r.reviewer?.firstName || ""} ${r.reviewer?.lastName || ""}`.trim() ||
+          "Anonymous",
+        initials:
+          `${r.reviewer?.firstName?.[0] || ""}${r.reviewer?.lastName?.[0] || ""}`.toUpperCase() ||
+          "?",
+        date: new Date(r.createdAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        rawDate: r.createdAt,
+        rating: r.rating,
+        category: "",
+        content: r.comment,
+      })) || [],
       // Calculate real star distribution from reviews
       reviewStats: (() => {
         const distribution = [5, 4, 3, 2, 1].map((stars) => ({
@@ -321,6 +345,17 @@ export default function VendorPage() {
               reviews={vendor.reviews}
               stats={vendor.reviewStats}
             />
+            {totalReviewCount !== undefined && reviews.length < totalReviewCount && (
+              <div className="mt-6 flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setReviewsPage((p) => p + 1)}
+                  disabled={isFetchingReviews}
+                >
+                  {isFetchingReviews ? "Loading..." : "Load more reviews"}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Right Column - Contact Sidebar */}

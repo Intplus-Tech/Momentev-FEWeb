@@ -23,6 +23,7 @@ import { cancelBooking } from "@/lib/actions/booking";
 import { PaymentModal } from "../../_components/PaymentModal";
 import { CreateDisputeModal } from "../../_components/CreateDisputeModal";
 import type { BookingResponse } from "@/types/booking";
+import { CreateReviewDialog } from "@/app/(home)/search/_vendor-components/CreateReviewDialog";
 
 type Props = {
   booking: BookingResponse;
@@ -42,6 +43,8 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
   const showCancelButton = requiresPayment;
   const showPayButton = booking.status === "awaiting_payment";
   const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);
+  const showLeaveReview = booking.status === "completed";
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
 
   const handleMessageVendor = async () => {
     if (isMessaging) return;
@@ -107,6 +110,12 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
           </Button>
         )}
 
+        {showLeaveReview && (
+          <Button onClick={() => setIsReviewOpen(true)}>
+            Leave a Review
+          </Button>
+        )}
+
         {showCancelButton && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -157,6 +166,13 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
         booking={booking}
         open={isDisputeOpen}
         onOpenChange={setIsDisputeOpen}
+      />
+
+      <CreateReviewDialog
+        vendorId={vendorId}
+        bookingId={booking._id}
+        isOpen={isReviewOpen}
+        onOpenChange={setIsReviewOpen}
       />
     </>
   );

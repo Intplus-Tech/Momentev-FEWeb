@@ -14,61 +14,22 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CreateReviewDialog } from "./CreateReviewDialog";
-import { useUserProfile } from "@/hooks/api/use-user-profile";
-import { useRouter, usePathname } from "next/navigation";
-
-interface Review {
-  id: string;
-  author: string;
-  initials: string;
-  avatar?: string;
-  date: string;
-  rawDate: string; // Used for accurate date sorting
-  rating: number;
-  category: string;
-  content: string;
-}
-
-interface ReviewStats {
-  average: number;
-  total: number;
-  distribution: {
-    stars: number;
-    count: number;
-  }[];
-}
+import type { ReviewUI, ReviewStats } from "@/types/review";
 
 interface ReviewsSectionProps {
   vendorId: string;
-  reviews: Review[];
+  reviews: ReviewUI[];
   stats: ReviewStats;
   hideTitle?: boolean;
 }
 
 export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsSectionProps) {
   const [sortBy, setSortBy] = useState("newest");
-  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
-  const { data: user, isLoading: isUserLoading } = useUserProfile();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const isClient = user?.role === "customer" || user?.role === "CUSTOMER";
-  const isLoggedOut = !user && !isUserLoading;
 
   const hasReviews = (stats?.total || 0) > 0 && reviews.length > 0;
   const maxCount = hasReviews
     ? Math.max(...stats.distribution.map((d) => d.count))
     : 0;
-
-  const handleWriteReviewClick = () => {
-    if (isLoggedOut) {
-      const redirect = pathname || "/client";
-      router.push(`/client/auth/log-in?redirect=${encodeURIComponent(redirect)}`);
-      return;
-    }
-    setIsReviewDialogOpen(true);
-  };
 
   return (
     <div className="">
@@ -86,8 +47,8 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
               <Star
                 key={i}
                 className={`w-5 h-5 ${i < Math.floor(stats.average)
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "fill-muted text-muted"
+                  ? "fill-yellow-400 text-yellow-400"
+                  : "fill-muted text-muted"
                   }`}
               />
             ))}
@@ -127,7 +88,7 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
         </div>
       </div>
 
-      {/* Sort and Write Review */}
+      {/* Sort */}
       <div className="flex items-center justify-between mb-6">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -148,12 +109,6 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-
-        {isClient && (
-          <Button className="h-9" onClick={handleWriteReviewClick}>
-            Write a Review
-          </Button>
-        )}
       </div>
 
       {/* Reviews List */}
@@ -177,8 +132,8 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
                     <Star
                       key={i}
                       className={`w-4 h-4 ${i < review.rating
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "fill-muted text-muted"
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-muted text-muted"
                         }`}
                     />
                   ))}
@@ -211,11 +166,6 @@ export function ReviewsSection({ vendorId, reviews, stats, hideTitle }: ReviewsS
         )}
       </div>
 
-      <CreateReviewDialog
-        vendorId={vendorId}
-        isOpen={isReviewDialogOpen}
-        onOpenChange={setIsReviewDialogOpen}
-      />
     </div>
   );
 }

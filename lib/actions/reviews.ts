@@ -1,24 +1,9 @@
-'use server';
+"use server";
 
 import { getAccessToken, tryRefreshToken } from '@/lib/session';
+import type { Review as ApiReview } from '@/types/review';
 
-export type Review = {
-  _id: string;
-  vendorId: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    avatar?: {
-      url: string;
-    };
-    category?: string; // Assuming category might come from vendor profile populate
-  };
-  customerId: string;
-  rating: number;
-  review: string;
-  createdAt: string;
-  updatedAt: string;
-};
+export type Review = ApiReview;
 
 export type GetReviewsResponse = {
   data: Review[];
@@ -147,7 +132,7 @@ export async function fetchVendorReviews(vendorId: string, page = 1, limit = 10)
   }
 }
 
-export async function createReview(data: { vendorId: string; rating: number; comment: string }) {
+export async function createReview(data: { vendorId: string; bookingId?: string; rating: number; comment: string }) {
   try {
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };
@@ -192,10 +177,144 @@ export async function createReview(data: { vendorId: string; rating: number; com
         }
         return { success: false, error: 'Session expired. Please login again.' };
       }
-      return { success: false, error: result?.message || 'Failed to submit review' };
+      // Explicit handling for known review errors
+      if (response.status === 403) {
+        return { success: false, error: 'Booking is not completed. Reviews can only be created for completed bookings.' };
+      }
+      if (response.status === 409) {
+        return { success: false, error: 'A review for this booking already exists.' };
+      }
+      return { success: false, error: result?.message || `Failed to submit review (${response.status})` };
+    }
+
+    // Normalize API response to expected shape when possible
+    const apiData = result?.data;
+    // If backend already returns the canonical review object, pass through
+    if (apiData && typeof apiData === 'object') {
+      return { success: true, data: apiData };
+    }
+
+    return { success: true, data: apiData };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+export async function updateReview(reviewId: string, data: { rating?: number; comment?: string }) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews/${reviewId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews/${reviewId}`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData.data };
+          }
+          return { success: false, error: retryData?.message || 'Failed to update review' };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+      if (response.status === 403) {
+        return { success: false, error: 'You can only edit your own reviews.' };
+      }
+      if (response.status === 404) {
+        return { success: false, error: 'Review not found.' };
+      }
+      return { success: false, error: result?.message || 'Failed to update review' };
     }
 
     return { success: true, data: result?.data };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'An unexpected error occurred';
+    return { success: false, error: message };
+  }
+}
+
+export async function deleteReview(reviewId: string) {
+  try {
+    if (!process.env.BACKEND_URL) {
+      return { success: false, error: 'Backend not configured' };
+    }
+
+    const token = await getAccessToken();
+    if (!token) {
+      return { success: false, error: 'Not authenticated' };
+    }
+
+    const response = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews/${reviewId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      if (response.status === 401) {
+        const refreshResult = await tryRefreshToken();
+        if (refreshResult.success && refreshResult.token) {
+          const retryResponse = await fetch(`${process.env.BACKEND_URL}/api/v1/reviews/${reviewId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${refreshResult.token}`,
+              'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+          });
+          const retryData = await retryResponse.json().catch(() => null);
+
+          if (retryResponse.ok) {
+            return { success: true, data: retryData?.data ?? retryData };
+          }
+          return { success: false, error: retryData?.message || 'Failed to delete review' };
+        }
+        return { success: false, error: 'Session expired. Please login again.' };
+      }
+      if (response.status === 403) {
+        return { success: false, error: 'You can only delete your own reviews.' };
+      }
+      if (response.status === 404) {
+        return { success: false, error: 'Review not found.' };
+      }
+      return { success: false, error: result?.message || 'Failed to delete review' };
+    }
+
+    return { success: true, data: result?.data ?? result };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { success: false, error: message };

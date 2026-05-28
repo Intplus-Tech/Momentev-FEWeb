@@ -36,12 +36,14 @@ type ReviewFormValues = z.infer<typeof reviewSchema>;
 
 interface CreateReviewDialogProps {
   vendorId: string;
+  bookingId?: string;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export function CreateReviewDialog({
   vendorId,
+  bookingId,
   isOpen,
   onOpenChange,
 }: CreateReviewDialogProps) {
@@ -63,9 +65,15 @@ export function CreateReviewDialog({
       return;
     }
 
+    if (!bookingId) {
+      toast.error("Booking ID is required to submit a review");
+      return;
+    }
+
     try {
       await createReview.mutateAsync({
         vendorId,
+        bookingId,
         rating: data.rating,
         comment: data.comment,
         user: user ? {
@@ -87,7 +95,7 @@ export function CreateReviewDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
           <DialogTitle>Write a Review</DialogTitle>
           <DialogDescription>
@@ -115,11 +123,10 @@ export function CreateReviewDialog({
                           onClick={() => field.onChange(star)}
                         >
                           <Star
-                            className={`w-8 h-8 ${
-                              star <= (hoveredStar || field.value)
-                                ? "fill-yellow-400 text-yellow-400"
-                                : "fill-muted text-muted"
-                            }`}
+                            className={`w-8 h-8 ${star <= (hoveredStar || field.value)
+                              ? "fill-yellow-400 text-yellow-400"
+                              : "fill-muted text-muted"
+                              }`}
                           />
                         </button>
                       ))}
@@ -139,7 +146,7 @@ export function CreateReviewDialog({
                   <FormControl>
                     <Textarea
                       placeholder="Tell us about your experience..."
-                      className="min-h-[120px] resize-none"
+                      className="min-h-30 resize-none"
                       {...field}
                     />
                   </FormControl>

@@ -1,14 +1,4 @@
-// Review type
-export interface Review {
-  id: string;
-  author: string;
-  initials: string;
-  date: string;
-  rawDate: string;
-  rating: number;
-  category: string;
-  content: string;
-}
+import type { ReviewUI as Review, ReviewStats } from '@/types/review';
 
 // Service item type
 export interface ServiceItem {
@@ -22,15 +12,7 @@ export interface ServiceCategory {
   items: ServiceItem[];
 }
 
-// Review stats type
-export interface ReviewStats {
-  average: number;
-  total: number;
-  distribution: {
-    stars: number;
-    count: number;
-  }[];
-}
+// ReviewStats imported from types/review
 
 // Extended vendor type with additional details for the vendor page
 export interface VendorDetails {
