@@ -2,6 +2,7 @@
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
+import { majorToMinor } from "@/lib/currency";
 import {
   CustomRequestPayload,
   DraftUpdatePayload,
@@ -17,6 +18,30 @@ type ActionResponse<T> = {
   data?: T;
   error?: string;
 };
+
+function normalizeCustomRequestPayload(payload: CustomRequestPayload): CustomRequestPayload {
+  return {
+    ...payload,
+    budgetAllocations: payload.budgetAllocations.map((allocation) => ({
+      ...allocation,
+      budgetedAmount: majorToMinor(allocation.budgetedAmount),
+    })),
+  };
+}
+
+function normalizeDraftUpdatePayload(payload: DraftUpdatePayload): DraftUpdatePayload {
+  if (!payload.budgetAllocations) {
+    return payload;
+  }
+
+  return {
+    ...payload,
+    budgetAllocations: payload.budgetAllocations.map((allocation) => ({
+      ...allocation,
+      budgetedAmount: majorToMinor(allocation.budgetedAmount),
+    })),
+  };
+}
 
 /**
  * Helper to make authenticated requests with token refresh
@@ -134,7 +159,7 @@ export async function submitCustomRequest(
     }
 
     const finalPayload = {
-      ...payload,
+      ...normalizeCustomRequestPayload(payload),
       customerId: profileResult.data._id,
     };
 
@@ -171,7 +196,7 @@ export async function saveAsDraft(
     }
 
     const finalPayload = {
-      ...payload,
+      ...normalizeCustomRequestPayload(payload),
       customerId: profileResult.data._id,
     };
 
@@ -228,11 +253,11 @@ export async function updateDraft(
 
   try {
 
-
+    const normalizedPayload = normalizeDraftUpdatePayload(payload);
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/drafts/${id}`, {
       method: "PATCH",
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizedPayload),
     });
   } catch (error) {
     console.error("Error updating draft:", error);

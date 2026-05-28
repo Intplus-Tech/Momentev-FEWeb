@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { decideVendorBooking } from "@/lib/actions/booking";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
+import formatMoney from "@/lib/formatMoney";
 
 const PAGE_SIZE = 5;
 
@@ -99,11 +100,9 @@ function formatAmount(booking: BookingResponse): string {
   const amount = booking.amounts.total > 0
     ? booking.amounts.total
     : booking.budgetAllocations.reduce((s, a) => s + a.budgetedAmount, 0);
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: booking.currency || "GBP",
-  }).format(amount);
+  return formatMoney(amount, booking.currency || "GBP");
 }
+
 
 export function ConfirmedBookingsTable({
   bookings,

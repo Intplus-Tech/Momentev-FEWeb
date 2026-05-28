@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { BookingResponse } from "@/types/booking";
+import formatMoney from "@/lib/formatMoney";
 
 export interface UpcomingEventProps {
   booking: BookingResponse;
@@ -93,8 +94,7 @@ export function UpcomingEvents({ events, isLoading }: UpcomingEventsProps) {
           });
           const formattedDate = format(startDate, "EEE, d MMM yyyy 'at' h:mm a");
           const timeRange = `${format(startDate, "HH:mm")}–${format(endDate, "HH:mm")}`;
-          const currencySymbol = booking.currency === "GBP" ? "£" : booking.currency === "USD" ? "$" : booking.currency;
-          const totalAmount = `${currencySymbol}${booking.amounts.total.toLocaleString()}`;
+          const totalAmount = formatMoney(booking.amounts?.total ?? 0, booking.currency || "GBP");
           const location = booking.location?.addressText || "TBD";
 
           return (

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { 
-  Building2, 
-  CalendarClock, 
-  ChevronRight, 
-  Clock, 
-  MapPin, 
+import {
+  Building2,
+  CalendarClock,
+  ChevronRight,
+  Clock,
+  MapPin,
   AlertCircle,
   FileText,
   Loader2
@@ -28,6 +28,7 @@ import {
 import { ClientDispute, cancelDispute } from "@/lib/actions/disputes";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import formatMoney from "@/lib/formatMoney";
 
 interface DisputeCardProps {
   dispute: ClientDispute;
@@ -64,12 +65,7 @@ const getPriorityColor = (priority: string) => {
   }
 };
 
-const formatCurrency = (amount: number, currency: string) => {
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: currency || "GBP",
-  }).format(amount);
-};
+// use formatMoney for minor->major formatting
 
 export function DisputeCard({ dispute }: DisputeCardProps) {
   const router = useRouter();
@@ -119,7 +115,7 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground font-medium">Disputed Amount:</span>
             <span className="text-lg font-bold text-foreground">
-              {formatCurrency(dispute.amountInDisputeMinor / 100, dispute.currency)}
+              {formatMoney(dispute.amountInDisputeMinor, dispute.currency)}
             </span>
           </div>
           <Badge className={`capitalize font-medium ${getStatusColor(dispute.status)}`}>
@@ -168,12 +164,12 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
               <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">Client Reason</span>
               <p className="text-sm mt-1 line-clamp-3 text-foreground">{dispute.reason.clientClaim}</p>
             </div>
-            
+
             <div className="flex items-center justify-between pt-2 border-t mt-3">
               <span className="text-sm font-medium text-muted-foreground">Requested Refund</span>
               <span className="text-sm font-bold text-foreground">{dispute.reason.requestedRefundPercent}%</span>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">Evidence Uploaded</span>
               <div className="flex items-center gap-1.5 text-sm text-foreground">
@@ -190,8 +186,8 @@ export function DisputeCard({ dispute }: DisputeCardProps) {
         {isCancellable && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 disabled={isCancelling}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"

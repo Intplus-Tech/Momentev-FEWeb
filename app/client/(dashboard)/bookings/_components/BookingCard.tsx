@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -113,10 +114,8 @@ export function BookingCard({
   );
 
   // Format currency
-  const formattedTotal = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: booking.currency || "GBP",
-  }).format(booking.amounts.total || totalBudget);
+  const totalMinor = booking.amounts?.total ?? totalBudget;
+  const formattedTotal = formatMoney(totalMinor, booking.currency || "GBP");
 
   const handleMessageVendor = async () => {
     if (isMessaging) return;
@@ -213,12 +212,7 @@ export function BookingCard({
                         {specialty?.priceCharge
                           ? specialty.priceCharge.replace(/_/g, " ")
                           : "TBD"}{" "}
-                        (Budget:{" "}
-                        {new Intl.NumberFormat("en-GB", {
-                          style: "currency",
-                          currency: booking.currency || "GBP",
-                        }).format(allocation.budgetedAmount)}
-                        )
+                        (Budget: {" "}{formatMoney(allocation.budgetedAmount, booking.currency || "GBP")})
                       </p>
                     </div>
                   );

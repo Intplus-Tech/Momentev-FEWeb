@@ -19,6 +19,16 @@ export interface CommissionAgreement {
   currency: string;
 }
 
+export interface ServiceCategory {
+  _id: string;
+  name: string;
+  icon?: string;
+  suggestedTags?: string[];
+  createdAt?: string;
+  updatedAt?: string;
+  __v?: number;
+}
+
 // Populated vendor data
 export interface PopulatedVendor {
   _id: string;
@@ -105,6 +115,11 @@ export interface BookingAmounts {
   total: number;
 }
 
+export interface BookingHourlyDetails {
+  estimatedServiceHours: number;
+  hourlyRate: number;
+}
+
 export interface CreateBookingPayload {
   vendorId: string;
   eventDetails: BookingEventDetails;
@@ -123,6 +138,7 @@ export interface BookingResponse {
   _id: string;
   customerId: string | PopulatedCustomer;
   vendorId: string | PopulatedVendor;
+  serviceCategoryId?: string | ServiceCategory;
   eventDetails: BookingEventDetails;
   budgetAllocations: BookingBudgetAllocation[];
   location: BookingLocation;
@@ -130,6 +146,7 @@ export interface BookingResponse {
   amounts: BookingAmounts;
   paymentModel: string;
   pricingType?: PricingType;
+  hourlyDetails?: BookingHourlyDetails;
   status: BookingStatus;
   payment?: BookingPayment;
   createdAt: string;

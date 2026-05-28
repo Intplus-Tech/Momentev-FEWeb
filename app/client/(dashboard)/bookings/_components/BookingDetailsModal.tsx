@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { Calendar, MapPin, Users, CreditCard, ExternalLink } from "lucide-react";
 import type { BookingResponse, PopulatedVendorSpecialty } from "@/types/booking";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 
 const statusConfig = {
   pending: {
@@ -157,10 +158,7 @@ export function BookingDetailsModal({
                   const rawId = specialty?.serviceSpecialty;
                   const readableName = (rawId && serviceNamesMap[rawId]) || rawId || `Service ${idx + 1}`;
 
-                  const budgetFormatted = new Intl.NumberFormat("en-GB", {
-                    style: "currency",
-                    currency: booking.currency || "GBP",
-                  }).format(allocation.budgetedAmount);
+                  const budgetFormatted = formatMoney(allocation.budgetedAmount, booking.currency || "GBP");
 
                   return (
                     <div key={idx} className="flex justify-between items-start gap-4">

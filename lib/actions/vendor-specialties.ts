@@ -1,6 +1,7 @@
 "use server";
 
 import { getAccessToken } from "@/lib/session";
+import { majorToMinor } from "@/lib/currency";
 import type {
   PaginatedResponse,
   VendorSpecialty,
@@ -86,6 +87,36 @@ export type UpdateVendorSpecialtyInput = {
   priceCharge?: string;
 };
 
+type VendorSpecialtyMutationInput = {
+  price?: string | number;
+  priceCharge?: string;
+  serviceSpecialty?: string;
+  vendorId?: string;
+};
+
+async function sendVendorSpecialtyMutation(
+  url: string,
+  method: "POST" | "PUT",
+  accessToken: string,
+  input: VendorSpecialtyMutationInput,
+) {
+  return fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      ...input,
+      price:
+        input.price === undefined || input.price === null || input.price === ""
+          ? undefined
+          : String(majorToMinor(input.price)),
+    }),
+    cache: "no-store",
+  });
+}
+
 /**
  * Create a new vendor specialty
  * POST /api/v1/vendor-specialties
@@ -103,15 +134,12 @@ export async function createVendorSpecialty(
       return { success: false, error: "Authentication required" };
     }
 
-    const response = await fetch(`${API_URL}/api/v1/vendor-specialties`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(input),
-      cache: "no-store",
-    });
+    const response = await sendVendorSpecialtyMutation(
+      `${API_URL}/api/v1/vendor-specialties`,
+      "POST",
+      accessToken,
+      input,
+    );
 
     const data = await response.json().catch(() => ({}));
 
@@ -148,18 +176,12 @@ export async function updateVendorSpecialty(
       return { success: false, error: "Authentication required" };
     }
 
-    const response = await fetch(`${API_URL}/api/v1/vendor-specialties/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({
-        ...input,
-        price: input.price ? String(input.price) : undefined,
-      }),
-      cache: "no-store",
-    });
+    const response = await sendVendorSpecialtyMutation(
+      `${API_URL}/api/v1/vendor-specialties/${id}`,
+      "PUT",
+      accessToken,
+      input,
+    );
 
     const data = await response.json();
 
@@ -178,6 +200,58 @@ export async function updateVendorSpecialty(
     };
   } catch (error) {
     console.error("Error updating vendor specialty:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
+  }
+}
+
+export async function bulkUpdateVendorSpecialtiesPricing(
+  ids: string[],
+  input: UpdateVendorSpecialtyInput,
+): Promise<ActionResponse<null>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  if (ids.length === 0) {
+    return { success: true };
+  }
+
+  try {
+    const accessToken = await getAccessToken();
+
+    if (!accessToken) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    const results = await Promise.all(
+      ids.map((id) =>
+        sendVendorSpecialtyMutation(
+          `${API_URL}/api/v1/vendor-specialties/${id}`,
+          "PUT",
+          accessToken,
+          input,
+        ),
+      ),
+    );
+
+    const failed = results.find((response) => !response.ok);
+    if (failed) {
+      const data = await failed.json().catch(() => ({}));
+      return {
+        success: false,
+        error:
+          data.message || `Failed to update vendor specialty: ${failed.statusText}`,
+      };
+    }
+
+    revalidatePath("/vendor/services", "page");
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error bulk updating vendor specialties:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred",

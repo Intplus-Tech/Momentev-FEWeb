@@ -14,6 +14,7 @@ import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
 import type { PopulatedVendor, PopulatedVendorSpecialty } from "@/types/booking";
 
 import { BookingDetailActions } from "./_components/BookingDetailActions";
+import formatMoney from "@/lib/formatMoney";
 
 const statusConfig = {
   pending: { label: "Pending Vendor Confirmation", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
@@ -87,10 +88,28 @@ export default async function BookingDetailPage({
 
   const allocations = booking.budgetAllocations ?? [];
   const totalBudget = allocations.reduce((sum, a) => sum + a.budgetedAmount, 0);
-  const formattedTotal = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: booking.currency || "GBP",
-  }).format(booking.amounts?.total || totalBudget);
+  const formattedTotal = formatMoney(booking.amounts?.total ?? totalBudget, booking.currency || "GBP");
+  const subtotalFormatted = formatMoney(booking.amounts?.subtotal ?? totalBudget, booking.currency || "GBP");
+  const feesFormatted = formatMoney(booking.amounts?.fees ?? 0, booking.currency || "GBP");
+  const commissionFormatted = formatMoney(booking.amounts?.commission ?? 0, booking.currency || "GBP");
+  const serviceCategory =
+    typeof booking.serviceCategoryId === "object" ? booking.serviceCategoryId.name : null;
+  const pricingTypeLabel =
+    booking.pricingType === "hourly_rate"
+      ? "Hourly rate"
+      : booking.pricingType === "package_pricing"
+        ? "Package pricing"
+        : booking.pricingType === "custom_quotes"
+          ? "Custom quote"
+          : "Not specified";
+  const hourlyRateFormatted = booking.hourlyDetails
+    ? formatMoney(booking.hourlyDetails.hourlyRate, booking.currency || "GBP")
+    : null;
+  const estimatedHours = booking.hourlyDetails?.estimatedServiceHours;
+  const estimatedHourlyTotal =
+    booking.hourlyDetails && estimatedHours
+      ? formatMoney(booking.hourlyDetails.hourlyRate * estimatedHours, booking.currency || "GBP")
+      : null;
 
   const formattedStartDate = format(new Date(booking.eventDetails.startDate), "MMM dd, yyyy");
   const formattedEndDate = format(new Date(booking.eventDetails.endDate), "MMM dd, yyyy");
@@ -135,9 +154,55 @@ export default async function BookingDetailPage({
       <Separator />
 
       {/* Content grid */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 md:items-start">
         {/* Left: Event Details */}
-        <div className="space-y-6">
+        <div className="space-y-6 self-start">
+          <section className="space-y-3">
+            <div className="rounded-xl border bg-muted/30 p-4 text-sm space-y-3">
+              <h2 className="font-semibold text-foreground">Pricing Snapshot</h2>
+              <div className="flex items-center justify-between gap-4">
+                <p className="font-medium text-foreground">Pricing model</p>
+                <p className="text-muted-foreground text-right">{pricingTypeLabel}</p>
+              </div>
+              {serviceCategory ? (
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-medium text-foreground">Category</p>
+                  <p className="text-muted-foreground text-right">{serviceCategory}</p>
+                </div>
+              ) : null}
+              {booking.hourlyDetails ? (
+                <>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Hourly rate</p>
+                    <p className="text-muted-foreground text-right">{hourlyRateFormatted}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Estimated hours</p>
+                    <p className="text-muted-foreground text-right">{estimatedHours}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Estimated hourly total</p>
+                    <p className="text-muted-foreground text-right">{estimatedHourlyTotal}</p>
+                  </div>
+                </>
+              ) : null}
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Subtotal</p>
+                  <p className="font-medium text-foreground">{subtotalFormatted}</p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Fees</p>
+                  <p className="font-medium text-foreground">{feesFormatted}</p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Commission</p>
+                  <p className="font-medium text-foreground">{commissionFormatted}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section className="space-y-3">
             <h2 className="font-semibold text-foreground">Event Details</h2>
             <div className="space-y-3 text-sm text-muted-foreground">
@@ -184,7 +249,7 @@ export default async function BookingDetailPage({
         </div>
 
         {/* Right: Vendor, Services & Payment */}
-        <div className="space-y-6 bg-muted/50 p-4 rounded-xl border">
+        <div className="space-y-6 bg-muted/50 p-4 rounded-xl border self-start h-fit">
           <section className="space-y-2">
             <h2 className="font-semibold text-foreground border-b pb-2">Vendor</h2>
             <Link
@@ -198,6 +263,12 @@ export default async function BookingDetailPage({
                 Rating: {vendorRating.toFixed(1)} ⭐
               </p>
             )}
+            {booking.paymentModel ? (
+              <p className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">Payment model: </span>
+                <span className="capitalize">{booking.paymentModel.replace(/_/g, " ")}</span>
+              </p>
+            ) : null}
           </section>
 
           <section className="space-y-3">
@@ -207,10 +278,7 @@ export default async function BookingDetailPage({
                 const specialty = allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
                 const rawId = specialty?.serviceSpecialty;
                 const name = (rawId && serviceNamesMap[rawId]) || rawId || `Service ${idx + 1}`;
-                const budgetFormatted = new Intl.NumberFormat("en-GB", {
-                  style: "currency",
-                  currency: booking.currency || "GBP",
-                }).format(allocation.budgetedAmount);
+                const budgetFormatted = formatMoney(allocation.budgetedAmount, booking.currency || "GBP");
 
                 return (
                   <div key={idx} className="flex justify-between items-start gap-4">

@@ -7,6 +7,7 @@ import { NotAuthorized } from "@/components/vendor/NotAuthorized";
 
 export const dynamic = "force-dynamic";
 import { BookingStats } from "./_components/booking-stats";
+import formatMoney from "@/lib/formatMoney";
 import { ConfirmedBookingsTable } from "./_components/confirmed-bookings-table";
 import { TodaysSchedule } from "./_components/todays-schedule";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -67,11 +68,7 @@ export default async function VendorBookingsPage() {
   const responseRate =
     total > 0 ? Math.round((confirmedCount / total) * 100) : 0;
 
-  const revenueFormatted = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    maximumFractionDigits: 0,
-  }).format(upcomingRevenue);
+  const revenueFormatted = formatMoney(upcomingRevenue, "GBP", { maximumFractionDigits: 0 });
 
   const bookingStats: BookingStat[] = [
     {

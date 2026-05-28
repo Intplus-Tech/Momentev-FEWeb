@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 
 import { useCustomerRequestQuotes, useCustomerRequest } from "@/hooks/api/use-custom-requests";
 import { useVendorDetails } from "@/hooks/api/use-vendors";
@@ -58,8 +59,7 @@ const statusStyles: Record<string, { label: string; className: string }> = {
   },
 };
 
-const formatCurrency = (val: number, currency = "GBP") =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(val);
+// use formatMoney helper
 
 function formatRelativeExpiry(dateString?: string) {
   if (!dateString) return null;
@@ -124,7 +124,7 @@ function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) 
               Quote Total
             </span>
             <h3 className="text-2xl font-semibold text-foreground">
-              {formatCurrency(quote.total, quote.currency)}
+              {formatMoney(quote.total, quote.currency)}
             </h3>
             <div className="text-sm text-muted-foreground">
               From{" "}
@@ -132,7 +132,7 @@ function QuoteCard({ quote, onViewDetails, onRespond, onBook }: QuoteCardProps) 
                 <Skeleton className="inline-block h-4 w-24" />
               ) : (
                 (vendor?.businessProfile?.businessName ??
-                `Vendor #${quote.vendorId?._id?.slice(-6)}`)
+                  `Vendor #${quote.vendorId?._id?.slice(-6)}`)
               )}
             </div>
           </div>

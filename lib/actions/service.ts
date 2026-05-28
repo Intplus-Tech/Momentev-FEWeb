@@ -3,6 +3,7 @@
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
+import { majorToMinor } from "@/lib/currency";
 import type {
   ServiceCategoriesFormData,
 } from "@/app/vendor/(vendor-setup)/_schemas/serviceCategoriesSchema";
@@ -17,6 +18,8 @@ type ActionResponse<T = void> = {
   data?: T;
   error?: string;
 };
+
+const toMinorPriceString = (value: unknown) => String(majorToMinor(value as number | string | null | undefined));
 
 /**
  * Submit service setup (Step 2)
@@ -55,12 +58,12 @@ export async function submitServiceSetup(
       let name = "Transport Fee";
 
       if (pricingData.transportFee.type === "flat_50") {
-        price = "50";
+        price = toMinorPriceString(50);
         name = "Transport Fee (Flat)";
       } else if (pricingData.transportFee.type === "per_mile_1") {
-        price = "1";
+        price = toMinorPriceString(1);
       } else if (pricingData.transportFee.type === "custom") {
-        price = sanitizePrice(pricingData.transportFee.amount) || "0";
+        price = toMinorPriceString(sanitizePrice(pricingData.transportFee.amount));
         name = "Transport Fee (Custom)";
       }
 
@@ -75,7 +78,7 @@ export async function submitServiceSetup(
     if (pricingData.additionalFees) {
       additionalFees.push(...pricingData.additionalFees.map(fee => ({
         name: fee.name,
-        price: sanitizePrice(fee.price),
+        price: toMinorPriceString(sanitizePrice(fee.price)),
         feeCategory: fee.category
       })));
     }
@@ -125,7 +128,7 @@ export async function submitServiceSetup(
     let priceCharge = "custom_quotes";
 
     if (pricingData.pricingType === "hourly") {
-      basePrice = sanitizePrice(pricingData.hourlyRate) || "0";
+      basePrice = toMinorPriceString(sanitizePrice(pricingData.hourlyRate));
       priceCharge = "hourly_rate";
     }
     // Custom is default "custom_quotes" with price "0"
@@ -166,7 +169,7 @@ export async function submitServiceSetup(
       vendorId,
       accessToken,
     });
-    
+
     if (!stageUpdateResult.success) {
       console.warn('⚠️ [Step 2 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
       // Continue anyway - stage update is secondary to service setup submission

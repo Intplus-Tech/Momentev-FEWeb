@@ -19,6 +19,7 @@ import { ScheduleCard } from "./_components/schedule-card";
 import { StatsGrid } from "./_components/stats-grid";
 import { StripeConnectBanner } from "./_components/stripe-connect-banner";
 import type { DashboardStat } from "./data";
+import formatMoney from "@/lib/formatMoney";
 
 const DashboardPage = async () => {
   // Parallel-fetch all data
@@ -90,7 +91,7 @@ const DashboardPage = async () => {
     },
     {
       title: "Total Revenue",
-      value: `£${revenue.toLocaleString()}`,
+      value: formatMoney(revenue, "GBP"),
       change: "Paid & confirmed",
       icon: Coins,
       accent: "bg-primary/10 text-primary",

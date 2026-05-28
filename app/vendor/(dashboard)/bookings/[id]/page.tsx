@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { fetchBookingById } from "@/lib/actions/booking";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 import type { BookingStatus, PopulatedCustomer, PopulatedVendorSpecialty } from "@/types/booking";
 import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
 import { UnifiedBookingActions } from "./_components/UnifiedBookingActions";
@@ -114,10 +115,27 @@ export default async function VendorBookingDetailPage({
   const fallbackTotal = allocations.reduce((sum, allocation) => sum + allocation.budgetedAmount, 0);
   const finalTotal = booking.amounts?.total || fallbackTotal;
 
-  const formattedTotal = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: booking.currency || "GBP",
-  }).format(finalTotal);
+  const formattedTotal = formatMoney(finalTotal, booking.currency || "GBP");
+  const subtotalFormatted = formatMoney(booking.amounts?.subtotal ?? fallbackTotal, booking.currency || "GBP");
+  const feesFormatted = formatMoney(booking.amounts?.fees ?? 0, booking.currency || "GBP");
+  const commissionFormatted = formatMoney(booking.amounts?.commission ?? 0, booking.currency || "GBP");
+  const serviceCategory = typeof booking.serviceCategoryId === "object" ? booking.serviceCategoryId.name : null;
+  const pricingTypeLabel =
+    booking.pricingType === "hourly_rate"
+      ? "Hourly rate"
+      : booking.pricingType === "package_pricing"
+        ? "Package pricing"
+        : booking.pricingType === "custom_quotes"
+          ? "Custom quote"
+          : "Not specified";
+  const hourlyRateFormatted = booking.hourlyDetails
+    ? formatMoney(booking.hourlyDetails.hourlyRate, booking.currency || "GBP")
+    : null;
+  const estimatedHours = booking.hourlyDetails?.estimatedServiceHours;
+  const estimatedHourlyTotal =
+    booking.hourlyDetails && estimatedHours
+      ? formatMoney(booking.hourlyDetails.hourlyRate * estimatedHours, booking.currency || "GBP")
+      : null;
 
   const formattedStartDate = format(new Date(booking.eventDetails.startDate), "MMM dd, yyyy");
   const formattedEndDate = format(new Date(booking.eventDetails.endDate), "MMM dd, yyyy");
@@ -151,8 +169,55 @@ export default async function VendorBookingDetailPage({
 
       <UnifiedBookingActions booking={booking} />
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="space-y-6">
+      <div className="grid gap-6 md:grid-cols-2 md:items-start">
+        <div className="space-y-6 self-start">
+          <section className="space-y-3">
+            <div className="space-y-3 rounded-xl border bg-muted/30 p-4 text-sm">
+              <h2 className="font-semibold text-foreground">Pricing Snapshot</h2>
+              <Separator />
+              <div className="flex items-center justify-between gap-4">
+                <p className="font-medium text-foreground">Pricing model</p>
+                <p className="text-muted-foreground text-right">{pricingTypeLabel}</p>
+              </div>
+              {serviceCategory ? (
+                <div className="flex items-center justify-between gap-4">
+                  <p className="font-medium text-foreground">Category</p>
+                  <p className="text-muted-foreground text-right">{serviceCategory}</p>
+                </div>
+              ) : null}
+              {booking.hourlyDetails ? (
+                <>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Hourly rate</p>
+                    <p className="text-muted-foreground text-right">{hourlyRateFormatted}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Estimated hours</p>
+                    <p className="text-muted-foreground text-right">{estimatedHours}</p>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="font-medium text-foreground">Estimated hourly total</p>
+                    <p className="text-muted-foreground text-right">{estimatedHourlyTotal}</p>
+                  </div>
+                </>
+              ) : null}
+              <div className="border-t pt-3 space-y-2">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Subtotal</p>
+                  <p className="font-medium text-foreground">{subtotalFormatted}</p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Fees</p>
+                  <p className="font-medium text-foreground">{feesFormatted}</p>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-muted-foreground">Commission</p>
+                  <p className="font-medium text-foreground">{commissionFormatted}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <section className="space-y-3">
             <h2 className="font-semibold text-foreground">Event Details</h2>
             <div className="space-y-3 text-sm text-muted-foreground">
@@ -207,23 +272,23 @@ export default async function VendorBookingDetailPage({
               {customerEmail ? (
                 <p className="mt-1 text-muted-foreground">{customerEmail}</p>
               ) : null}
+              {typeof customer !== "string" && customer.phoneNumber ? (
+                <p className="mt-1 text-muted-foreground">{customer.phoneNumber}</p>
+              ) : null}
             </div>
           </section>
         </div>
 
-        <div className="space-y-6 rounded-xl border bg-muted/50 p-4">
+        <div className="space-y-6 rounded-xl border bg-muted/50 p-4 self-start h-fit">
           <section className="space-y-3">
-            <h2 className="border-b pb-2 font-semibold text-foreground">Services & Budget</h2>
+            <h2 className="font-semibold text-foreground">Services & Budget</h2>
             <div className="space-y-3 text-sm">
               {allocations.map((allocation, index) => {
                 const specialty = allocation.vendorSpecialtyId as PopulatedVendorSpecialty;
                 const rawId = specialty?.serviceSpecialty;
                 const serviceName = rawId ? serviceNamesMap[rawId] || rawId : `Service ${index + 1}`;
 
-                const budgetFormatted = new Intl.NumberFormat("en-GB", {
-                  style: "currency",
-                  currency: booking.currency || "GBP",
-                }).format(allocation.budgetedAmount);
+                const budgetFormatted = formatMoney(allocation.budgetedAmount, booking.currency || "GBP");
 
                 return (
                   <div key={`${booking._id}-${index}`} className="flex items-start justify-between gap-4">
@@ -255,6 +320,12 @@ export default async function VendorBookingDetailPage({
                   <span className="capitalize">{booking.paymentModel.replace(/_/g, " ")}</span>
                 </p>
               </div>
+              {typeof booking.vendorId !== "string" ? (
+                <p className="pl-6">
+                  <span className="font-medium text-foreground">Vendor payout: </span>
+                  <span className="capitalize">{booking.vendorId.paymentModel.replace(/_/g, " ")}</span>
+                </p>
+              ) : null}
               {booking.payment?.status ? (
                 <p className="pl-6">
                   <span className="font-medium text-foreground">Status: </span>

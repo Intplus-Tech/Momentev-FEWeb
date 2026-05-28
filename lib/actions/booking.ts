@@ -1,6 +1,7 @@
 "use server";
 
 import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
+import { majorToMinor } from "@/lib/currency";
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import type {
   CreateBookingPayload,
@@ -18,6 +19,39 @@ type ActionResponse<T = undefined> = {
   error?: string;
 };
 
+function normalizeBookingPayload(payload: CreateBookingPayload): CreateBookingPayload {
+  return {
+    ...payload,
+    budgetAllocations: payload.budgetAllocations.map((allocation) => ({
+      ...allocation,
+      budgetedAmount: majorToMinor(allocation.budgetedAmount),
+    })),
+  };
+}
+
+function normalizeUnifiedBookingPayload(
+  payload: CreateUnifiedBookingInput,
+): CreateUnifiedBookingInput {
+  return {
+    ...payload,
+    budget: payload.budget,
+  };
+}
+
+function normalizeAdjustedBookingPayload(
+  payload: AdjustUnifiedBookingInput,
+): AdjustUnifiedBookingInput {
+  return {
+    ...payload,
+    finalPrice:
+      payload.finalPrice !== undefined ? majorToMinor(payload.finalPrice) : payload.finalPrice,
+    extraLineItems: payload.extraLineItems?.map((item) => ({
+      ...item,
+      amount: majorToMinor(item.amount),
+    })),
+  };
+}
+
 /**
  * Create a booking
  * POST /api/v1/bookings
@@ -30,6 +64,8 @@ export async function createBooking(
   }
 
   try {
+    const normalizedPayload = normalizeBookingPayload(payload);
+    console.log("[Booking] createBooking payload:", normalizedPayload);
     const accessToken = await getAccessToken();
 
     if (!accessToken) {
@@ -42,7 +78,7 @@ export async function createBooking(
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(normalizedPayload),
     });
 
     const data = await response.json();
@@ -59,10 +95,11 @@ export async function createBooking(
               "Content-Type": "application/json",
               Authorization: `Bearer ${refreshResult.token}`,
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify(normalizedPayload),
           });
 
           const retryData = await retryResponse.json();
+          console.log("[Booking] createBooking response (retry):", retryData);
 
 
           if (retryResponse.ok) {
@@ -413,6 +450,8 @@ export async function createUnifiedBooking(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
+    const normalizedPayload = normalizeUnifiedBookingPayload(payload);
+    console.log("[Booking] createUnifiedBooking payload:", normalizedPayload);
     const { response, error } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/unified`, {
         method: "POST",
@@ -420,7 +459,7 @@ export async function createUnifiedBooking(
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalizedPayload),
       })
     );
 
@@ -429,6 +468,7 @@ export async function createUnifiedBooking(
     }
 
     const data = await response.json().catch(() => ({}));
+    console.log("[Booking] createUnifiedBooking response:", data);
 
     if (!response.ok) {
       return {
@@ -501,6 +541,7 @@ export async function adjustUnifiedBooking(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
+    const normalizedPayload = normalizeAdjustedBookingPayload(payload);
     const { response, error } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/${bookingId}/unified-adjust`, {
         method: "PUT",
@@ -508,7 +549,7 @@ export async function adjustUnifiedBooking(
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(normalizedPayload),
       })
     );
 

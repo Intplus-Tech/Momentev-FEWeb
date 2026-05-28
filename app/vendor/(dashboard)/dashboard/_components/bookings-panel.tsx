@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import formatMoney from "@/lib/formatMoney";
 
 function getCustomer(customerId: BookingResponse["customerId"]) {
   if (typeof customerId === "object" && customerId !== null) {
@@ -107,8 +108,7 @@ export function BookingsPanel({ bookings }: { bookings: BookingResponse[] }) {
                   {booking.status.replace("_", " ")}
                 </Badge>
                 <p className="w-full text-right text-base font-semibold text-foreground md:w-auto">
-                  {booking.currency === "GBP" ? "£" : "$"}
-                  {booking.amounts.total.toLocaleString()}
+                  {formatMoney(booking.amounts?.total ?? 0, booking.currency || "GBP")}
                 </p>
               </Link>
             );

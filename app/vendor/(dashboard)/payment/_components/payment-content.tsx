@@ -28,19 +28,9 @@ import { PaymentModelCard } from "./payment-model-card";
 
 // ── helpers ──────────────────────────────────────────────────
 
-/** Stripe amounts are in cents — convert to dollars. */
-function cents(amount: number) {
-  return amount / 100;
-}
+import formatMoney from "@/lib/formatMoney";
 
-function formatCurrency(amount: number, currency: string) {
-  // Always display amounts in British pounds for the vendor dashboard
-  return new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    minimumFractionDigits: 2,
-  }).format(amount);
-}
+/** API amounts are provided in minor units (pence/cents). Use formatMoney directly. */
 
 function formatDate(epoch: number) {
   return new Date(epoch * 1000).toLocaleDateString("en-US", {
@@ -68,43 +58,39 @@ export function PaymentContent() {
   const summaryMetrics: SummaryMetric[] = useMemo(() => {
     // Force GBP for display regardless of underlying currency data
     const cur = balance.data?.currency ?? "gbp";
-    const availableBal = cents(balance.data?.available ?? 0);
-    const pendingBal = cents(balance.data?.pending ?? 0);
+    const availableMinor = balance.data?.available ?? 0;
+    const pendingMinor = balance.data?.pending ?? 0;
 
-    const totalEarnings = earnings.data?.earnings
-      ? cents(
-        earnings.data.earnings.reduce((sum, e) => sum + e.amount, 0),
-      )
+    const totalEarningsMinor = earnings.data?.earnings
+      ? earnings.data.earnings.reduce((sum, e) => sum + e.amount, 0)
       : 0;
 
-    const totalPayouts = payouts.data?.payouts
-      ? cents(
-        payouts.data.payouts.reduce((sum, p) => sum + p.amount, 0),
-      )
+    const totalPayoutsMinor = payouts.data?.payouts
+      ? payouts.data.payouts.reduce((sum, p) => sum + p.amount, 0)
       : 0;
 
     return [
       {
         label: "Available Balance",
-        value: formatCurrency(availableBal, cur),
+        value: formatMoney(availableMinor, "GBP"),
         change: "Funds ready for payout",
         icon: ShieldCheck,
       },
       {
         label: "Pending Balance",
-        value: formatCurrency(pendingBal, cur),
+        value: formatMoney(pendingMinor, "GBP"),
         change: "Funds in transit",
         icon: Hourglass,
       },
       {
         label: "Total Earnings",
-        value: formatCurrency(totalEarnings, cur),
+        value: formatMoney(totalEarningsMinor, "GBP"),
         change: `${earnings.data?.total ?? 0} transaction${(earnings.data?.total ?? 0) !== 1 ? "s" : ""}`,
         icon: Wallet2,
       },
       {
         label: "Total Payouts",
-        value: formatCurrency(totalPayouts, cur),
+        value: formatMoney(totalPayoutsMinor, "GBP"),
         change: `${payouts.data?.payouts?.length ?? 0} payout${(payouts.data?.payouts?.length ?? 0) !== 1 ? "s" : ""}`,
         icon: CalendarClock,
       },
@@ -124,9 +110,9 @@ export function PaymentContent() {
       type: capitalize(e.type),
       subLabel: capitalize(e.type),
       client: "—",
-      amount: formatCurrency(cents(e.amount), cur),
+      amount: formatMoney(e.amount, "GBP"),
       fee: "—",
-      net: formatCurrency(cents(e.amount), cur),
+      net: formatMoney(e.amount, "GBP"),
       status: "Completed",
       statusDetail: "",
     }));
@@ -148,7 +134,7 @@ export function PaymentContent() {
     return payouts.data.payouts.map((p) => ({
       date: formatDate(p.arrival_date),
       payoutId: p.id,
-      amount: formatCurrency(cents(p.amount), cur),
+      amount: formatMoney(p.amount, "GBP"),
       status: (capitalize(p.status) === "Paid" ? "Completed" : "Pending") as
         | "Completed"
         | "Pending",

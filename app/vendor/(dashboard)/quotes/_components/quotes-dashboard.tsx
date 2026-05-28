@@ -78,8 +78,9 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const formatGBP = (val: number) =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(val);
+import formatMoney from "@/lib/formatMoney";
+
+// use formatMoney for minor-unit amounts
 
 function formatRelativeExpiry(dateString?: string) {
   if (!dateString) return null;
@@ -238,7 +239,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
                 <span className="truncate pr-4">
                   {item.quantity}x {item.service}
                 </span>
-                <span className="font-medium shrink-0">{formatGBP(item.subtotal)}</span>
+                <span className="font-medium shrink-0">{formatMoney(item.subtotal, "GBP")}</span>
               </div>
             ))}
           </div>
@@ -250,7 +251,7 @@ function QuoteCard({ quote, onEditDraft, onViewDetails, onWithdraw, onRevise }: 
                   Total Quoted
                 </p>
                 <p className="mt-0.5 text-xl font-bold text-gray-900">
-                  {formatGBP(quote.total)}
+                  {formatMoney(quote.total, "GBP")}
                 </p>
               </div>
               <div className="text-right">

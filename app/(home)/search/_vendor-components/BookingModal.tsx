@@ -38,6 +38,7 @@ import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 
 import {
   createUnifiedBookingSchema,
@@ -767,8 +768,7 @@ export function BookingModal({
                                     </span>
                                   )}
                                   <span className="block text-xs text-muted-foreground">
-                                    £{specialty.price}{" "}
-                                    {specialty.priceCharge?.replace(/_/g, " ")}
+                                    {formatMoney(specialty.price)} {specialty.priceCharge?.replace(/_/g, " ")}
                                   </span>
                                 </Label>
                               </div>
@@ -811,17 +811,17 @@ export function BookingModal({
                         {(() => {
                           const selectedSpecialtyId = form.getValues("vendorSpecialtyId");
                           const selected = specialties.find((s) => s._id === selectedSpecialtyId);
-                          const hourlyPrice = selected && selected.priceCharge === "hourly_rate" ? Number(selected.price) : NaN;
+                          const hourlyPriceMinor = selected && selected.priceCharge === "hourly_rate" ? Number(selected.price) : NaN;
                           const hours = field.value ?? undefined;
 
-                          if (!isNaN(hourlyPrice)) {
-                            const estimated = typeof hours === "number" && hours > 0 ? (hours * hourlyPrice) : null;
+                          if (!Number.isNaN(hourlyPriceMinor)) {
+                            const estimatedMinor = typeof hours === "number" && hours > 0 ? hours * hourlyPriceMinor : null;
                             return (
                               <>
-                                <div>Hourly rate: {currencySymbol}{hourlyPrice.toLocaleString(undefined, {maximumFractionDigits:2})}</div>
+                                <div>Hourly rate: {formatMoney(hourlyPriceMinor)}</div>
                                 <div>
-                                  {estimated !== null
-                                    ? `Estimated cost: ${currencySymbol}${estimated.toLocaleString(undefined, {maximumFractionDigits:2})} (estimate)`
+                                  {estimatedMinor !== null
+                                    ? `Estimated cost: ${formatMoney(estimatedMinor)} (estimate)`
                                     : "Enter estimated hours to see an estimated cost."}
                                 </div>
                               </>

@@ -9,10 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
+import { minorToMajor } from "@/lib/currency";
 import {
   ChevronDown,
   ChevronUp,
-  Edit2,
   Trash2,
   Loader2,
   Plus,
@@ -54,24 +55,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  updateVendorSpecialty,
+  bulkUpdateVendorSpecialtiesPricing,
   deleteVendorSpecialty,
   createVendorSpecialty,
 } from "@/lib/actions/vendor-specialties";
-import { updateVendorService, deleteVendorService } from "@/lib/actions/vendor-services";
+import { updateVendorService } from "@/lib/actions/vendor-services";
 import { useServiceSpecialties } from "@/hooks/api/use-service-categories";
 import { toast } from "sonner";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
 
-const formatCurrency = (value: number | string) => {
-  const num = Number(value);
-  if (isNaN(num)) return value;
-  return num.toLocaleString("en-GB", {
-    style: "currency",
-    currency: "GBP",
-    maximumFractionDigits: 0,
-  });
-};
+// use formatMoney for price formatting
 
 const MINIMUM_BOOKING_DURATION = [
   { value: "two_hours", label: "2 hours" },
@@ -94,6 +87,45 @@ const MAXIMUM_EVENT_SIZE = [
   { value: "two_hundred_guest", label: "200 guests" },
 ];
 
+function getUniversalSpecialtyPricing(specialties: VendorSpecialtyItem[]) {
+  if (specialties.length === 0) {
+    return {
+      priceCharge: "custom_quotes",
+      priceMinor: "0",
+      priceMajor: "0",
+      isMixed: false,
+    };
+  }
+
+  const firstSpecialty = specialties[0];
+  const isMixed = specialties.some(
+    (specialty) =>
+      specialty.priceCharge !== firstSpecialty.priceCharge ||
+      String(specialty.price) !== String(firstSpecialty.price),
+  );
+
+  return {
+    priceCharge: firstSpecialty.priceCharge || "custom_quotes",
+    priceMinor: firstSpecialty.price || "0",
+    priceMajor: String(minorToMajor(firstSpecialty.price || "0")),
+    isMixed,
+  };
+}
+
+function normalizeUniversalPricingInput(priceCharge: string, price: string) {
+  if (priceCharge === "custom_quotes") {
+    return {
+      priceCharge,
+      price: "0",
+    };
+  }
+
+  return {
+    priceCharge,
+    price,
+  };
+}
+
 export function ServiceCard({
   service,
   specialties,
@@ -115,6 +147,7 @@ export function ServiceCard({
   const [containerHeight, setContainerHeight] = useState<string>(() =>
     expanded ? "auto" : "0px",
   );
+  const servicePricing = getUniversalSpecialtyPricing(specialties);
 
   useEffect(() => {
     const node = contentWrapperRef.current;
@@ -219,6 +252,31 @@ export function ServiceCard({
             </div>
           </div>
 
+          <div className="grid gap-4 text-sm sm:grid-cols-2">
+            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+              <span className="font-semibold text-foreground">
+                Universal Pricing Model
+              </span>
+              <p className="text-muted-foreground capitalize">
+                {servicePricing.priceCharge}
+              </p>
+            </div>
+            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+              <span className="font-semibold text-foreground">
+                Universal Price
+              </span>
+              <p className="text-muted-foreground">
+                {formatMoney(servicePricing.priceMinor)}
+              </p>
+            </div>
+          </div>
+          {servicePricing.isMixed && (
+            <p className="text-xs text-muted-foreground">
+              Existing specialty pricing is mixed. Saving the service will
+              normalize every specialty to the same value.
+            </p>
+          )}
+
           {/* Specialties Section */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -227,6 +285,8 @@ export function ServiceCard({
                 <AddSpecialtyDialog
                   vendorId={vendorId}
                   categoryId={service.serviceCategory?._id}
+                  priceCharge={servicePricing.priceCharge}
+                  price={servicePricing.priceMajor}
                   existingSpecialtyIds={specialties
                     .map((s) => s.serviceSpecialty?._id)
                     .filter(Boolean)}
@@ -257,7 +317,7 @@ export function ServiceCard({
                           {spec.serviceSpecialty?.name}
                         </TableCell>
                         <TableCell
-                          className="max-w-[300px] truncate"
+                          className="max-w-75 truncate"
                           title={spec.serviceSpecialty?.description}
                         >
                           {spec.serviceSpecialty?.description || "-"}
@@ -266,16 +326,10 @@ export function ServiceCard({
                           {spec.priceCharge}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(spec.price)}
+                          {formatMoney(spec.price)}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
-                              <EditSpecialtyDialog
-                                specialty={spec}
-                                onUpdate={onRefreshAll}
-                              />
-                            </PermissionActionGate>
                             <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
                               <DeleteSpecialtyAlert
                                 specialty={spec}
@@ -319,7 +373,7 @@ export function ServiceCard({
                           {fee.feeCategory}
                         </TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(fee.price)}
+                          {formatMoney(fee.price)}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -335,7 +389,11 @@ export function ServiceCard({
 
           <div className="flex flex-wrap gap-3 pt-2">
             <PermissionActionGate module="manage_services" action="write">
-              <EditServiceDialog service={service} onUpdated={onRefreshAll} />
+              <EditServiceDialog
+                service={service}
+                specialties={specialties}
+                onUpdated={onRefreshAll}
+              />
             </PermissionActionGate>
             {/* <DeleteServiceAlert
               serviceId={service._id}
@@ -346,121 +404,6 @@ export function ServiceCard({
         </div>
       </div>
     </Card>
-  );
-}
-
-// ── Edit Specialty Dialog ──────────────────────────────────────────────
-
-function EditSpecialtyDialog({
-  specialty,
-  onUpdate,
-}: {
-  specialty: VendorSpecialtyItem;
-  onUpdate: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [price, setPrice] = useState<string | number>(specialty.price);
-  const [priceCharge, setPriceCharge] = useState(specialty.priceCharge);
-
-  useEffect(() => {
-    if (priceCharge === "custom_quotes") {
-      setPrice("0");
-    }
-  }, [priceCharge]);
-
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (open) {
-      setPrice(specialty.price);
-      setPriceCharge(specialty.priceCharge);
-    }
-  }, [open, specialty.price, specialty.priceCharge]);
-
-  const handleSave = async () => {
-    setLoading(true);
-    const res = await updateVendorSpecialty(specialty._id, {
-      price,
-      priceCharge,
-    });
-    setLoading(false);
-    if (res.success) {
-      toast.success("Specialty pricing updated");
-      setOpen(false);
-      onUpdate();
-    } else {
-      toast.error(res.error || "Failed to update specialty");
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="icon"
-          variant="ghost"
-          className="h-8 w-8 text-muted-foreground hover:text-blue-600"
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] p-0">
-        <DialogHeader className="border-b border-black">
-          <DialogTitle className="text-lg font-semibold p-4">
-            Edit {specialty.serviceSpecialty?.name}
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="grid gap-4 p-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-price" className="text-right">
-              Price (£)
-            </Label>
-            <Input
-              id="edit-price"
-              type="number"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              disabled={priceCharge === "custom_quotes"}
-              className="col-span-3"
-            />
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="edit-model" className="text-right">
-              Model
-            </Label>
-            <Select value={priceCharge} onValueChange={setPriceCharge}>
-              <SelectTrigger className="col-span-3 w-full" id="edit-model">
-                <SelectValue placeholder="Pricing Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="package_pricing">
-                  Package/Fixed Pricing
-                </SelectItem>
-                <SelectItem value="hourly_rate">Hourly/Per Hour</SelectItem>
-                <SelectItem value="custom_quotes">Custom Quote</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <DialogFooter className="p-4">
-          <Button
-            disabled={loading}
-            onClick={handleSave}
-            className="bg-[#2F6BFF] text-white hover:bg-[#1e4dcc]"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-              </>
-            ) : (
-              "Save changes"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
 
@@ -536,19 +479,21 @@ function DeleteSpecialtyAlert({
 function AddSpecialtyDialog({
   vendorId,
   categoryId,
+  priceCharge,
+  price,
   existingSpecialtyIds,
   onCreated,
 }: {
   vendorId: string;
   categoryId: string;
+  priceCharge: string;
+  price: string;
   existingSpecialtyIds: string[];
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState("");
-  const [priceCharge, setPriceCharge] = useState("custom_quotes");
-  const [price, setPrice] = useState("0");
 
   // Fetch available specialties for this category
   const { data: specialtiesData, isLoading: isLoadingSpecialties } =
@@ -558,18 +503,10 @@ function AddSpecialtyDialog({
     (spec) => !existingSpecialtyIds.includes(spec._id),
   );
 
-  useEffect(() => {
-    if (priceCharge === "custom_quotes") {
-      setPrice("0");
-    }
-  }, [priceCharge]);
-
   // Reset state on open
   useEffect(() => {
     if (open) {
       setSelectedSpecialtyId("");
-      setPriceCharge("custom_quotes");
-      setPrice("0");
     }
   }, [open]);
 
@@ -602,7 +539,7 @@ function AddSpecialtyDialog({
           <Plus className="h-4 w-4" /> Add Specialty
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[480px]">
+      <DialogContent className="sm:max-w-120">
         <DialogHeader>
           <DialogTitle>Add New Specialty</DialogTitle>
         </DialogHeader>
@@ -636,35 +573,8 @@ function AddSpecialtyDialog({
               </Select>
             )}
           </div>
-
-          {/* Pricing model */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Model</Label>
-            <Select value={priceCharge} onValueChange={setPriceCharge}>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Pricing Model" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="package_pricing">
-                  Package/Fixed Pricing
-                </SelectItem>
-                <SelectItem value="hourly_rate">Hourly/Per Hour</SelectItem>
-                <SelectItem value="custom_quotes">Custom Quote</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Price */}
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right">Price (£)</Label>
-            <Input
-              type="number"
-              min="0"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              disabled={priceCharge === "custom_quotes"}
-              className="col-span-3"
-            />
+          <div className="rounded-xl border border-dashed border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+            This specialty will inherit the service-wide pricing model and price.
           </div>
         </div>
         <DialogFooter>
@@ -691,9 +601,11 @@ function AddSpecialtyDialog({
 
 function EditServiceDialog({
   service,
+  specialties,
   onUpdated,
 }: {
   service: VendorService;
+  specialties: VendorSpecialtyItem[];
   onUpdated: (
     updatedService?: Partial<VendorService> & { _id: string },
   ) => void;
@@ -714,6 +626,12 @@ function EditServiceDialog({
   const [fees, setFees] = useState(
     service.additionalFees?.map((f) => ({ ...f })) || [],
   );
+  const [priceCharge, setPriceCharge] = useState(
+    getUniversalSpecialtyPricing(specialties).priceCharge,
+  );
+  const [price, setPrice] = useState(
+    getUniversalSpecialtyPricing(specialties).priceMajor,
+  );
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -724,6 +642,9 @@ function EditServiceDialog({
       setMaximumEventSize(service.maximumEventSize || "");
       setFees(service.additionalFees?.map((f) => ({ ...f })) || []);
       setTagInput("");
+      const universalPricing = getUniversalSpecialtyPricing(specialties);
+      setPriceCharge(universalPricing.priceCharge);
+      setPrice(universalPricing.priceMajor);
     }
   }, [
     open,
@@ -732,6 +653,7 @@ function EditServiceDialog({
     service.leadTimeRequired,
     service.maximumEventSize,
     service.additionalFees,
+    specialties,
   ]);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -757,6 +679,13 @@ function EditServiceDialog({
     setFees((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const handlePriceChargeChange = (value: string) => {
+    setPriceCharge(value);
+    if (value === "custom_quotes") {
+      setPrice("0");
+    }
+  };
+
   const handleFeeChange = (index: number, field: string, value: string) => {
     setFees((prev) =>
       prev.map((fee, i) => (i === index ? { ...fee, [field]: value } : fee)),
@@ -776,22 +705,26 @@ function EditServiceDialog({
     };
 
     const res = await updateVendorService(service._id, payload);
-    console.info("[EditServiceDialog] updateVendorService response", {
-      serviceId: service._id,
-      payload,
-      success: res.success,
-      error: res.error,
-      responseTags: (res as any)?.data?.tags,
-      responseMinimumBookingDuration: (res as any)?.data
-        ?.minimumBookingDuration,
-      responseLeadTimeRequired: (res as any)?.data?.leadTimeRequired,
-      responseMaximumEventSize: (res as any)?.data?.maximumEventSize,
-      responseFees: (res as any)?.data?.additionalFees,
-      data: (res as any).data,
-    });
-
-    setLoading(false);
     if (res.success) {
+      const specialtyIds = specialties.map((specialty) => specialty._id);
+      const normalizedPricing = normalizeUniversalPricingInput(
+        priceCharge,
+        price,
+      );
+      const pricingRes = await bulkUpdateVendorSpecialtiesPricing(
+        specialtyIds,
+        {
+          priceCharge: normalizedPricing.priceCharge,
+          price: normalizedPricing.price,
+        },
+      );
+
+      if (!pricingRes.success) {
+        setLoading(false);
+        toast.error(pricingRes.error || "Failed to update specialty pricing");
+        return;
+      }
+
       toast.success("Service configuration updated");
       setOpen(false);
       onUpdated({
@@ -810,6 +743,8 @@ function EditServiceDialog({
     } else {
       toast.error(res.error || "Failed to update service");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -817,7 +752,7 @@ function EditServiceDialog({
       <DialogTrigger asChild>
         <Button>Edit Service Configuration</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-140 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Service Configuration</DialogTitle>
         </DialogHeader>
@@ -885,6 +820,49 @@ function EditServiceDialog({
             </div>
           </div>
 
+          <div className="space-y-3">
+            <Label className="text-sm font-semibold">Universal Pricing</Label>
+            <p className="text-xs text-muted-foreground">
+              This pricing is applied to every specialty in the service.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Pricing Model</Label>
+                <Select value={priceCharge} onValueChange={handlePriceChargeChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Pricing Model" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="package_pricing">
+                      Package/Fixed Pricing
+                    </SelectItem>
+                    <SelectItem value="hourly_rate">
+                      Hourly/Per Hour
+                    </SelectItem>
+                    <SelectItem value="custom_quotes">Custom Quote</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Price (£)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  disabled={priceCharge === "custom_quotes"}
+                  placeholder={priceCharge === "custom_quotes" ? "0" : "0"}
+                />
+                {priceCharge === "custom_quotes" && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Custom quotes do not use a fixed price.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Tags */}
           <div className="space-y-3">
             <Label className="text-sm font-semibold">Keywords / Tags</Label>
@@ -898,20 +876,20 @@ function EditServiceDialog({
               {tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary text-sm rounded-full"
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
                 >
                   {tag}
                   <button
                     type="button"
                     onClick={() => handleRemoveTag(tag)}
-                    className="hover:bg-primary/20 rounded-full p-0.5"
+                    className="rounded-full p-0.5 hover:bg-primary/20"
                   >
                     <X className="h-3 w-3" />
                   </button>
                 </span>
               ))}
               {tags.length === 0 && (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-sm italic text-muted-foreground">
                   No tags added
                 </p>
               )}
@@ -934,7 +912,7 @@ function EditServiceDialog({
             </div>
 
             {fees.length === 0 && (
-              <p className="text-sm text-muted-foreground italic">
+              <p className="text-sm italic text-muted-foreground">
                 No additional fees
               </p>
             )}
@@ -968,7 +946,7 @@ function EditServiceDialog({
                   size="icon"
                   variant="ghost"
                   onClick={() => handleRemoveFee(idx)}
-                  className="h-9 w-9 text-muted-foreground hover:text-red-600 shrink-0"
+                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-red-600"
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -994,72 +972,5 @@ function EditServiceDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-}
-
-// ── Delete Service Alert ──────────────────────────────────────────────
-
-function DeleteServiceAlert({
-  serviceId,
-  serviceName,
-  onDeleted,
-}: {
-  serviceId: string;
-  serviceName?: string;
-  onDeleted: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleDelete = async () => {
-    setLoading(true);
-    const res = await deleteVendorService(serviceId);
-    setLoading(false);
-    if (res.success) {
-      toast.success("Service deleted");
-      setOpen(false);
-      onDeleted();
-    } else {
-      toast.error(res.error || "Failed to delete service");
-    }
-  };
-
-  return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="rounded-full border-red-200 text-red-500 hover:bg-red-50"
-        >
-          Delete Configuration
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete service configuration?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will permanently delete your{" "}
-            <strong>{serviceName || "service"}</strong> configuration and all
-            associated specialties. This action cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            disabled={loading}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
-              </>
-            ) : (
-              "Delete"
-            )}
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }

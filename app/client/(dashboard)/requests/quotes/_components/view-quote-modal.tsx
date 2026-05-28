@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import formatMoney from "@/lib/formatMoney";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -30,22 +31,21 @@ const statusStyles: Record<string, { bg: string; text: string; label: string }> 
   converted: { bg: "bg-green-50 text-green-700 border-green-200", text: "text-green-700", label: "Booked" },
 };
 
-const formatCurrency = (val: number, currency = "GBP") =>
-  new Intl.NumberFormat("en-GB", { style: "currency", currency }).format(val);
+// use formatMoney for minor->major currency formatting
 
 function formatRelativeExpiry(dateString?: string) {
   if (!dateString) return null;
   const expiry = new Date(dateString);
   const now = new Date();
-  
+
   if (expiry < now) return "Expired";
-  
+
   const diffHours = differenceInHours(expiry, now);
   if (diffHours < 24) {
     if (diffHours === 0) return "Expires in < 1 hour";
     return `Expires in ${diffHours} hour${diffHours === 1 ? "" : "s"}`;
   }
-  
+
   const diffDays = differenceInDays(expiry, now);
   if (diffDays === 1) return "Expires tomorrow";
   return `Expires in ${diffDays} day${diffDays === 1 ? "" : "s"}`;
@@ -79,13 +79,13 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
     quote.expiresAt &&
     new Date(quote.expiresAt) > new Date() &&
     differenceInHours(new Date(quote.expiresAt), new Date()) < 48;
-    
+
   const isExpired = quote.expiresAt && new Date(quote.expiresAt) <= new Date();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92vh] w-full p-0 overflow-hidden sm:max-w-3xl rounded-2xl shadow-none">
-        
+
         {/* Header - Fixed */}
         <div className="bg-card px-6 py-5 border-b">
           <div className="flex justify-between items-start">
@@ -94,7 +94,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                 Quote Details
               </DialogTitle>
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-1">
-                From 
+                From
                 {isLoadingVendor ? (
                   <Skeleton className="h-4 w-24 inline-block" />
                 ) : (
@@ -106,7 +106,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                 <span className="italic">{event?.title ?? "Event"}</span>
               </p>
             </div>
-            
+
             <div className="flex flex-col items-end gap-2">
               <span
                 className={cn(
@@ -127,13 +127,13 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
         {/* Scrollable Body */}
         <ScrollArea className="px-6 py-6 max-h-[calc(92vh-140px)]">
           <div className="space-y-8 pb-4">
-            
+
             {/* ── Event Details ─────────────────────────────────────── */}
             <section>
               <h3 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-primary">
                 Event Information
               </h3>
-              
+
               <div className="rounded-2xl border bg-card p-5 shadow-sm space-y-5">
                 {event?.description && (
                   <div>
@@ -145,7 +145,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                     </p>
                   </div>
                 )}
-                
+
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {event?.startDate && (
                     <div className="flex flex-col gap-1.5">
@@ -187,8 +187,8 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
 
             {/* ── Personal Message ──────────────────────────────────── */}
             {quote.personalMessage && (
-               <section>
-                 <h3 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-primary">
+              <section>
+                <h3 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-primary">
                   Message from Vendor
                 </h3>
                 <div className="rounded-2xl bg-primary/5 p-5 border border-primary/10">
@@ -204,7 +204,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
               <h3 className="mb-4 text-[13px] font-bold uppercase tracking-widest text-primary">
                 Line Items & Financials
               </h3>
-              
+
               <div className="rounded-2xl border bg-card shadow-sm overflow-hidden">
                 {/* Headers */}
                 <div className="grid grid-cols-[1fr_80px_100px] gap-4 bg-muted/50 px-5 py-3 border-b">
@@ -212,7 +212,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                   <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-center">Qty/Hrs</span>
                   <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground text-right">Subtotal</span>
                 </div>
-                
+
                 {/* Items */}
                 <div className="divide-y">
                   {quote.lineItems?.map((item, i) => (
@@ -222,7 +222,7 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                         {item.quantity}x • {item.hours}h
                       </span>
                       <span className="text-[14px] font-semibold text-foreground text-right">
-                        {formatCurrency(item.subtotal, quote.currency)}
+                        {formatMoney(item.subtotal, quote.currency)}
                       </span>
                     </div>
                   ))}
@@ -232,20 +232,20 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                 <div className="bg-muted/30 px-5 py-4 border-t">
                   <div className="flex justify-between items-end">
                     <div>
-                        <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                          Total Quoted
-                        </p>
-                        <p className="text-2xl font-black text-foreground tracking-tight">
-                          {formatCurrency(quote.total, quote.currency)}
-                        </p>
+                      <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-widest mb-1">
+                        Total Quoted
+                      </p>
+                      <p className="text-2xl font-black text-foreground tracking-tight">
+                        {formatMoney(quote.total, quote.currency)}
+                      </p>
                     </div>
                     <div className="text-right space-y-1">
-                        <p className="text-[12px] font-medium text-muted-foreground">
-                          <span className="font-semibold text-foreground">Deposit:</span> {quote.paymentTerms?.depositPercent}%
-                        </p>
-                        <p className="text-[12px] font-medium text-muted-foreground">
-                          <span className="font-semibold text-foreground">Balance:</span> {quote.paymentTerms?.balancePercent}%
-                        </p>
+                      <p className="text-[12px] font-medium text-muted-foreground">
+                        <span className="font-semibold text-foreground">Deposit:</span> {quote.paymentTerms?.depositPercent}%
+                      </p>
+                      <p className="text-[12px] font-medium text-muted-foreground">
+                        <span className="font-semibold text-foreground">Balance:</span> {quote.paymentTerms?.balancePercent}%
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -261,11 +261,11 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                     Quote Expiration
                   </span>
                 </div>
-                
+
                 {quote.expiresAt ? (
                   <>
                     <p className="text-[15px] font-medium text-foreground">
-                       {format(new Date(quote.expiresAt), "MMMM d, yyyy 'at' h:mm a")}
+                      {format(new Date(quote.expiresAt), "MMMM d, yyyy 'at' h:mm a")}
                     </p>
                     <div className="mt-2 flex items-center gap-2">
                       {isUrgent && !isExpired && (
@@ -285,99 +285,99 @@ export function ViewQuoteModal({ open, onOpenChange, quote, onRespond, onBook }:
                   <p className="text-[14px] text-muted-foreground">No expiration date set.</p>
                 )}
               </div>
-              
+
               {/* Attachments (If any) */}
               {/* @ts-expect-error Backend returns attachments but interface is missing it */}
               {request?.customerRequestId?.attachments && request.customerRequestId.attachments.length > 0 && (
-                 <div className="flex-1 rounded-2xl border bg-card p-5 shadow-sm">
-                    <div className="flex items-center gap-2 mb-3">
-                      <FileText className="size-4 text-muted-foreground" />
-                      <span className="text-[12px] font-bold uppercase tracking-widest text-primary">
-                        Attachments
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {/* @ts-expect-error */}
-                      {request.customerRequestId.attachments.map((url: string, i: number) => (
-                        <a 
-                          key={i} 
-                          href={url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
-                        >
-                           <span className="text-[13px] font-medium text-foreground truncate mr-2">
-                              Attachment {i + 1}
-                           </span>
-                           <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
-                        </a>
-                      ))}
-                    </div>
-                 </div>
+                <div className="flex-1 rounded-2xl border bg-card p-5 shadow-sm">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="size-4 text-muted-foreground" />
+                    <span className="text-[12px] font-bold uppercase tracking-widest text-primary">
+                      Attachments
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    {/* @ts-expect-error */}
+                    {request.customerRequestId.attachments.map((url: string, i: number) => (
+                      <a
+                        key={i}
+                        href={url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center justify-between p-2 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                      >
+                        <span className="text-[13px] font-medium text-foreground truncate mr-2">
+                          Attachment {i + 1}
+                        </span>
+                        <ExternalLink className="size-3.5 text-muted-foreground group-hover:text-foreground shrink-0" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
               )}
             </section>
-            
+
           </div>
         </ScrollArea>
-        
+
         {/* Footer */}
         <div className="bg-card px-6 py-4 border-t flex flex-wrap items-center justify-between gap-3">
-           <Button
-             variant="outline"
-             onClick={() => onOpenChange(false)}
-             className="rounded-full px-6 shadow-none"
-           >
-             Close
-           </Button>
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="rounded-full px-6 shadow-none"
+          >
+            Close
+          </Button>
 
-           <div className="flex flex-wrap gap-2">
-              {quote.status === "sent" && onBook && onRespond && (
-                <>
-                  <Button
-                    variant="destructive"
-                    onClick={() => {
-                      onOpenChange(false);
-                      onRespond("decline");
-                    }}
-                    className="rounded-full"
-                  >
-                    Decline
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => {
-                      onOpenChange(false);
-                      onRespond("request_changes");
-                    }}
-                    className="rounded-full"
-                  >
-                    Request Changes
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    onClick={() => {
-                      onOpenChange(false);
-                      onBook();
-                    }}
-                    className="rounded-full"
-                  >
-                    Accept & Book
-                  </Button>
-                </>
-              )}
-              {quote.status === "accepted" && onBook && (
-                <Button 
-                  variant="default" 
+          <div className="flex flex-wrap gap-2">
+            {quote.status === "sent" && onBook && onRespond && (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onRespond("decline");
+                  }}
+                  className="rounded-full"
+                >
+                  Decline
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    onOpenChange(false);
+                    onRespond("request_changes");
+                  }}
+                  className="rounded-full"
+                >
+                  Request Changes
+                </Button>
+                <Button
+                  variant="default"
                   onClick={() => {
                     onOpenChange(false);
                     onBook();
                   }}
                   className="rounded-full"
                 >
-                  Book Vendor
+                  Accept & Book
                 </Button>
-              )}
-           </div>
+              </>
+            )}
+            {quote.status === "accepted" && onBook && (
+              <Button
+                variant="default"
+                onClick={() => {
+                  onOpenChange(false);
+                  onBook();
+                }}
+                className="rounded-full"
+              >
+                Book Vendor
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

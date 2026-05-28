@@ -1,9 +1,10 @@
 "use server";
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
-import { 
-  QuotePayload, 
-  QuotePatchPayload, 
+import { majorToMinor } from "@/lib/currency";
+import {
+  QuotePayload,
+  QuotePatchPayload,
   QuoteDraft,
   VendorQuoteFilters,
   VendorQuoteListResponse,
@@ -16,6 +17,30 @@ type ActionResponse<T> = {
   data?: T;
   error?: string;
 };
+
+function normalizeQuoteLineItems(lineItems: QuotePayload["lineItems"]) {
+  return lineItems.map((item) => ({
+    ...item,
+    rate: majorToMinor(item.rate),
+    subtotal: majorToMinor(item.subtotal),
+  }));
+}
+
+function normalizeQuotePayload(payload: QuotePayload): QuotePayload {
+  return {
+    ...payload,
+    lineItems: normalizeQuoteLineItems(payload.lineItems),
+    total: majorToMinor(payload.total),
+  };
+}
+
+function normalizeQuotePatchPayload(patch: QuotePatchPayload): QuotePatchPayload {
+  return {
+    ...patch,
+    lineItems: patch.lineItems ? normalizeQuoteLineItems(patch.lineItems) : patch.lineItems,
+    total: patch.total !== undefined ? majorToMinor(patch.total) : patch.total,
+  };
+}
 
 async function makeAuthenticatedRequest<T>(
   url: string,
@@ -84,9 +109,10 @@ export async function createQuoteDraft(
   payload: QuotePayload
 ): Promise<ActionResponse<QuoteDraft>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
+  const normalizedPayload = normalizeQuotePayload(payload);
   return makeAuthenticatedRequest<QuoteDraft>(
     `${API_URL}/api/v1/quotes/drafts`,
-    { method: "POST", body: JSON.stringify(payload) }
+    { method: "POST", body: JSON.stringify(normalizedPayload) }
   );
 }
 
@@ -99,9 +125,10 @@ export async function updateQuoteDraft(
   patch: QuotePatchPayload
 ): Promise<ActionResponse<QuoteDraft>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
+  const normalizedPatch = normalizeQuotePatchPayload(patch);
   return makeAuthenticatedRequest<QuoteDraft>(
     `${API_URL}/api/v1/quotes/drafts/${quoteId}`,
-    { method: "PATCH", body: JSON.stringify(patch) }
+    { method: "PATCH", body: JSON.stringify(normalizedPatch) }
   );
 }
 
@@ -145,7 +172,7 @@ export async function fetchVendorQuotes(
     `${API_URL}/api/v1/quotes/vendor/me?${queryParams.toString()}`,
     { method: "GET" }
   );
-  
+
   return result;
 }
 
@@ -172,8 +199,9 @@ export async function reviseQuote(
   payload: QuotePatchPayload
 ): Promise<ActionResponse<QuoteDraft>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
+  const normalizedPayload = normalizeQuotePatchPayload(payload);
   return makeAuthenticatedRequest<QuoteDraft>(
     `${API_URL}/api/v1/quotes/${quoteId}/revise`,
-    { method: "POST", body: JSON.stringify(payload) }
+    { method: "POST", body: JSON.stringify(normalizedPayload) }
   );
 }
