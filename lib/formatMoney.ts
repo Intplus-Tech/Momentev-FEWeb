@@ -1,7 +1,7 @@
 export function formatMoney(
   minor: number | string | null | undefined,
   currency = "GBP",
-  locale = "en-GB",
+  localeOrOptions: string | Intl.NumberFormatOptions = "en-GB",
 ) {
   if (minor === undefined || minor === null || minor === "") return "";
 
@@ -9,7 +9,15 @@ export function formatMoney(
   if (Number.isNaN(n)) return "";
 
   const major = n / 100;
-  return new Intl.NumberFormat(locale, { style: "currency", currency }).format(major);
+  if (typeof localeOrOptions === "string") {
+    return new Intl.NumberFormat(localeOrOptions, { style: "currency", currency }).format(major);
+  }
+
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency,
+    ...localeOrOptions,
+  }).format(major);
 }
 
 export default formatMoney;

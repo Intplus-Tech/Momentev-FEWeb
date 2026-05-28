@@ -174,7 +174,7 @@ export const ReviewsSection = () => {
 
   // Accumulate paginated reviews
   const [accumulatedReviews, setAccumulatedReviews] = useState<CustomerReviewItem[]>([]);
-  const totalReviewsCount = reviewsData?.total ?? reviewsData?.data?.total ?? undefined;
+  const totalReviewsCount = reviewsData?.total;
 
   // Append new page of reviews when it arrives
   useEffect(() => {
