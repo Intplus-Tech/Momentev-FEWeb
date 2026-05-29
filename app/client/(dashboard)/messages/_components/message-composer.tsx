@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { Send, Smile, Paperclip, X, FileIcon, ImageIcon } from "lucide-react";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -10,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import { useTheme } from "next-themes";
+import type { ClientActionRestriction } from "@/lib/client-access";
 
 export type PendingAttachment = {
   file: File;
@@ -24,6 +26,8 @@ export type MessageComposerProps = {
   onFileSelect?: (file: File) => void;
   onRemoveAttachment?: () => void;
   isUploading?: boolean;
+  restriction?: ClientActionRestriction | null;
+  showInlineBanner?: boolean;
 };
 
 export const MessageComposer = ({
@@ -34,9 +38,12 @@ export const MessageComposer = ({
   onFileSelect,
   onRemoveAttachment,
   isUploading,
+  restriction = null,
+  showInlineBanner = true,
 }: MessageComposerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
+  const isRestricted = Boolean(restriction);
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -55,6 +62,23 @@ export const MessageComposer = ({
 
   return (
     <div className="shrink-0 border-t bg-background px-4 py-4">
+      {isRestricted && showInlineBanner ? (
+        <Alert variant="destructive" className="mb-3 flex items-start gap-3">
+          <AlertTitle className="mb-0 flex items-center gap-2 text-sm font-semibold">
+            <span>{restriction?.title || "Messaging disabled"}</span>
+          </AlertTitle>
+          <AlertDescription className="space-y-2 text-sm text-muted-foreground">
+            <p>{restriction?.description || "Your account cannot send messages right now."}</p>
+            <p>{restriction?.helpText || "Please contact support to restore access."}</p>
+          </AlertDescription>
+          {restriction?.supportHref ? (
+            <Button asChild variant="outline" size="sm" className="ml-auto shrink-0">
+              <a href={restriction.supportHref}>Contact support</a>
+            </Button>
+          ) : null}
+        </Alert>
+      ) : null}
+
       {/* Pending attachment preview */}
       {pendingAttachment && (
         <div className="mb-3 flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
@@ -135,7 +159,7 @@ export const MessageComposer = ({
           size="icon-sm"
           className="text-muted-foreground"
           onClick={handleAttachClick}
-          disabled={isUploading}
+          disabled={isUploading || isRestricted}
         >
           <Paperclip className="h-4 w-4" />
         </Button>
@@ -159,8 +183,8 @@ export const MessageComposer = ({
             }
           }}
           placeholder="Type your message here..."
-          className="h-11 flex-1 resize-none border-0 bg-transparent px-2 py-[10px] text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isUploading}
+          className="h-11 flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isUploading || isRestricted}
         />
         <Button
           type="button"
@@ -168,7 +192,7 @@ export const MessageComposer = ({
           size="icon-sm"
           className="rounded-full"
           onClick={onSend}
-          disabled={isUploading}
+          disabled={isUploading || isRestricted}
         >
           <Send className="h-4 w-4" />
         </Button>

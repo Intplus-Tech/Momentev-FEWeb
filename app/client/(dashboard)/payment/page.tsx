@@ -17,6 +17,7 @@ import {
   setDefaultPaymentMethod,
   type CustomerPaymentMethod,
 } from "@/lib/actions/customer-payment";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { AddPaymentMethodModal } from "./_components/AddPaymentMethodModal";
 
 const CARD_PALETTES = [
@@ -154,6 +155,8 @@ export default function ClientPaymentPage() {
   const [error, setError] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [settingDefaultId, setSettingDefaultId] = useState<string | null>(null);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const fetchMethods = useCallback(async () => {
     setIsLoading(true);
@@ -180,6 +183,12 @@ export default function ClientPaymentPage() {
     setSettingDefaultId(paymentMethodId);
     try {
       const result = await setDefaultPaymentMethod(paymentMethodId);
+      if ((result as any).restriction) {
+        setBlockedRestriction((result as any).restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
+
       if (result.success) {
         await fetchMethods();
       } else {
@@ -226,6 +235,14 @@ export default function ClientPaymentPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               <span className="ml-2 text-sm text-muted-foreground">

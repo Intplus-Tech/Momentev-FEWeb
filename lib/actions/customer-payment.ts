@@ -2,6 +2,8 @@
 
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
+import { ensureClientAllowedToAct } from "@/lib/actions/utils";
+import { ClientActionBlockedError } from "@/lib/actions/errors";
 
 const API_URL = process.env.BACKEND_URL;
 
@@ -98,6 +100,15 @@ export async function addCustomerPaymentMethod(
     if (!customerId)
       return { success: false, error: "Customer profile not found" };
 
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
+
     const accessToken = await getAccessToken();
     if (!accessToken)
       return { success: false, error: "Authentication required" };
@@ -146,6 +157,15 @@ export async function setDefaultPaymentMethod(
     const customerId = profileResult.data?._id;
     if (!customerId)
       return { success: false, error: "Customer profile not found" };
+
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
 
     const accessToken = await getAccessToken();
     if (!accessToken)

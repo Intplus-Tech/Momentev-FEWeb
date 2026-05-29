@@ -28,6 +28,7 @@ import { FileUploadCard } from "@/components/ui/file-upload-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 import { createDispute } from "@/lib/actions/disputes";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import type { BookingResponse } from "@/types/booking";
 
 interface CreateDisputeModalProps {
@@ -43,6 +44,8 @@ export function CreateDisputeModal({
 }: CreateDisputeModalProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   // Form state
   const [clientClaim, setClientClaim] = useState("");
@@ -78,6 +81,12 @@ export function CreateDisputeModal({
         clientAttachments: attachmentIds.length > 0 ? attachmentIds : undefined,
       });
 
+      if ((result as any).restriction) {
+        setBlockedRestriction((result as any).restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
+
       if (result.success) {
         toast.success("Dispute created successfully");
         router.refresh(); // Refresh the page to update booking state if needed
@@ -108,8 +117,8 @@ export function CreateDisputeModal({
 
   return (
     <Dialog open={open} onOpenChange={(val) => !isSubmitting && onOpenChange(val)}>
-      <DialogContent className="max-h-[92vh] w-full p-0 overflow-hidden sm:max-w-[550px] rounded-2xl shadow-none">
-        
+      <DialogContent className="max-h-[92vh] w-full p-0 overflow-hidden sm:max-w-137.5 rounded-2xl shadow-none">
+
         {/* Header - Fixed */}
         <div className="bg-card px-6 py-5 border-b">
           <DialogTitle className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2 mb-1">
@@ -117,7 +126,7 @@ export function CreateDisputeModal({
             Open Dispute
           </DialogTitle>
           <DialogDescription className="text-sm font-medium text-muted-foreground mt-2">
-            You are opening a dispute for booking <strong>{booking.eventDetails.title}</strong>. 
+            You are opening a dispute for booking <strong>{booking.eventDetails.title}</strong>.
             Once submitted, our resolution center will review your claim along with the vendor.
           </DialogDescription>
         </div>
@@ -133,7 +142,7 @@ export function CreateDisputeModal({
                 <Textarea
                   id="clientClaim"
                   placeholder="Please describe why you are disputing this booking in detail..."
-                  className="min-h-[120px] resize-none"
+                  className="min-h-30 resize-none"
                   value={clientClaim}
                   onChange={(e) => setClientClaim(e.target.value)}
                   disabled={isSubmitting}
@@ -199,7 +208,7 @@ export function CreateDisputeModal({
                 <p className="text-xs text-muted-foreground pb-2">
                   Upload photos, screenshots, or documents supporting your claim.
                 </p>
-                
+
                 {/* List of currently uploaded attachments */}
                 <div className="space-y-3 mb-4">
                   {attachments.map((file) => (
@@ -225,28 +234,36 @@ export function CreateDisputeModal({
                 </div>
               </div>
             </div>
-            
-             <div className="bg-card px-6 py-4 border-t flex items-center justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"       
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!isValid || isSubmitting}
-              className="bg-red-600 hover:bg-red-700 text-white"
-            >
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Submit Dispute
-            </Button>
-          </div>
+
+            <div className="bg-card px-6 py-4 border-t flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isValid || isSubmitting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit Dispute
+              </Button>
+            </div>
           </ScrollArea>
         </form>
       </DialogContent>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
     </Dialog>
   );
 }

@@ -28,11 +28,16 @@ import {
   MessageHistory,
   type UploadingMessage,
 } from "../_components/message-history";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 
 const ClientThreadPage = () => {
   const router = useRouter();
   const params = useParams<{ threadId: string }>();
 
+  const { restriction, isLoading: isProfileLoading, isBanned } = useClientActionGuard();
+
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const threadId = useMemo(() => {
     const value = params?.threadId;
     return Array.isArray(value) ? value[0] : value || "";
@@ -61,6 +66,7 @@ const ClientThreadPage = () => {
   const conversation = conversations.find(
     (c: ChatConversation) => c._id === threadId,
   );
+
 
   // Fetch vendor profile for display
   const { data: vendorProfile } = useVendorProfile(conversation?.vendorId);
@@ -91,6 +97,10 @@ const ClientThreadPage = () => {
   const handleSend = async () => {
     const trimmed = messageText.trim();
     if (!threadId) return;
+    if (restriction) {
+      setShowBlockedDialog(true);
+      return;
+    }
 
     // If there's a pending attachment, upload it first
     if (pendingAttachment) {
@@ -239,8 +249,15 @@ const ClientThreadPage = () => {
           onFileSelect={handleFileSelect}
           onRemoveAttachment={handleRemoveAttachment}
           isUploading={isUploading}
+          restriction={restriction}
+          showInlineBanner={false}
         />
       </div>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+        restriction={restriction}
+      />
     </div>
   );
 };

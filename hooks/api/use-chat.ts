@@ -74,7 +74,9 @@ export function useSendMessage() {
     }) => {
       const result = await sendMessage(conversationId, payload);
       if (!result.success) {
-        throw new Error(result.error || "Failed to send message");
+        const err: any = new Error(result.error || "Failed to send message");
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -298,7 +300,9 @@ export function useStartVendorConversation() {
     mutationFn: async (vendorId: string) => {
       const result = await getOrCreateConversation(vendorId);
       if (!result.success || !result.data) {
-        throw new Error(result.error || "Failed to start conversation");
+        const err: any = new Error(result.error || "Failed to start conversation");
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -323,10 +327,10 @@ export function useUnreadBadgeCount(userSide: ChatUserSide) {
 
     // Check against the role's last read timestamp
     const lastReadTimeStr = userSide === "vendor" ? conv.vendorLastReadAt : conv.userLastReadAt;
-    
+
     // If they've never read it, or their last read time is before the last message time, it's unread
     if (!lastReadTimeStr) return count + 1;
-    
+
     const lastReadTime = new Date(lastReadTimeStr).getTime();
     return lastMsgTime > lastReadTime ? count + 1 : count;
   }, 0) || 0;

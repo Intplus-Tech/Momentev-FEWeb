@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { getStripe } from "@/lib/stripe";
 import { addCustomerPaymentMethod } from "@/lib/actions/customer-payment";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { Loader2 } from "lucide-react";
 
 function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel: () => void }) {
@@ -19,6 +20,8 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +59,13 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
 
       // Send the pm_... token to our backend
       const result = await addCustomerPaymentMethod(paymentMethod.id);
+
+      if ((result as any).restriction) {
+        setBlockedRestriction((result as any).restriction);
+        setShowBlockedDialog(true);
+        setIsLoading(false);
+        return;
+      }
 
       if (!result.success) {
         setError(result.error || "Failed to save payment method");
@@ -112,6 +122,14 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
         </Button>
       </div>
     </form>
+    <ClientActionBlockedDialog
+      open={showBlockedDialog}
+      onOpenChange={(open) => {
+        if (!open) setBlockedRestriction(null);
+        setShowBlockedDialog(open);
+      }}
+      restriction={blockedRestriction}
+    />
   );
 }
 

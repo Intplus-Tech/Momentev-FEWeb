@@ -37,6 +37,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useClientReviews, useDeleteReview, useUpdateReview } from "@/hooks/api/use-client-reviews";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 
 import { SectionShell } from "./section-shell";
 
@@ -202,6 +203,8 @@ export const ReviewsSection = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<CustomerReviewItem | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const openEdit = (review: CustomerReviewItem) => {
     setSelectedReview(review);
@@ -230,6 +233,12 @@ export const ReviewsSection = () => {
       setEditOpen(false);
       setSelectedReview(null);
     } catch (error) {
+      const err: any = error;
+      if (err?.restriction) {
+        setBlockedRestriction(err.restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : "Failed to update review");
     }
   };
@@ -249,6 +258,12 @@ export const ReviewsSection = () => {
       setDeleteOpen(false);
       setDeleteTarget(null);
     } catch (error) {
+      const err: any = error;
+      if (err?.restriction) {
+        setBlockedRestriction(err.restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
       toast.error(error instanceof Error ? error.message : "Failed to delete review");
     }
   };
@@ -411,6 +426,14 @@ export const ReviewsSection = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
     </SectionShell>
   );
 };

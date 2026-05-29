@@ -1,6 +1,8 @@
 "use server";
 
 import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
+import { ensureClientAllowedToAct } from "@/lib/actions/utils";
+import { ClientActionBlockedError } from "@/lib/actions/errors";
 
 const API_URL = process.env.BACKEND_URL;
 
@@ -39,6 +41,14 @@ export async function createDispute(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
     const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/disputes`, {
         method: "POST",

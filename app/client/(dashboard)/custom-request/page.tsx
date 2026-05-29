@@ -80,6 +80,7 @@ export default function CustomRequestPage() {
   const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null);
   const [isSavingDraft, setIsSavingDraft] = useState(false);
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
   const [showMissingDialog, setShowMissingDialog] = useState(false);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
@@ -192,6 +193,12 @@ export default function CustomRequestPage() {
       try {
         const payload = buildPayload();
         const result = await saveAsDraft(payload);
+
+        if ((result as any).restriction) {
+          setBlockedRestriction((result as any).restriction);
+          setShowBlockedDialog(true);
+          return;
+        }
 
         if (result.success) {
           toast.success("Draft saved successfully!");
@@ -350,6 +357,12 @@ export default function CustomRequestPage() {
         status === "draft"
           ? await saveAsDraft(payload)
           : await submitCustomRequest(payload);
+
+      if ((result as any).restriction) {
+        setBlockedRestriction((result as any).restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
 
       if (result.success) {
         toast.success(
@@ -522,7 +535,11 @@ export default function CustomRequestPage() {
 
       <ClientActionBlockedDialog
         open={showBlockedDialog}
-        onOpenChange={setShowBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
       />
     </div>
   );

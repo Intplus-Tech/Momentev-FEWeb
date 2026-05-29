@@ -1,6 +1,8 @@
 'use server';
 
 import { getAccessToken, tryRefreshToken } from '@/lib/session';
+import { ensureClientAllowedToAct } from '@/lib/actions/utils';
+import { ClientActionBlockedError } from '@/lib/actions/errors';
 import type {
   ChatConversation,
   ChatMessage,
@@ -84,6 +86,15 @@ export async function getConversations() {
  * POST /api/v1/chats/vendor/{vendorId}
  */
 export async function getOrCreateConversation(vendorId: string) {
+  try {
+    await ensureClientAllowedToAct();
+  } catch (err: any) {
+    if (err?.name === 'ClientActionBlockedError') {
+      return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+    }
+    throw err;
+  }
+
   const result = await fetchWithAuth(`/api/v1/chats/vendor/${vendorId}`, { method: 'POST' });
   return result;
 }
@@ -108,6 +119,15 @@ export async function getMessages(conversationId: string, limit: number = 30, be
  * POST /api/v1/chats/{conversationId}/messages
  */
 export async function sendMessage(conversationId: string, payload: CreateMessageRequest) {
+  try {
+    await ensureClientAllowedToAct();
+  } catch (err: any) {
+    if (err?.name === 'ClientActionBlockedError') {
+      return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+    }
+    throw err;
+  }
+
   const result = await fetchWithAuth(`/api/v1/chats/${conversationId}/messages`, {
     method: 'POST',
     body: JSON.stringify(payload),

@@ -15,6 +15,9 @@ import {
   useChatRealtime,
   useMarkConversationRead,
 } from "@/hooks/api/use-chat";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
+import { useState } from "react";
 import type { ChatConversation } from "@/types/chat";
 import { uploadFile } from "@/lib/actions/upload";
 
@@ -49,6 +52,9 @@ const VendorThreadPage = () => {
   const { data: messages = [] } = useChatMessages(threadId);
   const { mutate: sendMessage } = useSendMessage();
   const { mutate: markAsRead } = useMarkConversationRead();
+  const { restriction } = useClientActionGuard();
+
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   useChatRealtime(threadId);
 
@@ -233,9 +239,15 @@ const VendorThreadPage = () => {
             onFileSelect={handleFileSelect}
             onRemoveAttachment={handleRemoveAttachment}
             isUploading={isUploading}
+            restriction={restriction}
           />
         </PermissionActionGate>
       </div>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+        restriction={restriction}
+      />
     </div>
   );
 };

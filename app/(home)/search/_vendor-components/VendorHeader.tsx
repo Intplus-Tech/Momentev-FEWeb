@@ -33,7 +33,7 @@ export function VendorHeader({
   const router = useRouter();
   const pathname = usePathname();
   const { data: user, isLoading: isUserLoading, isError } = useUserProfile();
-  const { canPerformAction } = useClientActionGuard();
+  const { canPerformAction, isBanned } = useClientActionGuard();
   const startConversation = useStartVendorConversation();
   const { data: isFavorited, isLoading: isFavoriteLoading } = useFavoriteStatus(
     user?.role === "customer" || user?.role === "CUSTOMER" ? vendorId : undefined
@@ -41,6 +41,7 @@ export function VendorHeader({
   const addFavorite = useAddFavorite();
   const removeFavorite = useRemoveFavorite();
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const role = user?.role?.toUpperCase();
   const isVendor = role === "VENDOR";
@@ -97,10 +98,13 @@ export function VendorHeader({
         }
         toast.error("Unable to open chat. Please try again.");
       } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "Failed to start conversation";
+        const err: any = error;
+        if (err?.restriction) {
+          setBlockedRestriction(err.restriction);
+          setShowBlockedDialog(true);
+          return;
+        }
+        const message = err instanceof Error ? err.message : "Failed to start conversation";
         toast.error(message);
       }
       return;
@@ -126,9 +130,13 @@ export function VendorHeader({
         toast.success("Vendor added to favorites");
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to update favorites"
-      );
+      const err: any = error;
+      if (err?.restriction) {
+        setBlockedRestriction(err.restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
+      toast.error(err instanceof Error ? err.message : "Failed to update favorites");
     }
   };
 
@@ -158,8 +166,8 @@ export function VendorHeader({
                 <Star
                   key={i}
                   className={`w-4 h-4 ${i < Math.floor(rating)
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "fill-muted text-muted"
+                    ? "fill-yellow-400 text-yellow-400"
+                    : "fill-muted text-muted"
                     }`}
                 />
               ))}
@@ -185,7 +193,7 @@ export function VendorHeader({
             variant="outline"
             className="flex-1 h-11 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
             onClick={handleMessage}
-            disabled={isUserLoading || startConversation.isPending}
+            disabled={isUserLoading || startConversation.isPending || isBanned}
           >
             Message Vendor
           </Button>
@@ -220,7 +228,11 @@ export function VendorHeader({
 
       <ClientActionBlockedDialog
         open={showBlockedDialog}
-        onOpenChange={setShowBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
       />
     </div>
   );

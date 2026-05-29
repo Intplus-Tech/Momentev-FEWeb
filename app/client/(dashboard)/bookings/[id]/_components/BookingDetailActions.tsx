@@ -20,6 +20,8 @@ import {
 
 import { getOrCreateConversation } from "@/lib/actions/chat";
 import { cancelBooking } from "@/lib/actions/booking";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
 import { PaymentModal } from "../../_components/PaymentModal";
 import { CreateDisputeModal } from "../../_components/CreateDisputeModal";
 import type { BookingResponse } from "@/types/booking";
@@ -33,10 +35,13 @@ type Props = {
 
 export function BookingDetailActions({ booking, vendorId, formattedTotal }: Props) {
   const router = useRouter();
+  const { isBanned } = useClientActionGuard();
   const [isMessaging, setIsMessaging] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const requiresPayment =
     booking.status === "pending_payment" || booking.status === "awaiting_payment";
@@ -54,7 +59,12 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
       if (result.success && result.data) {
         router.push(`/client/messages/${result.data._id}`);
       } else {
-        toast.error("Failed to open conversation");
+        if ((result as any).restriction) {
+          setBlockedRestriction((result as any).restriction);
+          setShowBlockedDialog(true);
+        } else {
+          toast.error("Failed to open conversation");
+        }
       }
     } catch {
       toast.error("Failed to open conversation");
@@ -87,7 +97,7 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
         <Button
           variant="outline"
           onClick={handleMessageVendor}
-          disabled={isMessaging || isCancelling}
+          disabled={isMessaging || isCancelling || isBanned}
         >
           <MessageSquare className="mr-2 h-4 w-4" />
           {isMessaging ? "Loading..." : "Message Vendor"}
@@ -173,6 +183,14 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
         bookingId={booking._id}
         isOpen={isReviewOpen}
         onOpenChange={setIsReviewOpen}
+      />
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
       />
     </>
   );

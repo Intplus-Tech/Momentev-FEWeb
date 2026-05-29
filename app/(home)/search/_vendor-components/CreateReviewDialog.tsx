@@ -26,6 +26,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCreateReview } from "@/hooks/api/use-client-reviews";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 
 const reviewSchema = z.object({
   rating: z.number().min(1, "Please select a rating").max(5),
@@ -87,11 +88,18 @@ export function CreateReviewDialog({
       form.reset();
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Failed to submit review"
-      );
+      const err: any = error;
+      if (err?.restriction) {
+        setBlockedRestriction(err.restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
+      toast.error(error instanceof Error ? error.message : "Failed to submit review");
     }
   };
+
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -173,6 +181,14 @@ export function CreateReviewDialog({
             </div>
           </form>
         </Form>
+        <ClientActionBlockedDialog
+          open={showBlockedDialog}
+          onOpenChange={(open) => {
+            if (!open) setBlockedRestriction(null);
+            setShowBlockedDialog(open);
+          }}
+          restriction={blockedRestriction}
+        />
       </DialogContent>
     </Dialog>
   );

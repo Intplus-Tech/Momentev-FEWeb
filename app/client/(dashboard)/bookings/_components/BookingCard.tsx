@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ import {
 
 import { getOrCreateConversation } from "@/lib/actions/chat";
 import { cancelBooking } from "@/lib/actions/booking";
+import { useClientActionGuard } from "@/hooks/use-client-action-guard";
 import { PaymentModal } from "./PaymentModal";
 import { BookingDetailsModal } from "./BookingDetailsModal";
 import { CreateDisputeModal } from "./CreateDisputeModal";
@@ -87,11 +89,14 @@ export function BookingCard({
   serviceNamesMap = {},
 }: BookingCardProps) {
   const router = useRouter();
+  const { isBanned } = useClientActionGuard();
   const [isMessaging, setIsMessaging] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isDisputeOpen, setIsDisputeOpen] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
   const vendor = booking.vendorId as PopulatedVendor;
   const vendorId = typeof vendor === "string" ? vendor : vendor._id;
@@ -128,11 +133,16 @@ export function BookingCard({
         // Navigate to the conversation
         router.push(`/client/messages/${result.data._id}`);
       } else {
-        console.error("Failed to create conversation:", result.error);
+        if ((result as any).restriction) {
+          setBlockedRestriction((result as any).restriction);
+          setShowBlockedDialog(true);
+          return;
+        }
+        toast.error(result.error || "Failed to create conversation");
         // Could show a toast notification here
       }
     } catch (error) {
-      console.error("Error creating conversation:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to create conversation");
     } finally {
       setIsMessaging(false);
     }
@@ -304,7 +314,7 @@ export function BookingCard({
               size="sm"
               variant="outline"
               onClick={handleMessageVendor}
-              disabled={isMessaging || isCancelling}
+              disabled={isMessaging || isCancelling || isBanned}
             >
               {isMessaging ? "Loading..." : "Message Vendor"}
             </Button>
@@ -370,6 +380,14 @@ export function BookingCard({
         bookingId={booking._id}
         formattedTotal={formattedTotal}
         eventTitle={booking.eventDetails.title}
+      />
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
       />
     </Card>
   );

@@ -62,7 +62,9 @@ export function useCreateBooking() {
     mutationFn: async (payload: CreateBookingPayload) => {
       const result = await createBooking(payload);
       if (!result.success) {
-        throw new Error(result.error || "Failed to create booking");
+        const err: any = new Error(result.error || "Failed to create booking");
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -83,7 +85,9 @@ export function useCreateUnifiedBooking() {
     mutationFn: async (payload: CreateUnifiedBookingInput) => {
       const result = await createUnifiedBooking(payload);
       if (!result.success) {
-        throw new Error(result.error || "Failed to create unified booking");
+        const err: any = new Error(result.error || "Failed to create unified booking");
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -104,7 +108,9 @@ export function useCancelBooking() {
     mutationFn: async (bookingId: string) => {
       const result = await cancelBooking(bookingId);
       if (!result.success) {
-        throw new Error(result.error || "Failed to cancel booking");
+        const err: any = new Error(result.error || "Failed to cancel booking");
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },

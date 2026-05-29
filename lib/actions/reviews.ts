@@ -1,6 +1,8 @@
 "use server";
 
 import { getAccessToken, tryRefreshToken } from '@/lib/session';
+import { ensureClientAllowedToAct } from '@/lib/actions/utils';
+import { ClientActionBlockedError } from '@/lib/actions/errors';
 import type { Review as ApiReview } from '@/types/review';
 
 export type Review = ApiReview;
@@ -134,6 +136,19 @@ export async function fetchVendorReviews(vendorId: string, page = 1, limit = 10)
 
 export async function createReview(data: { vendorId: string; bookingId?: string; rating: number; comment: string }) {
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error running client action check for createReview', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Action blocked' };
+  }
+  try {
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };
     }
@@ -203,6 +218,19 @@ export async function createReview(data: { vendorId: string; bookingId?: string;
 
 export async function updateReview(reviewId: string, data: { rating?: number; comment?: string }) {
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error running client action check for updateReview', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Action blocked' };
+  }
+  try {
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };
     }
@@ -263,6 +291,19 @@ export async function updateReview(reviewId: string, data: { rating?: number; co
 }
 
 export async function deleteReview(reviewId: string) {
+  try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
+  } catch (error) {
+    console.error('Error running client action check for deleteReview', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Action blocked' };
+  }
   try {
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };

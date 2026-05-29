@@ -1,6 +1,9 @@
 'use server';
 
 import { getAccessToken, tryRefreshToken } from '@/lib/session';
+import { ensureClientAllowedToAct } from '@/lib/actions/utils';
+
+import { ClientActionBlockedError } from '@/lib/actions/errors';
 
 export async function getMyFavorites(page = 1, limit = 10) {
   try {
@@ -110,6 +113,14 @@ export async function checkFavoriteStatus(vendorId: string) {
 
 export async function addFavorite(vendorId: string) {
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };
     }
@@ -163,6 +174,14 @@ export async function addFavorite(vendorId: string) {
 
 export async function removeFavorite(vendorId: string) {
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
     if (!process.env.BACKEND_URL) {
       return { success: false, error: 'Backend not configured' };
     }

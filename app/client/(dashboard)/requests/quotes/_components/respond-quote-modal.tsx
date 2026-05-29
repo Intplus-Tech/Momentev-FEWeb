@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { CustomerQuote, QuoteDecision } from "@/types/quote";
 import { respondToQuote } from "@/lib/actions/client-quotes";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { queryKeys } from "@/lib/react-query/keys";
 
 import {
@@ -35,6 +36,8 @@ export function RespondQuoteModal({
 }: RespondQuoteModalProps) {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
   const queryClient = useQueryClient();
 
   if (!quote || !decision) return null;
@@ -66,6 +69,12 @@ export function RespondQuoteModal({
         decision,
         customerNote: note.trim() || undefined,
       });
+
+      if ((res as any).restriction) {
+        setBlockedRestriction((res as any).restriction);
+        setShowBlockedDialog(true);
+        return;
+      }
 
       if (!res.success) {
         toast.error(res.error || `Failed to ${decision.replace("_", " ")} quote`);
@@ -130,6 +139,14 @@ export function RespondQuoteModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
     </Dialog>
   );
 }

@@ -1,6 +1,8 @@
 "use server";
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
+import { ensureClientAllowedToAct } from "@/lib/actions/utils";
+import { ClientActionBlockedError } from "@/lib/actions/errors";
 import type {
   CustomerQuoteListResponse,
   CustomerQuoteFilters,
@@ -108,10 +110,18 @@ export async function respondToQuote(
   payload: QuoteResponsePayload | { decision: "accept" }
 ): Promise<ActionResponse<void>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
+  try {
+    await ensureClientAllowedToAct();
+  } catch (err: any) {
+    if (err?.name === 'ClientActionBlockedError') {
+      return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+    }
+    throw err;
+  }
 
   return makeAuthenticatedRequest<void>(
     `${API_URL}/api/v1/quotes/${quoteId}/respond`,
-    { 
+    {
       method: "POST",
       body: JSON.stringify(payload)
     }

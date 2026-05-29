@@ -40,7 +40,9 @@ export function useCreateReview() {
         comment: data.comment,
       });
       if (!result.success) {
-        throw new Error(result.error);
+        const err: any = new Error(result.error);
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -128,7 +130,9 @@ export function useUpdateReview() {
         comment: data.comment,
       });
       if (!result.success) {
-        throw new Error(result.error);
+        const err: any = new Error(result.error);
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -153,7 +157,9 @@ export function useDeleteReview() {
     mutationFn: async (data: { reviewId: string; vendorId?: string; bookingId?: string }) => {
       const result = await deleteReview(data.reviewId);
       if (!result.success) {
-        throw new Error(result.error);
+        const err: any = new Error(result.error);
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },

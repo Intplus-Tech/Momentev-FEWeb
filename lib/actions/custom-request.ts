@@ -2,6 +2,8 @@
 
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
+import { ensureClientAllowedToAct } from "@/lib/actions/utils";
+import { ClientActionBlockedError } from "@/lib/actions/errors";
 import { majorToMinor } from "@/lib/currency";
 import {
   CustomRequestPayload,
@@ -158,6 +160,15 @@ export async function submitCustomRequest(
       return { success: false, error: "Failed to fetch user profile for customer ID" };
     }
 
+    try {
+      await ensureClientAllowedToAct(profileResult.data);
+    } catch (err: any) {
+      if (err?.name === "ClientActionBlockedError") {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
+
     const finalPayload = {
       ...normalizeCustomRequestPayload(payload),
       customerId: profileResult.data._id,
@@ -252,7 +263,7 @@ export async function updateDraft(
   }
 
   try {
-
+    const _ = await ensureClientAllowedToAct();
     const normalizedPayload = normalizeDraftUpdatePayload(payload);
 
     return await makeAuthenticatedRequest(`${API_URL}/api/v1/customer-requests/drafts/${id}`, {

@@ -37,7 +37,9 @@ export function useAddFavorite() {
     mutationFn: async (vendorId: string) => {
       const result = await addFavorite(vendorId);
       if (!result.success) {
-        throw new Error(result.error);
+        const err: any = new Error(result.error || 'Failed to add favorite');
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },
@@ -55,7 +57,9 @@ export function useRemoveFavorite() {
     mutationFn: async (vendorId: string) => {
       const result = await removeFavorite(vendorId);
       if (!result.success) {
-        throw new Error(result.error);
+        const err: any = new Error(result.error || 'Failed to remove favorite');
+        if ((result as any).restriction) err.restriction = (result as any).restriction;
+        throw err;
       }
       return result.data;
     },

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import type { CustomerQuote } from "@/types/quote";
 import { createBookingFromQuote } from "@/lib/actions/booking";
 import { respondToQuote } from "@/lib/actions/client-quotes";
+import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
 import { queryKeys } from "@/lib/react-query/keys";
 
 import {
@@ -35,6 +36,8 @@ export function ConvertQuoteModal({
 }: ConvertQuoteModalProps) {
   const [location, setLocation] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -48,6 +51,13 @@ export function ConvertQuoteModal({
         const acceptRes = await respondToQuote(quote._id, {
           decision: "accept",
         });
+        if ((acceptRes as any).restriction) {
+          setBlockedRestriction((acceptRes as any).restriction);
+          setShowBlockedDialog(true);
+          setIsSubmitting(false);
+          return;
+        }
+
         if (!acceptRes.success) {
           toast.error(acceptRes.error || "Failed to accept quote before booking.");
           setIsSubmitting(false);
@@ -61,18 +71,23 @@ export function ConvertQuoteModal({
       );
 
       if (!res.success) {
+        if ((res as any).restriction) {
+          setBlockedRestriction((res as any).restriction);
+          setShowBlockedDialog(true);
+          return;
+        }
         toast.error(res.error || "Failed to create booking");
         return;
       }
 
       toast.success("Booking successfully created!");
-      
+
       // Invalidate queries so dashboards update
       queryClient.invalidateQueries({ queryKey: queryKeys.quotes.all });
       queryClient.invalidateQueries({ queryKey: queryKeys.quoteRequests.all });
-      
+
       onOpenChange(false);
-      
+
       // Redirect to the bookings page to view the newly created booking
       router.push("/client/bookings");
     } finally {
@@ -131,6 +146,14 @@ export function ConvertQuoteModal({
           </Button>
         </DialogFooter>
       </DialogContent>
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
     </Dialog>
   );
 }

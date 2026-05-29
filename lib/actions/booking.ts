@@ -3,6 +3,8 @@
 import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { majorToMinor } from "@/lib/currency";
 import { getAccessToken, tryRefreshToken } from "@/lib/session";
+import { ensureClientAllowedToAct } from "@/lib/actions/utils";
+import { ClientActionBlockedError } from "@/lib/actions/errors";
 import type {
   CreateBookingPayload,
   BookingResponse,
@@ -64,6 +66,14 @@ export async function createBooking(
   }
 
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
     const normalizedPayload = normalizeBookingPayload(payload);
     console.log("[Booking] createBooking payload:", normalizedPayload);
     const accessToken = await getAccessToken();
@@ -149,6 +159,14 @@ export async function createBookingFromQuote(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message, restriction: err.restriction } as any;
+      }
+      throw err;
+    }
     const body = location ? JSON.stringify({ location: { addressText: location } }) : undefined;
 
     const { response, error, errorCode } = await fetchWithAuthRetry((token) =>
@@ -450,6 +468,14 @@ export async function createUnifiedBooking(
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
   try {
+    try {
+      await ensureClientAllowedToAct();
+    } catch (err: any) {
+      if (err?.name === 'ClientActionBlockedError') {
+        return { success: false, error: err.restriction?.helpText || err.message };
+      }
+      throw err;
+    }
     const normalizedPayload = normalizeUnifiedBookingPayload(payload);
     console.log("[Booking] createUnifiedBooking payload:", normalizedPayload);
     const { response, error } = await fetchWithAuthRetry((token) =>
