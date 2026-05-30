@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -146,6 +148,7 @@ interface CreateQuoteModalProps {
 export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRevision }: CreateQuoteModalProps) {
   const uid = useId();
   const queryClient = useQueryClient();
+  const { restriction, canPerformAction } = useVendorActionGuard();
 
   // Form state
   const [lineItems, setLineItems] = useState<QuoteLineItem[]>([emptyLineItem()]);
@@ -160,6 +163,7 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
   // Loading states
   const [savingDraft, setSavingDraft] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   // Derived
   const total = lineItems.reduce((sum, item) => sum + item.subtotal, 0);
@@ -239,6 +243,10 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
   // ── Save Draft ─────────────────────────────────────────────────────────────
 
   const handleSaveDraft = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     const err = validate();
     if (err) { toast.error(err); return; }
 
@@ -276,6 +284,10 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
   // ── Send Quote ────────────────────────────────────────────────────────────
 
   const handleSendQuote = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     const err = validate();
     if (err) { toast.error(err); return; }
 
@@ -315,6 +327,10 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
   // ── Revise Quote ──────────────────────────────────────────────────────────
 
   const handleReviseQuote = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     const err = validate();
     if (err) { toast.error(err); return; }
     if (!draftQuote) return;
@@ -534,7 +550,7 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
           {isRevision ? (
             <Button
               type="button"
-              disabled={sending}
+              disabled={sending || Boolean(restriction)}
               onClick={handleReviseQuote}
               className="w-full bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] sm:w-auto"
             >
@@ -546,7 +562,7 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
               Submit Revision
             </Button>
           ) : (
-            <>
+                disabled={savingDraft || sending || Boolean(restriction)}
               <Button
                 type="button"
                 variant="outline"
@@ -564,7 +580,7 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
 
               <Button
                 type="button"
-                disabled={savingDraft || sending}
+                disabled={savingDraft || sending || Boolean(restriction)}
                 onClick={handleSendQuote}
                 className="w-full bg-[#2F6BFF] text-white hover:bg-[#1e4dcc] sm:w-auto"
               >
@@ -578,6 +594,12 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
             </>
           )}
         </DialogFooter>
+
+        <VendorActionBlockedDialog
+          open={showBlockedDialog}
+          onOpenChange={setShowBlockedDialog}
+          restriction={restriction}
+        />
       </DialogContent>
     </Dialog>
   );

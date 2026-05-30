@@ -1,6 +1,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 import { VendorHeader } from "./_components/VendorHeader";
+import { VendorBanner } from "./_components/VendorBanner";
 import { VendorSidebar } from "./_components/VendorSidebar";
 import { VendorOnboardingGuard } from "./_components/VendorOnboardingGuard";
 import { PermissionsProvider } from "@/contexts/permissions-context";
@@ -23,6 +24,7 @@ export default async function VendorDashboardLayout({
             <VendorSidebar />
             <SidebarInset className="flex flex-1 flex-col bg-background">
               <VendorHeader />
+              <VendorBanner />
               <div className="flex-1 overflow-y-auto px-4 pb-10 pt-6 sm:px-6 lg:px-10">
                 <div className="mx-auto w-full max-w-6xl">{children}</div>
               </div>

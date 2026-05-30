@@ -1,6 +1,10 @@
 "use client";
 
 import { Building2, CreditCard } from "lucide-react";
+import { useState } from "react";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { VendorPaymentMethod } from "@/lib/actions/payment";
@@ -10,6 +14,8 @@ interface BankAccountCardProps {
 }
 
 export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
+  const { restriction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   // We'll just show the first bank account if multiple exist, or map them all.
   // The API returns a list, so let's handle the empty case or list case.
   
@@ -20,6 +26,14 @@ export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
   // Assuming we just want to show the list of attached bank accounts
   return (
     <Card className="rounded-3xl border bg-white p-6">
+      {restriction && (
+        <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-50 p-3">
+          <p className="text-sm font-medium text-amber-700">Certain payout actions are currently blocked for your account.</p>
+          <Button size="sm" variant="ghost" onClick={() => setShowBlockedDialog(true)}>
+            Why?
+          </Button>
+        </div>
+      )}
       <div className="mb-4">
         <h3 className="flex items-center gap-2 text-base font-semibold text-foreground">
           <Building2 className="h-5 w-5 text-muted-foreground" />
@@ -62,5 +76,10 @@ export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
         ))}
       </div>
     </Card>
+      <VendorActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+        restriction={restriction}
+      />
   );
 }

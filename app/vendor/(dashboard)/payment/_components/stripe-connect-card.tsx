@@ -9,6 +9,8 @@ import {
   useStripeDashboard,
 } from "@/hooks/api/use-stripe-account";
 import { ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 export function StripeConnectCard() {
   const {
@@ -22,6 +24,11 @@ export function StripeConnectCard() {
   const dashboard = useStripeDashboard();
 
   const handleOnboard = async () => {
+    if (!canPerformAction()) {
+      setBlockedOpen(true);
+      return;
+    }
+
     try {
       const result = await onboarding.mutateAsync();
       if (result.url) {
@@ -33,6 +40,11 @@ export function StripeConnectCard() {
   };
 
   const handleDashboard = async () => {
+    if (!canPerformAction()) {
+      setBlockedOpen(true);
+      return;
+    }
+
     try {
       const result = await dashboard.mutateAsync();
       if (result.url) {
@@ -76,6 +88,9 @@ export function StripeConnectCard() {
     account?.payoutsEnabled &&
     account?.detailsSubmitted;
 
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [blockedOpen, setBlockedOpen] = useState(false);
+
   return (
     <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -117,10 +132,10 @@ export function StripeConnectCard() {
         {/* Right: Action */}
         {!isFullyOnboarded ? (
           <Button
-            onClick={handleOnboard}
-            disabled={onboarding.isPending}
-            className="shrink-0 sm:min-w-44"
-          >
+              onClick={handleOnboard}
+              disabled={onboarding.isPending || Boolean(restriction)}
+              className="shrink-0 sm:min-w-44"
+            >
             {onboarding.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -130,11 +145,11 @@ export function StripeConnectCard() {
           </Button>
         ) : (
           <Button
-            variant="outline"
-            onClick={handleDashboard}
-            disabled={dashboard.isPending}
-            className="shrink-0 sm:min-w-44"
-          >
+              variant="outline"
+              onClick={handleDashboard}
+              disabled={dashboard.isPending || Boolean(restriction)}
+              className="shrink-0 sm:min-w-44"
+            >
             {dashboard.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -151,6 +166,11 @@ export function StripeConnectCard() {
         </p>
       )}
     </Card>
+    <VendorActionBlockedDialog
+      open={blockedOpen}
+      onOpenChange={setBlockedOpen}
+      restriction={restriction || undefined}
+    />
   );
 }
 

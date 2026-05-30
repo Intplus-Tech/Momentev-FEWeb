@@ -67,8 +67,12 @@ type StaffMember = {
 export const TeamSection = () => {
   const { data: staffList = [], isLoading: loadingStaff } = useVendorStaff();
   const { data: permissionsList = [] } = useVendorPermissions();
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
   const updateStaffMutation = useUpdateVendorStaff();
   const deleteStaffMutation = useDeleteVendorStaff();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   const [openMemberId, setOpenMemberId] = useState<string | null>(null);
   const [memberToDelete, setMemberToDelete] = useState<StaffMember | null>(
@@ -157,6 +161,11 @@ export const TeamSection = () => {
       }));
 
     try {
+      if (!canPerformAction()) {
+        setBlockedOpen(true);
+        return;
+      }
+
       await updateStaffMutation.mutateAsync({
         id: selected._id,
         data: {
@@ -172,6 +181,11 @@ export const TeamSection = () => {
   };
 
   const handleDeleteMember = (member: StaffMember) => {
+    if (!canPerformAction()) {
+      setBlockedOpen(true);
+      return;
+    }
+
     setMemberToDelete(member);
   };
 
@@ -404,7 +418,16 @@ export const TeamSection = () => {
         </div>
 
         <PermissionActionGate module="manage_staff" action="write">
-          <Button variant={"link"} onClick={() => setIsAddMemberOpen(true)}>
+          <Button
+            variant={"link"}
+            onClick={() => {
+              if (!canPerformAction()) {
+                setBlockedOpen(true);
+                return;
+              }
+              setIsAddMemberOpen(true);
+            }}
+          >
             + Add Another Member
           </Button>
         </PermissionActionGate>
@@ -412,6 +435,8 @@ export const TeamSection = () => {
         <AddMemberModal
           open={isAddMemberOpen}
           onOpenChange={setIsAddMemberOpen}
+          disabled={Boolean(restriction)}
+          onBlocked={() => setBlockedOpen(true)}
           onMemberAdded={() => {
             // No manual fetch needed, react-query invalidates automatically
           }}
@@ -419,7 +444,13 @@ export const TeamSection = () => {
 
         <AlertDialog
           open={!!memberToDelete}
-          onOpenChange={(open) => !open && setMemberToDelete(null)}
+          onOpenChange={(open) => {
+            if (open && !canPerformAction()) {
+              setBlockedOpen(true);
+              return;
+            }
+            if (!open) setMemberToDelete(null);
+          }}
         >
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -443,6 +474,11 @@ export const TeamSection = () => {
                 disabled={deleteStaffMutation.isPending}
                 onClick={(e) => {
                   e.preventDefault();
+                  if (!canPerformAction()) {
+                    setBlockedOpen(true);
+                    return;
+                  }
+
                   if (memberToDelete) performDelete(memberToDelete._id);
                 }}
               >
@@ -455,6 +491,11 @@ export const TeamSection = () => {
           </AlertDialogContent>
         </AlertDialog>
       </div>
+      <VendorActionBlockedDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        restriction={restriction || undefined}
+      />
     </SectionShell>
   );
 };

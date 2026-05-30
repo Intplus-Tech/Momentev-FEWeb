@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,12 +8,20 @@ import {
   useStripeOnboarding,
 } from "@/hooks/api/use-stripe-account";
 import { AlertTriangle, CheckCircle2, AlertCircle, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 export function StripeConnectBanner() {
   const { data: account, isLoading, isError } = useStripeAccount();
   const onboarding = useStripeOnboarding();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleOnboard = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     try {
       const result = await onboarding.mutateAsync();
       if (result.url) {
@@ -73,7 +82,7 @@ export function StripeConnectBanner() {
         {/* Right: CTA */}
         <Button
           onClick={handleOnboard}
-          disabled={onboarding.isPending}
+          disabled={onboarding.isPending || Boolean(restriction)}
           className="shrink-0 bg-amber-600 text-white hover:bg-amber-700"
         >
           {onboarding.isPending ? (
@@ -91,6 +100,12 @@ export function StripeConnectBanner() {
             "Failed to start onboarding. Please try again."}
         </p>
       )}
+
+      <VendorActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+        restriction={restriction}
+      />
     </Card>
   );
 }

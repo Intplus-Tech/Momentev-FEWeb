@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { CLIENT_BAN_TITLE, CLIENT_BAN_DESCRIPTION } from "@/lib/client-access";
 import { ClientSidebar } from "./_components/ClientSidebar";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
+
+
 function ClientBanner() {
   const { data: user, isBanned } = useClientActionGuard();
 
@@ -21,7 +23,7 @@ function ClientBanner() {
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="min-w-0 flex-1 space-y-0.5">
             <p className="text-sm font-semibold">{CLIENT_BAN_TITLE}</p>
-            <p className="text-xs sm:text-sm text-foreground/80 truncate">{CLIENT_BAN_DESCRIPTION}</p>
+            <p className="text-xs sm:text-sm text-foreground/80 max-w-4xl">{CLIENT_BAN_DESCRIPTION}</p>
           </div>
         </div>
         <div className="mt-2 sm:mt-0 shrink-0">

@@ -15,9 +15,8 @@ import {
   useChatRealtime,
   useMarkConversationRead,
 } from "@/hooks/api/use-chat";
-import { useClientActionGuard } from "@/hooks/use-client-action-guard";
-import { ClientActionBlockedDialog } from "@/components/shared/client-action-blocked-dialog";
-import { useState } from "react";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 import type { ChatConversation } from "@/types/chat";
 import { uploadFile } from "@/lib/actions/upload";
 
@@ -47,14 +46,13 @@ const VendorThreadPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadingMessage, setUploadingMessage] =
     useState<UploadingMessage | null>(null);
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const { data: conversations = [] } = useConversations();
   const { data: messages = [] } = useChatMessages(threadId);
   const { mutate: sendMessage } = useSendMessage();
   const { mutate: markAsRead } = useMarkConversationRead();
-  const { restriction } = useClientActionGuard();
-
-  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const { restriction, canPerformAction } = useVendorActionGuard();
 
   useChatRealtime(threadId);
 
@@ -90,6 +88,10 @@ const VendorThreadPage = () => {
   };
 
   const handleSend = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     const trimmed = messageText.trim();
     if (!threadId) return;
 
@@ -240,10 +242,11 @@ const VendorThreadPage = () => {
             onRemoveAttachment={handleRemoveAttachment}
             isUploading={isUploading}
             restriction={restriction}
+            showInlineBanner={false}
           />
         </PermissionActionGate>
       </div>
-      <ClientActionBlockedDialog
+      <VendorActionBlockedDialog
         open={showBlockedDialog}
         onOpenChange={setShowBlockedDialog}
         restriction={restriction}

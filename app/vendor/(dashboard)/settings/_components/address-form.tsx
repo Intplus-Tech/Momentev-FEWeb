@@ -22,6 +22,8 @@ import { updateUserProfile } from "@/lib/actions/user";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 const addressSchema = z.object({
   street: z.string().min(1, "Street is required"),
@@ -50,6 +52,8 @@ interface AddressFormProps {
 export function AddressForm({ address }: AddressFormProps) {
   const [isEditing, setIsEditing] = useState(!address);
   const queryClient = useQueryClient();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
@@ -79,6 +83,10 @@ export function AddressForm({ address }: AddressFormProps) {
   }, [address, form]);
 
   const onSubmit = async (values: AddressFormValues) => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     try {
       const payload = {
         ...values,
@@ -233,6 +241,7 @@ export function AddressForm({ address }: AddressFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 p-4">
+        <fieldset disabled={Boolean(restriction)} className="contents">
         <div className="grid gap-4 md:grid-cols-2">
           <FormField
             control={form.control}
@@ -374,6 +383,13 @@ export function AddressForm({ address }: AddressFormProps) {
               className="px-6"
             >
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          </fieldset>
+
+          <VendorActionBlockedDialog
+            open={showBlockedDialog}
+            onOpenChange={setShowBlockedDialog}
+            restriction={restriction}
+          />
               {address ? "Update Address" : "Create Address"}
             </Button>
           </PermissionActionGate>

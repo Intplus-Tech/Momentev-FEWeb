@@ -38,6 +38,8 @@ import {
 } from "../../../../../components/ui/popover";
 import { cn } from "@/lib/utils";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 import { SectionShell } from "./section-shell";
 
@@ -54,6 +56,8 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export const ProfileSection = () => {
   const [open, setOpen] = useState(false);
   const { data: user, isLoading } = useUserProfile();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const queryClient = useQueryClient();
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -87,6 +91,10 @@ export const ProfileSection = () => {
   }, [user, form]);
 
   const onSubmit = async (values: ProfileFormValues) => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     try {
       let finalAvatarId = undefined;
 
@@ -168,6 +176,7 @@ export const ProfileSection = () => {
             className="flex flex-col gap-6 p-4 sm:p-6"
             onSubmit={form.handleSubmit(onSubmit)}
           >
+            <fieldset disabled={Boolean(restriction)} className="contents">
             <div className="flex justify-center">
               <FormField
                 control={form.control}
@@ -187,6 +196,7 @@ export const ProfileSection = () => {
                               // Fallback
                             }
                           }
+                        </fieldset>
                         }}
                       />
                     </FormControl>
@@ -258,7 +268,7 @@ export const ProfileSection = () => {
                           <div className="relative">
                             <button
                               type="button"
-                              className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-[42px] rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
+                              className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-10.5 rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
                             >
                               <span className={cn(!field.value && "opacity-0")}>
                                 {field.value ? format(field.value, "PPP") : "Select date"}
@@ -266,6 +276,12 @@ export const ProfileSection = () => {
                               <ChevronDownIcon className="h-4 w-4 opacity-50" />
                             </button>
                             <label
+
+                          <VendorActionBlockedDialog
+                            open={showBlockedDialog}
+                            onOpenChange={setShowBlockedDialog}
+                            restriction={restriction}
+                          />
                               className={cn(
                                 "pointer-events-none absolute left-4 z-10 bg-background px-2 transition-all duration-200 -translate-y-4",
                                 field.value || open

@@ -20,6 +20,8 @@ import {
   useVendorPermissions,
   useAddVendorStaff,
 } from "@/hooks/api/use-vendor";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 interface AddMemberModalProps {
   open: boolean;
@@ -35,6 +37,8 @@ export function AddMemberModal({
   const { data: permissionsList = [], isLoading: loadingPermissions } =
     useVendorPermissions();
   const addStaffMutation = useAddVendorStaff();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   // Form State
   const [firstName, setFirstName] = useState("");
@@ -74,6 +78,10 @@ export function AddMemberModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
 
     if (!firstName || !lastName || !email) {
       toast.error("Please fill in all required fields");
@@ -126,12 +134,13 @@ export function AddMemberModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-150 max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>New User</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
+          <fieldset disabled={Boolean(restriction)} className="contents">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="full-name">Full Name</Label>
@@ -154,6 +163,13 @@ export function AddMemberModal({
             </div>
 
             <div className="space-y-2">
+
+            <VendorActionBlockedDialog
+              open={showBlockedDialog}
+              onOpenChange={setShowBlockedDialog}
+              restriction={restriction}
+            />
+          </fieldset>
               <Label htmlFor="email">Email Address</Label>
               <Input
                 id="email"

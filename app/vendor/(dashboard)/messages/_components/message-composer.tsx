@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Send, Smile, Paperclip, X, FileIcon } from "lucide-react";
+import { Send, Smile, Paperclip, X, FileIcon, AlertTriangle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import { useTheme } from "next-themes";
+import type { VendorActionRestriction } from "@/lib/vendor-access";
 
 export type PendingAttachment = {
   file: File;
@@ -24,6 +25,8 @@ export type MessageComposerProps = {
   onFileSelect?: (file: File) => void;
   onRemoveAttachment?: () => void;
   isUploading?: boolean;
+  restriction?: VendorActionRestriction | null;
+  showInlineBanner?: boolean;
 };
 
 export const MessageComposer = ({
@@ -34,9 +37,12 @@ export const MessageComposer = ({
   onFileSelect,
   onRemoveAttachment,
   isUploading,
+  restriction = null,
+  showInlineBanner = true,
 }: MessageComposerProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { theme } = useTheme();
+  const isRestricted = Boolean(restriction);
 
   const handleAttachClick = () => {
     fileInputRef.current?.click();
@@ -54,6 +60,18 @@ export const MessageComposer = ({
 
   return (
     <div className="shrink-0 border-t bg-background px-4 py-4">
+      {isRestricted && showInlineBanner ? (
+        <div className="mb-3 rounded-xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-amber-950 dark:text-amber-50">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="space-y-1">
+              <p className="text-sm font-semibold">{restriction?.title}</p>
+              <p className="text-xs text-foreground/80">{restriction?.description}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       {/* Pending attachment preview */}
       {pendingAttachment && (
         <div className="mb-3 flex items-center gap-3 rounded-xl border bg-muted/30 p-3">
@@ -81,7 +99,7 @@ export const MessageComposer = ({
             variant="ghost"
             size="icon-sm"
             onClick={onRemoveAttachment}
-            disabled={isUploading}
+            disabled={isUploading || isRestricted}
           >
             <X className="h-4 w-4" />
           </Button>
@@ -92,7 +110,7 @@ export const MessageComposer = ({
             size="icon-sm"
             className="rounded-full"
             onClick={onSend}
-            disabled={isUploading}
+            disabled={isUploading || isRestricted}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -108,6 +126,7 @@ export const MessageComposer = ({
               variant="ghost"
               size="icon-sm"
               className="text-muted-foreground"
+              disabled={isUploading || isRestricted}
             >
               <Smile className="h-4 w-4" />
             </Button>
@@ -133,7 +152,7 @@ export const MessageComposer = ({
           size="icon-sm"
           className="text-muted-foreground"
           onClick={handleAttachClick}
-          disabled={isUploading}
+          disabled={isUploading || isRestricted}
         >
           <Paperclip className="h-4 w-4" />
         </Button>
@@ -152,12 +171,14 @@ export const MessageComposer = ({
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
-              onSend();
+              if (!isRestricted) {
+                onSend();
+              }
             }
           }}
           placeholder="Type your message here..."
-          className="h-11 flex-1 resize-none border-0 bg-transparent px-2 py-[10px] text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          disabled={isUploading}
+          className="h-11 flex-1 resize-none border-0 bg-transparent px-2 py-2.5 text-sm focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={isUploading || isRestricted}
         />
         <Button
           type="button"
@@ -165,7 +186,7 @@ export const MessageComposer = ({
           size="icon-sm"
           className="rounded-full"
           onClick={onSend}
-          disabled={isUploading}
+          disabled={isUploading || isRestricted}
         >
           <Send className="h-4 w-4" />
         </Button>

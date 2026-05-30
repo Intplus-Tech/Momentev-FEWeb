@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 type PaymentModel = "upfront_payout" | "split_payout";
 
@@ -40,6 +42,8 @@ const PAYMENT_MODEL_OPTIONS: Array<{
 export function PaymentModelCard() {
   const queryClient = useQueryClient();
   const profileQuery = useUserProfile();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const currentModel = useMemo(
     () => normalizePaymentModel(profileQuery.data?.vendor?.paymentModel),
@@ -113,7 +117,10 @@ export function PaymentModelCard() {
 
         <RadioGroup
           value={selectedModel}
-          onValueChange={(value) => setSelectedModel(value as PaymentModel)}
+          onValueChange={(value) => {
+            if (restriction) return;
+            setSelectedModel(value as PaymentModel);
+          }}
           className="space-y-3"
         >
           {PAYMENT_MODEL_OPTIONS.map((option) => (
@@ -142,8 +149,19 @@ export function PaymentModelCard() {
             Allowed values: <code>upfront_payout</code> or <code>split_payout</code>
           </p> */}
           <Button
-            onClick={() => updateModelMutation.mutate(selectedModel)}
-            disabled={isUnchanged || updateModelMutation.isPending || profileQuery.isLoading}
+            onClick={() => {
+              if (!canPerformAction(() => setShowBlockedDialog(true))) {
+                return;
+              }
+
+              updateModelMutation.mutate(selectedModel);
+            }}
+            disabled={
+              isUnchanged ||
+              updateModelMutation.isPending ||
+              profileQuery.isLoading ||
+              Boolean(restriction)
+            }
             className="sm:min-w-44"
           >
             {updateModelMutation.isPending ? (
@@ -156,6 +174,12 @@ export function PaymentModelCard() {
             )}
           </Button>
         </div>
+
+        <VendorActionBlockedDialog
+          open={showBlockedDialog}
+          onOpenChange={setShowBlockedDialog}
+          restriction={restriction}
+        />
       </div>
     </Card>
   );

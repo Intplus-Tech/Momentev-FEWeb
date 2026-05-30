@@ -30,6 +30,8 @@ import { ChevronDown, Search, MoreHorizontal, Loader2 } from "lucide-react";
 import { decideVendorBooking } from "@/lib/actions/booking";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
 import formatMoney from "@/lib/formatMoney";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 const PAGE_SIZE = 5;
 
@@ -323,8 +325,14 @@ export function ConfirmedBookingsTable({
 
 function BookingActions({ booking, router }: { booking: BookingResponse, router: any }) {
   const [isPending, startTransition] = useTransition();
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
 
   const handleDecision = (decision: "confirmed" | "rejected") => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     startTransition(async () => {
       const result = await decideVendorBooking(booking._id, decision);
       if (result.success) {
@@ -342,9 +350,10 @@ function BookingActions({ booking, router }: { booking: BookingResponse, router:
 
   return (
     <PermissionActionGate module="view_orders" action="write" visualIndication={false}>
-      <DropdownMenu>
+      <div className="inline-flex items-center gap-2">
+        <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending}>
+          <Button variant="ghost" className="h-8 w-8 p-0" disabled={isPending || Boolean(restriction)}>
             <span className="sr-only">Open menu</span>
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -364,7 +373,14 @@ function BookingActions({ booking, router }: { booking: BookingResponse, router:
             Reject Booking
           </DropdownMenuItem>
         </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+
+        <VendorActionBlockedDialog
+          open={showBlockedDialog}
+          onOpenChange={setShowBlockedDialog}
+          restriction={restriction}
+        />
+      </div>
     </PermissionActionGate>
   );
 }

@@ -63,6 +63,8 @@ import { updateVendorService } from "@/lib/actions/vendor-services";
 import { useServiceSpecialties } from "@/hooks/api/use-service-categories";
 import { toast } from "sonner";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 // use formatMoney for price formatting
 
@@ -148,6 +150,8 @@ export function ServiceCard({
     expanded ? "auto" : "0px",
   );
   const servicePricing = getUniversalSpecialtyPricing(specialties);
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [blockedOpen, setBlockedOpen] = useState(false);
 
   useEffect(() => {
     const node = contentWrapperRef.current;
@@ -173,7 +177,8 @@ export function ServiceCard({
   }, [containerHeight, expanded]);
 
   return (
-    <Card className="rounded-2xl border border-border bg-card p-5 transition">
+    <>
+      <Card className="rounded-2xl border border-border bg-card p-5 transition">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <button
           type="button"
@@ -283,6 +288,8 @@ export function ServiceCard({
               <h4 className="font-semibold text-foreground">Specialties</h4>
               <PermissionActionGate module="manage_services" action="write">
                 <AddSpecialtyDialog
+                  disabled={Boolean(restriction)}
+                  onBlocked={() => setBlockedOpen(true)}
                   vendorId={vendorId}
                   categoryId={service.serviceCategory?._id}
                   priceCharge={servicePricing.priceCharge}
@@ -332,6 +339,8 @@ export function ServiceCard({
                           <div className="flex justify-end gap-2">
                             <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
                               <DeleteSpecialtyAlert
+                                disabled={Boolean(restriction)}
+                                onBlocked={() => setBlockedOpen(true)}
                                 specialty={spec}
                                 onUpdate={onRefreshAll}
                               />
@@ -390,6 +399,8 @@ export function ServiceCard({
           <div className="flex flex-wrap gap-3 pt-2">
             <PermissionActionGate module="manage_services" action="write">
               <EditServiceDialog
+                disabled={Boolean(restriction)}
+                onBlocked={() => setBlockedOpen(true)}
                 service={service}
                 specialties={specialties}
                 onUpdated={onRefreshAll}
@@ -403,7 +414,14 @@ export function ServiceCard({
           </div>
         </div>
       </div>
-    </Card>
+      </Card>
+
+      <VendorActionBlockedDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        restriction={restriction || undefined}
+      />
+    </>
   );
 }
 
@@ -412,9 +430,13 @@ export function ServiceCard({
 function DeleteSpecialtyAlert({
   specialty,
   onUpdate,
+  disabled = false,
+  onBlocked,
 }: {
   specialty: VendorSpecialtyItem;
   onUpdate: () => void;
+  disabled?: boolean;
+  onBlocked?: () => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -434,12 +456,19 @@ function DeleteSpecialtyAlert({
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
+    <AlertDialog open={open} onOpenChange={(next) => {
+      if (next && disabled) {
+        onBlocked?.();
+        return;
+      }
+      setOpen(next);
+    }}>
       <AlertDialogTrigger asChild>
         <Button
           size="icon"
           variant="ghost"
           className="h-8 w-8 text-muted-foreground hover:text-red-600"
+          disabled={disabled}
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -483,6 +512,8 @@ function AddSpecialtyDialog({
   price,
   existingSpecialtyIds,
   onCreated,
+  disabled = false,
+  onBlocked,
 }: {
   vendorId: string;
   categoryId: string;
@@ -490,6 +521,8 @@ function AddSpecialtyDialog({
   price: string;
   existingSpecialtyIds: string[];
   onCreated: () => void;
+  disabled?: boolean;
+  onBlocked?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -515,6 +548,10 @@ function AddSpecialtyDialog({
       toast.error("Please select a specialty");
       return;
     }
+    if (disabled) {
+      onBlocked?.();
+      return;
+    }
     setLoading(true);
     const res = await createVendorSpecialty({
       vendorId,
@@ -533,9 +570,15 @@ function AddSpecialtyDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => {
+      if (next && disabled) {
+        onBlocked?.();
+        return;
+      }
+      setOpen(next);
+    }}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="gap-1.5 rounded-full">
+        <Button size="sm" variant="outline" className="gap-1.5 rounded-full" disabled={disabled}>
           <Plus className="h-4 w-4" /> Add Specialty
         </Button>
       </DialogTrigger>
@@ -603,12 +646,16 @@ function EditServiceDialog({
   service,
   specialties,
   onUpdated,
+  disabled = false,
+  onBlocked,
 }: {
   service: VendorService;
   specialties: VendorSpecialtyItem[];
   onUpdated: (
     updatedService?: Partial<VendorService> & { _id: string },
   ) => void;
+  disabled?: boolean;
+  onBlocked?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -704,6 +751,11 @@ function EditServiceDialog({
       additionalFees: validFees.length > 0 ? validFees : [],
     };
 
+    if (disabled) {
+      onBlocked?.();
+      return;
+    }
+
     const res = await updateVendorService(service._id, payload);
     if (res.success) {
       const specialtyIds = specialties.map((specialty) => specialty._id);
@@ -748,11 +800,18 @@ function EditServiceDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>Edit Service Configuration</Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-140 max-h-[85vh] overflow-y-auto">
+    <>
+      <Dialog open={open} onOpenChange={(next) => {
+        if (next && disabled) {
+          onBlocked?.();
+          return;
+        }
+        setOpen(next);
+      }}>
+        <DialogTrigger asChild>
+          <Button disabled={disabled}>Edit Service Configuration</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-140 max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Service Configuration</DialogTitle>
         </DialogHeader>
@@ -971,6 +1030,7 @@ function EditServiceDialog({
           </Button>
         </DialogFooter>
       </DialogContent>
-    </Dialog>
+      </Dialog>
+    </>
   );
 }

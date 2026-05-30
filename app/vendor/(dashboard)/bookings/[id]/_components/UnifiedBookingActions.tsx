@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { queryKeys } from "@/lib/react-query/keys";
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 import {
   adjustUnifiedBooking,
   sendUnifiedBookingInvoice,
@@ -40,10 +42,12 @@ const pricingTypeLabels: Record<PricingType, string> = {
 export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { restriction, canPerformAction } = useVendorActionGuard();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSavedAdjustments, setHasSavedAdjustments] = useState(false);
   const [actualServiceHours, setActualServiceHours] = useState<string>("");
   const [finalPrice, setFinalPrice] = useState<string>("");
+  const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [extraLineItems, setExtraLineItems] = useState<LineItemInput[]>([
     { description: "", amount: "" },
   ]);
@@ -61,6 +65,10 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
   };
 
   const handleConfirmAvailability = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await updateUnifiedBookingStatus(booking._id);
@@ -113,6 +121,10 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
   };
 
   const handleSaveAdjustments = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     const payload = buildAdjustPayload();
     if (!payload) return;
 
@@ -135,6 +147,10 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
   };
 
   const handleSendInvoice = async () => {
+    if (!canPerformAction(() => setShowBlockedDialog(true))) {
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const result = await sendUnifiedBookingInvoice(booking._id);
@@ -174,7 +190,7 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
           <p className="text-sm text-muted-foreground">
             Confirm you are available for this request to start the pricing review.
           </p>
-          <Button onClick={handleConfirmAvailability} disabled={isSubmitting}>
+          <Button onClick={handleConfirmAvailability} disabled={isSubmitting || Boolean(restriction)}>
             Confirm Availability
           </Button>
         </div>
@@ -286,15 +302,21 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
       )}
 
       <div className="flex flex-wrap gap-3">
-        <Button onClick={handleSaveAdjustments} disabled={isSubmitting}>
+        <Button onClick={handleSaveAdjustments} disabled={isSubmitting || Boolean(restriction)}>
           Save Adjustments
         </Button>
         {hasSavedAdjustments && (
-          <Button variant="outline" onClick={handleSendInvoice} disabled={isSubmitting}>
+          <Button variant="outline" onClick={handleSendInvoice} disabled={isSubmitting || Boolean(restriction)}>
             Send Final Invoice
           </Button>
         )}
       </div>
+
+      <VendorActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={setShowBlockedDialog}
+        restriction={restriction}
+      />
     </section>
   );
 }
