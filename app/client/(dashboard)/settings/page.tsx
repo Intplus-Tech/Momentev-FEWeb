@@ -2,14 +2,17 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Bookmark, MessageSquare, Shield, User2 } from "lucide-react";
+import { Bookmark, LifeBuoy, MessageSquare, Shield } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ReviewsSection } from "./_components/reviews-section";
 import { SavedVendorsSection } from "./_components/saved-vendors-section";
 import { SecuritySection } from "./_components/security-section";
+import { SupportSection } from "./_components/support-section";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
-const validTabValues = ["saved", "reviews", "security"];
+
+const validTabValues = ["saved", "reviews", "security", "support"];
 
 export default function ClientSettingsPage() {
   return (
@@ -23,6 +26,7 @@ function SettingsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const { data: userProfile } = useUserProfile();
 
   const validTabs = useMemo(() => new Set(validTabValues), []);
 
@@ -86,6 +90,13 @@ function SettingsContent() {
             <Shield className="h-4 w-4" />
             <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
+          <TabsTrigger
+            value="support"
+            className="gap-2 bg-muted px-4 py-2 data-[state=active]:bg-foreground data-[state=active]:text-white"
+          >
+            <LifeBuoy className="h-4 w-4" />
+            <span className="hidden sm:inline">Support</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="saved" className="space-y-4">
@@ -98,6 +109,14 @@ function SettingsContent() {
 
         <TabsContent value="security" className="space-y-4">
           <SecuritySection />
+        </TabsContent>
+
+        <TabsContent value="support" className="space-y-4">
+          <SupportSection
+            firstName={userProfile?.firstName ?? ""}
+            lastName={userProfile?.lastName ?? ""}
+            email={userProfile?.email ?? ""}
+          />
         </TabsContent>
       </Tabs>
     </section>

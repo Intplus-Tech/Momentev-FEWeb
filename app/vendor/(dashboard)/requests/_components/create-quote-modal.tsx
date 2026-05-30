@@ -562,11 +562,11 @@ export function CreateQuoteModal({ open, onOpenChange, request, draftQuote, isRe
               Submit Revision
             </Button>
           ) : (
-                disabled={savingDraft || sending || Boolean(restriction)}
+            <>
               <Button
                 type="button"
                 variant="outline"
-                disabled={savingDraft || sending}
+                disabled={savingDraft || sending || Boolean(restriction)}
                 onClick={handleSaveDraft}
                 className="w-full border-[#2F6BFF] text-[#2F6BFF] hover:bg-[#eef2ff] sm:w-auto"
               >

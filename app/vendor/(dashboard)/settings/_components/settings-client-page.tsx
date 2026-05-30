@@ -6,7 +6,7 @@ import { LifeBuoy, MessageSquare, Shield } from "lucide-react";
 import { Loader2 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supportPrefill } from "../data";
+
 import { ReviewsSection } from "./reviews-section";
 import { SecuritySection } from "./security-section";
 import { SupportSection } from "./support-section";
@@ -170,7 +170,13 @@ function VendorSettingsContent() {
         </TabsContent>
 
         <TabsContent value="support" className="space-y-4">
-          <SupportSection prefill={supportPrefill} />
+          <SupportSection
+            prefill={{
+              firstName: userProfile?.firstName ?? "",
+              lastName: userProfile?.lastName ?? "",
+              email: userProfile?.email ?? "",
+            }}
+          />
         </TabsContent>
       </Tabs>
     </section>

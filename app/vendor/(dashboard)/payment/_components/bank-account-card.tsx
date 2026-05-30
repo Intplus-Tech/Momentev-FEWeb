@@ -25,6 +25,7 @@ export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
 
   // Assuming we just want to show the list of attached bank accounts
   return (
+    <>
     <Card className="rounded-3xl border bg-white p-6">
       {restriction && (
         <div className="mb-4 flex items-center justify-between rounded-xl bg-amber-50 p-3">
@@ -76,10 +77,11 @@ export function BankAccountCard({ paymentMethods }: BankAccountCardProps) {
         ))}
       </div>
     </Card>
-      <VendorActionBlockedDialog
-        open={showBlockedDialog}
-        onOpenChange={setShowBlockedDialog}
-        restriction={restriction}
-      />
+    <VendorActionBlockedDialog
+      open={showBlockedDialog}
+      onOpenChange={setShowBlockedDialog}
+      restriction={restriction}
+    />
+    </>
   );
 }

@@ -9,6 +9,7 @@ import {
   useStripeDashboard,
 } from "@/hooks/api/use-stripe-account";
 import { ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import { useState } from "react";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
@@ -22,7 +23,8 @@ export function StripeConnectCard() {
 
   const onboarding = useStripeOnboarding();
   const dashboard = useStripeDashboard();
-
+  const { restriction, canPerformAction } = useVendorActionGuard();
+  const [blockedOpen, setBlockedOpen] = useState(false);
   const handleOnboard = async () => {
     if (!canPerformAction()) {
       setBlockedOpen(true);
@@ -88,10 +90,8 @@ export function StripeConnectCard() {
     account?.payoutsEnabled &&
     account?.detailsSubmitted;
 
-  const { restriction, canPerformAction } = useVendorActionGuard();
-  const [blockedOpen, setBlockedOpen] = useState(false);
-
   return (
+    <>
     <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         {/* Left: Status info */}
@@ -171,6 +171,7 @@ export function StripeConnectCard() {
       onOpenChange={setBlockedOpen}
       restriction={restriction || undefined}
     />
+    </>
   );
 }
 

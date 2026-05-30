@@ -177,176 +177,176 @@ export const ProfileSection = () => {
             onSubmit={form.handleSubmit(onSubmit)}
           >
             <fieldset disabled={Boolean(restriction)} className="contents">
-            <div className="flex justify-center">
-              <FormField
-                control={form.control}
-                name="avatar"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <FileUpload
-                        variant="avatar"
-                        value={field.value}
-                        onFileSelect={(file) => {
-                          setSelectedFile(file);
-                          if (file) {
-                            try {
-                              field.onChange(URL.createObjectURL(file));
-                            } catch (e) {
-                              // Fallback
+              <div className="flex justify-center">
+                <FormField
+                  control={form.control}
+                  name="avatar"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FileUpload
+                          variant="avatar"
+                          value={field.value}
+                          onFileSelect={(file) => {
+                            setSelectedFile(file);
+                            if (file) {
+                              try {
+                                field.onChange(URL.createObjectURL(file));
+                              } catch (e) {
+                                // Fallback
+                              }
                             }
-                          }
-                        </fieldset>
-                        }}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="fullName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <FloatingLabelInput label="Full Name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <FloatingLabelInput
-                        label="Email"
-                        type="email"
-                        inputMode="email"
-                        autoComplete="email"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <FloatingLabelInput
-                        label="Phone Number"
-                        inputMode="tel"
-                        autoComplete="tel"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="dob"
-                render={({ field }) => (
-                  <FormItem className="mt-1">
-                    <Popover open={open} onOpenChange={setOpen}>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-10.5 rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
-                            >
-                              <span className={cn(!field.value && "opacity-0")}>
-                                {field.value ? format(field.value, "PPP") : "Select date"}
-                              </span>
-                              <ChevronDownIcon className="h-4 w-4 opacity-50" />
-                            </button>
-                            <label
-
-                          <VendorActionBlockedDialog
-                            open={showBlockedDialog}
-                            onOpenChange={setShowBlockedDialog}
-                            restriction={restriction}
-                          />
-                              className={cn(
-                                "pointer-events-none absolute left-4 z-10 bg-background px-2 transition-all duration-200 -translate-y-4",
-                                field.value || open
-                                  ? "top-2.5 text-xs text-muted-foreground"
-                                  : "top-2/3 text-sm text-muted-foreground"
-                              )}
-                            >
-                              Date of Birth
-                            </label>
-                          </div>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-auto overflow-hidden p-0"
-                        align="start"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          captionLayout="dropdown"
-                          fromYear={1900}
-                          toYear={new Date().getFullYear()}
-                          onSelect={(newDate) => {
-                            if (newDate) {
-                              field.onChange(newDate);
-                            }
-                            setOpen(false);
                           }}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <PermissionActionGate module="business_profile" action="write">
-                <Button
-                  type="submit"
-                  className="px-6"
-                  disabled={!isDirty || isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update Profile"
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </Button>
-              </PermissionActionGate>
-              {isDirty && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={onReset}
-                  disabled={isSubmitting}
-                >
-                  Reset Changes
-                </Button>
-              )}
-            </div>
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FloatingLabelInput label="Full Name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FloatingLabelInput
+                          label="Email"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <FloatingLabelInput
+                          label="Phone Number"
+                          inputMode="tel"
+                          autoComplete="tel"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="dob"
+                  render={({ field }) => (
+                    <FormItem className="mt-1">
+                      <Popover open={open} onOpenChange={setOpen}>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                className="flex w-full items-center justify-between px-2.5 py-1 text-base shadow-xs min-h-10.5 rounded-md border border-input bg-white font-medium transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/40 text-foreground"
+                              >
+                                <span className={cn(!field.value && "opacity-0")}>
+                                  {field.value ? format(field.value, "PPP") : "Select date"}
+                                </span>
+                                <ChevronDownIcon className="h-4 w-4 opacity-50" />
+                              </button>
+                              <label
+                                className={cn(
+                                  "pointer-events-none absolute left-4 z-10 bg-background px-2 transition-all duration-200 -translate-y-4",
+                                  field.value || open
+                                    ? "top-2.5 text-xs text-muted-foreground"
+                                    : "top-2/3 text-sm text-muted-foreground"
+                                )}
+                              >
+                                Date of Birth
+                              </label>
+                            </div>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent
+                          className="w-auto overflow-hidden p-0"
+                          align="start"
+                        >
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            captionLayout="dropdown"
+                            fromYear={1900}
+                            toYear={new Date().getFullYear()}
+                            onSelect={(newDate) => {
+                              if (newDate) {
+                                field.onChange(newDate);
+                              }
+                              setOpen(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="flex items-center gap-4">
+                <PermissionActionGate module="business_profile" action="write">
+                  <Button
+                    type="submit"
+                    className="px-6"
+                    disabled={!isDirty || isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Profile"
+                    )}
+                  </Button>
+                </PermissionActionGate>
+                {isDirty && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onReset}
+                    disabled={isSubmitting}
+                  >
+                    Reset Changes
+                  </Button>
+                )}
+              </div>
+            </fieldset>
+
+            <VendorActionBlockedDialog
+              open={showBlockedDialog}
+              onOpenChange={setShowBlockedDialog}
+              restriction={restriction}
+            />
           </form>
         </Form>
       )}

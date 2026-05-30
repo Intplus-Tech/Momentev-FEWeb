@@ -141,110 +141,110 @@ export function AddMemberModal({
 
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <fieldset disabled={Boolean(restriction)} className="contents">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="full-name">Full Name</Label>
-              <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="full-name">Full Name</Label>
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    id="first-name"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    required
+                  />
+                  <Input
+                    id="last-name"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
                 <Input
-                  id="first-name"
-                  placeholder="First Name"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  required
-                />
-                <Input
-                  id="last-name"
-                  placeholder="Last Name"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="rounded-lg border bg-muted/30 mt-4">
+              <div className="border-b bg-muted/50 px-4 py-3 text-sm font-semibold">
+                Permission
+              </div>
+              <div className="px-4 py-3">
+                <div className="grid grid-cols-3 gap-2 text-sm font-medium mb-3">
+                  <span>Label</span>
+                  <span className="text-center">Read</span>
+                  <span className="text-center">Edit</span>
+                </div>
 
-            <VendorActionBlockedDialog
-              open={showBlockedDialog}
-              onOpenChange={setShowBlockedDialog}
-              restriction={restriction}
-            />
+                {loadingPermissions ? (
+                  <div className="flex justify-center py-4">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {permissionsList.map((permission: string) => (
+                      <div
+                        key={permission}
+                        className="grid grid-cols-3 items-center gap-2 text-sm"
+                      >
+                        <span className="capitalize">
+                          {permission.replace(/_/g, " ")}
+                        </span>
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={
+                              selectedPermissions[permission]?.read || false
+                            }
+                            onCheckedChange={(checked) =>
+                              handlePermissionChange(
+                                permission,
+                                "read",
+                                checked as boolean,
+                              )
+                            }
+                            aria-label={`${permission} read`}
+                          />
+                        </div>
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={
+                              selectedPermissions[permission]?.write || false
+                            }
+                            onCheckedChange={(checked) =>
+                              handlePermissionChange(
+                                permission,
+                                "write",
+                                checked as boolean,
+                              )
+                            }
+                            aria-label={`${permission} edit`}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </fieldset>
-              <Label htmlFor="email">Email Address</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-          </div>
 
-          <div className="rounded-lg border bg-muted/30">
-            <div className="border-b bg-muted/50 px-4 py-3 text-sm font-semibold">
-              Permission
-            </div>
-            <div className="px-4 py-3">
-              <div className="grid grid-cols-3 gap-2 text-sm font-medium mb-3">
-                <span>Label</span>
-                <span className="text-center">Read</span>
-                <span className="text-center">Edit</span>
-              </div>
+          <VendorActionBlockedDialog
+            open={showBlockedDialog}
+            onOpenChange={setShowBlockedDialog}
+            restriction={restriction}
+          />
 
-              {loadingPermissions ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {permissionsList.map((permission: string) => (
-                    <div
-                      key={permission}
-                      className="grid grid-cols-3 items-center gap-2 text-sm"
-                    >
-                      <span className="capitalize">
-                        {permission.replace(/_/g, " ")}
-                      </span>
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={
-                            selectedPermissions[permission]?.read || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handlePermissionChange(
-                              permission,
-                              "read",
-                              checked as boolean,
-                            )
-                          }
-                          aria-label={`${permission} read`}
-                        />
-                      </div>
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={
-                            selectedPermissions[permission]?.write || false
-                          }
-                          onCheckedChange={(checked) =>
-                            handlePermissionChange(
-                              permission,
-                              "write",
-                              checked as boolean,
-                            )
-                          }
-                          aria-label={`${permission} edit`}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter className="gap-2 sm:gap-0 mt-6">
             <Button
               type="button"
               variant="ghost"

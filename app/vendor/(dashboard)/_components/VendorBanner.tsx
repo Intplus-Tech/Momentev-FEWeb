@@ -23,7 +23,7 @@ export function VendorBanner() {
             <p className="text-sm font-semibold">
               {restriction?.title || VENDOR_SUSPENDED_TITLE}
             </p>
-            <p className="truncate text-xs text-foreground/80 sm:text-sm max-w-md">
+            <p className="text-xs text-foreground/80 sm:text-sm max-w-4xl">
               {restriction?.description || VENDOR_SUSPENDED_DESCRIPTION}
             </p>
           </div>
@@ -35,7 +35,7 @@ export function VendorBanner() {
             asChild
             className="shrink-0 border-amber-500/30 bg-background/70 text-foreground hover:bg-background"
           >
-            <a href={restriction?.supportHref || "mailto:support@momentev.com"}>
+            <a href="/vendor/settings?tab=support">
               Contact support
             </a>
           </Button>

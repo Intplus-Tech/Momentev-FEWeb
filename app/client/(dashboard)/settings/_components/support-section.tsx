@@ -21,7 +21,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import type { SupportPrefill } from "../types";
 import { SectionShell } from "./section-shell";
 import { createSupportRequest, getMySupportRequests } from "@/lib/actions/support";
 import type { SupportRequest } from "@/lib/actions/support";
@@ -51,7 +50,9 @@ function PastRequestRow({ req }: { req: SupportRequest }) {
       >
         <div className="flex items-center gap-3 min-w-0">
           <LifeBuoy className="h-4 w-4 shrink-0 text-primary/70" />
-          <span className="text-sm font-medium truncate">{req.message.slice(0, 60)}{req.message.length > 60 ? "…" : ""}</span>
+          <span className="text-sm font-medium truncate">
+            {req.message.slice(0, 60)}{req.message.length > 60 ? "…" : ""}
+          </span>
         </div>
         <div className="flex items-center gap-3 shrink-0">
           <span className="text-xs text-muted-foreground hidden sm:inline">
@@ -68,8 +69,14 @@ function PastRequestRow({ req }: { req: SupportRequest }) {
       {open && (
         <div className="px-4 pb-4 pt-1 border-t border-border/40 space-y-2">
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            <span><span className="font-medium text-foreground">From: </span>{req.firstName} {req.lastName}</span>
-            <span><span className="font-medium text-foreground">Email: </span>{req.email}</span>
+            <span>
+              <span className="font-medium text-foreground">From: </span>
+              {req.firstName} {req.lastName}
+            </span>
+            <span>
+              <span className="font-medium text-foreground">Email: </span>
+              {req.email}
+            </span>
             <span className="col-span-2">
               <span className="font-medium text-foreground">Submitted: </span>
               {format(new Date(req.createdAt), "MMMM d, yyyy 'at' h:mm a")}
@@ -131,17 +138,22 @@ function PastRequestsList() {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export const SupportSection = ({ prefill }: { prefill: SupportPrefill }) => {
+interface SupportSectionProps {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+}
+
+export const SupportSection = ({
+  firstName = "",
+  lastName = "",
+  email = "",
+}: SupportSectionProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<SupportFormValues>({
     resolver: zodResolver(supportSchema),
-    defaultValues: {
-      firstName: prefill.firstName,
-      lastName: prefill.lastName,
-      email: prefill.email,
-      message: "",
-    },
+    defaultValues: { firstName, lastName, email, message: "" },
   });
 
   const onSubmit = async (values: SupportFormValues) => {
@@ -203,7 +215,7 @@ export const SupportSection = ({ prefill }: { prefill: SupportPrefill }) => {
                 <FormItem>
                   <FormLabel className="text-xs text-muted-foreground">Email Address</FormLabel>
                   <FormControl>
-                    <Input {...field} type="email" placeholder="john@example.com" />
+                    <Input {...field} type="email" placeholder="you@example.com" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

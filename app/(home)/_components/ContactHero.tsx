@@ -12,13 +12,19 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
+import { createSupportRequest } from "@/lib/actions/support";
+
 const MIN_WORD_COUNT = 10;
 
 const contactSchema = z.object({
-  name: z
+  firstName: z
     .string()
-    .min(2, "Name must be at least 2 characters")
-    .regex(/^[a-zA-Z\s'\-]+$/, "Name must contain only letters"),
+    .min(1, "First name is required")
+    .regex(/^[a-zA-Z\s'\-]+$/, "First name must contain only letters"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .regex(/^[a-zA-Z\s'\-]+$/, "Last name must contain only letters"),
   email: z
     .string()
     .email("Please enter a valid email address")
@@ -26,12 +32,10 @@ const contactSchema = z.object({
       (val) => {
         const domain = val.split("@")[1]?.toLowerCase();
         if (!domain) return false;
-        // reject obviously invalid domains (must have a dot and a valid TLD)
         return /^[a-z0-9.-]+\.[a-z]{2,}$/.test(domain);
       },
       "Please enter a valid email domain"
     ),
-  subject: z.string().min(3, "Subject must be at least 3 characters"),
   message: z
     .string()
     .min(1, "Message is required")
@@ -59,15 +63,23 @@ export default function ContactHero() {
   const messageValue = watch("message") ?? "";
   const wordCount = messageValue.trim().split(/\s+/).filter(Boolean).length;
 
-  const onSubmit = async (_data: ContactFormData) => {
+  const onSubmit = async (data: ContactFormData) => {
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    reset();
-    toast.success("Sent Successfully", {
-      description: "We'll get back to you as soon as possible.",
-    });
+    try {
+      const result = await createSupportRequest(data);
+      if (result.success) {
+        reset();
+        toast.success("Message sent successfully", {
+          description: "We'll get back to you as soon as possible.",
+        });
+      } else {
+        toast.error(result.error || "Failed to send message. Please try again.");
+      }
+    } catch {
+      toast.error("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -149,44 +161,44 @@ export default function ContactHero() {
             >
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="firstName">First Name</Label>
                   <Input
-                    id="name"
+                    id="firstName"
                     type="text"
-                    placeholder="Your name"
+                    placeholder="First name"
                     className="h-12"
-                    {...register("name")}
+                    {...register("firstName")}
                   />
-                  {errors.name && (
-                    <p className="text-xs text-destructive">{errors.name.message}</p>
+                  {errors.firstName && (
+                    <p className="text-xs text-destructive">{errors.firstName.message}</p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="lastName">Last Name</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
+                    id="lastName"
+                    type="text"
+                    placeholder="Last name"
                     className="h-12"
-                    {...register("email")}
+                    {...register("lastName")}
                   />
-                  {errors.email && (
-                    <p className="text-xs text-destructive">{errors.email.message}</p>
+                  {errors.lastName && (
+                    <p className="text-xs text-destructive">{errors.lastName.message}</p>
                   )}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="subject">Subject</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="subject"
-                  type="text"
-                  placeholder="How can we help?"
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
                   className="h-12"
-                  {...register("subject")}
+                  {...register("email")}
                 />
-                {errors.subject && (
-                  <p className="text-xs text-destructive">{errors.subject.message}</p>
+                {errors.email && (
+                  <p className="text-xs text-destructive">{errors.email.message}</p>
                 )}
               </div>
 
@@ -194,10 +206,11 @@ export default function ContactHero() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="message">Message</Label>
                   <span
-                    className={`text-xs ${wordCount >= MIN_WORD_COUNT
+                    className={`text-xs ${
+                      wordCount >= MIN_WORD_COUNT
                         ? "text-green-600"
                         : "text-muted-foreground"
-                      }`}
+                    }`}
                   >
                     {wordCount} / {MIN_WORD_COUNT} words minimum
                   </span>

@@ -44,6 +44,9 @@ import {
 } from "@/hooks/api/use-vendor";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 
+import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
+import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
+
 import { SectionShell } from "./section-shell";
 import { AddMemberModal } from "./add-member-modal";
 
@@ -67,8 +70,6 @@ type StaffMember = {
 export const TeamSection = () => {
   const { data: staffList = [], isLoading: loadingStaff } = useVendorStaff();
   const { data: permissionsList = [] } = useVendorPermissions();
-import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
-import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
   const updateStaffMutation = useUpdateVendorStaff();
   const deleteStaffMutation = useDeleteVendorStaff();
   const { restriction, canPerformAction } = useVendorActionGuard();

@@ -1,5 +1,3 @@
-"use client";
-
 import ContactHero from "../_components/ContactHero";
 
 export default function ContactPage() {

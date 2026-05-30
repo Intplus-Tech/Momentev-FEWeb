@@ -2806,6 +2806,14 @@ window.onload = function() {
               "type": "string",
               "example": "64f0c2f7a2b6c1a9b3d2eaaa"
             },
+            "vendorId": {
+              "type": "string",
+              "example": "64f0c2f7a2b6c1a9b3d2e555"
+            },
+            "bookingId": {
+              "type": "string",
+              "example": "64f0c2f7a2b6c1a9b3d2ebbb"
+            },
             "rating": {
               "type": "number",
               "example": 5,
@@ -2817,7 +2825,19 @@ window.onload = function() {
               "example": "Fantastic experience",
               "nullable": true
             },
+            "isEdited": {
+              "type": "boolean",
+              "example": false
+            },
+            "isFlagged": {
+              "type": "boolean",
+              "example": false
+            },
             "createdAt": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "updatedAt": {
               "type": "string",
               "format": "date-time"
             },
@@ -16808,6 +16828,77 @@ window.onload = function() {
               }
             }
           }
+        },
+        "patch": {
+          "tags": [
+            "SupportRequests"
+          ],
+          "summary": "Update support request status/notes (Admin)",
+          "description": "Updates the status and/or adminNotes of a support request. Admin-only.",
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ],
+          "parameters": [
+            {
+              "in": "path",
+              "name": "id",
+              "required": true,
+              "schema": {
+                "type": "string"
+              },
+              "description": "SupportRequest ID"
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "pending",
+                        "in_progress",
+                        "resolved"
+                      ]
+                    },
+                    "adminNotes": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "status": "resolved",
+                  "adminNotes": "Answered client query and sent solution."
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Support request updated successfully",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/SupportRequestResponse"
+                  }
+                }
+              }
+            },
+            "401": {
+              "description": "Unauthorized"
+            },
+            "403": {
+              "description": "Forbidden"
+            },
+            "404": {
+              "description": "Support request not found"
+            }
+          }
         }
       },
       "/api/v1/support-requests/vendor/{vendorId}": {
@@ -19561,9 +19652,14 @@ window.onload = function() {
                       "data": [
                         {
                           "_id": "64f0c2f7a2b6c1a9b3d2eaaa",
+                          "vendorId": "64f0c2f7a2b6c1a9b3d2e555",
+                          "bookingId": "64f0c2f7a2b6c1a9b3d2ebbb",
                           "rating": 5,
                           "comment": "Fantastic experience",
+                          "isEdited": false,
+                          "isFlagged": false,
                           "createdAt": "2026-01-10T12:00:00.000Z",
+                          "updatedAt": "2026-01-10T12:00:00.000Z",
                           "reviewer": {
                             "firstName": "Jane",
                             "lastName": "Doe",
