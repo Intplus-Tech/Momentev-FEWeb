@@ -4,12 +4,17 @@ import { getAccessToken, tryRefreshToken } from "@/lib/session";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+export type SupportRequestStatus = "pending" | "in_progress" | "resolved";
+
 export type SupportRequest = {
   _id: string;
   firstName: string;
   lastName: string;
   email: string;
+  subject?: string;
   message: string;
+  status: SupportRequestStatus | string;
+  adminNotes?: string;
   vendorId: { _id: string } | null;
   clientId: { _id: string } | null;
   archivedAt: string | null;
@@ -29,6 +34,7 @@ type CreateSupportRequestInput = {
   firstName: string;
   lastName: string;
   email: string;
+  subject?: string;
   message: string;
 };
 

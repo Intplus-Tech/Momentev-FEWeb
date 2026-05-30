@@ -36,6 +36,7 @@ const contactSchema = z.object({
       },
       "Please enter a valid email domain"
     ),
+  subject: z.string().min(3, "Subject must be at least 3 characters"),
   message: z
     .string()
     .min(1, "Message is required")
@@ -199,6 +200,20 @@ export default function ContactHero() {
                 />
                 {errors.email && (
                   <p className="text-xs text-destructive">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subject">Subject</Label>
+                <Input
+                  id="subject"
+                  type="text"
+                  placeholder="How can we help?"
+                  className="h-12"
+                  {...register("subject")}
+                />
+                {errors.subject && (
+                  <p className="text-xs text-destructive">{errors.subject.message}</p>
                 )}
               </div>
 
