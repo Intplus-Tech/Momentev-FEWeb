@@ -82,54 +82,57 @@ function AddCardForm({ onSuccess, onCancel }: { onSuccess: () => void; onCancel:
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="rounded-lg border border-border p-4 bg-background">
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: "16px",
-                color: "hsl(var(--foreground))",
-                "::placeholder": {
-                  color: "hsl(var(--muted-foreground))",
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg border border-border p-4 bg-background">
+          <CardElement
+            options={{
+              style: {
+                base: {
+                  fontSize: "16px",
+                  color: "hsl(var(--foreground))",
+                  "::placeholder": {
+                    color: "hsl(var(--muted-foreground))",
+                  },
+                },
+                invalid: {
+                  color: "#ef4444",
                 },
               },
-              invalid: {
-                color: "#ef4444",
-              },
-            },
-          }}
-        />
-      </div>
+            }}
+          />
+        </div>
 
-      {error && (
-        <p className="text-sm text-destructive">{error}</p>
-      )}
+        {error && (
+          <p className="text-sm text-destructive">{error}</p>
+        )}
 
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={!stripe || isLoading}>
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Adding...
-            </>
-          ) : (
-            "Add Card"
-          )}
-        </Button>
-      </div>
-    </form>
-    <ClientActionBlockedDialog
-      open={showBlockedDialog}
-      onOpenChange={(open) => {
-        if (!open) setBlockedRestriction(null);
-        setShowBlockedDialog(open);
-      }}
-      restriction={blockedRestriction}
-    />
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button type="submit" disabled={!stripe || isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              "Add Card"
+            )}
+          </Button>
+        </div>
+      </form>
+
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
+    </>
   );
 }
 

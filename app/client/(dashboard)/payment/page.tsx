@@ -235,14 +235,6 @@ export default function ClientPaymentPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-      <ClientActionBlockedDialog
-        open={showBlockedDialog}
-        onOpenChange={(open) => {
-          if (!open) setBlockedRestriction(null);
-          setShowBlockedDialog(open);
-        }}
-        restriction={blockedRestriction}
-      />
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               <span className="ml-2 text-sm text-muted-foreground">
@@ -308,25 +300,8 @@ export default function ClientPaymentPage() {
 
                         {/* Bottom row: cardholder + expiry + make default */}
                         <div className="flex items-end justify-between">
-                          {/* <div className="flex flex-col">
-                            <span
-                              className={`text-[10px] uppercase tracking-wider ${palette.subtext}`}
-                            >
-                              Cardholder Name
-                            </span>
-                            <span
-                              className={`text-sm font-semibold ${palette.text}`}
-                            >
-                              On File
-                            </span>
-                          </div> */}
                           <div className="flex items-end gap-3">
                             <div className="flex flex-col text-right">
-                              {/* <span
-                                className={`text-[10px] uppercase tracking-wider ${palette.subtext}`}
-                              >
-                                Expiry Date
-                              </span> */}
                               <span
                                 className={`text-sm font-semibold ${palette.text}`}
                               >
@@ -378,6 +353,15 @@ export default function ClientPaymentPage() {
           )}
         </CardContent>
       </Card>
+
+      <ClientActionBlockedDialog
+        open={showBlockedDialog}
+        onOpenChange={(open) => {
+          if (!open) setBlockedRestriction(null);
+          setShowBlockedDialog(open);
+        }}
+        restriction={blockedRestriction}
+      />
 
       <AddPaymentMethodModal
         open={isAddModalOpen}

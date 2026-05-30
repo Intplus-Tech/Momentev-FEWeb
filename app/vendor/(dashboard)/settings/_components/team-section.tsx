@@ -436,8 +436,6 @@ export const TeamSection = () => {
         <AddMemberModal
           open={isAddMemberOpen}
           onOpenChange={setIsAddMemberOpen}
-          disabled={Boolean(restriction)}
-          onBlocked={() => setBlockedOpen(true)}
           onMemberAdded={() => {
             // No manual fetch needed, react-query invalidates automatically
           }}
