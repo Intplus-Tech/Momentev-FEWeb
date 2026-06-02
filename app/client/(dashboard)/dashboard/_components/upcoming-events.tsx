@@ -9,12 +9,50 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardTitle,
 } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { BookingResponse } from "@/types/booking";
+import type { BookingResponse, BookingStatus } from "@/types/booking";
 import formatMoney from "@/lib/formatMoney";
+
+const statusConfig: Record<BookingStatus, { label: string; color: string }> = {
+  pending: {
+    label: "Pending Vendor Confirmation",
+    color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+  },
+  reviewing: {
+    label: "Reviewing",
+    color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
+  },
+  awaiting_payment: {
+    label: "Awaiting Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
+  paid: {
+    label: "Paid",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
+  booked: {
+    label: "Booked",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
+  confirmed: {
+    label: "Confirmed",
+    color: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+  },
+  completed: {
+    label: "Completed",
+    color: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+  },
+  cancelled: {
+    label: "Cancelled",
+    color: "bg-gray-500/10 text-gray-500 border-gray-500/20",
+  },
+  rejected: {
+    label: "Rejected",
+    color: "bg-red-500/10 text-red-600 border-red-500/20",
+  },
+};
 
 export interface UpcomingEventProps {
   booking: BookingResponse;
@@ -92,84 +130,98 @@ export function UpcomingEvents({ events, isLoading }: UpcomingEventsProps) {
           const countdown = formatDistanceToNow(startDate, {
             addSuffix: false,
           });
-          const formattedDate = format(startDate, "EEE, d MMM yyyy 'at' h:mm a");
-          const timeRange = `${format(startDate, "HH:mm")}–${format(endDate, "HH:mm")}`;
+          const formattedDate = format(startDate, "EEE, d MMM yyyy");
+          const timeRange = `${format(startDate, "h:mm a")} – ${format(endDate, "h:mm a")}`;
           const totalAmount = formatMoney(booking.amounts?.total ?? 0, booking.currency || "GBP");
           const location = booking.location?.addressText || "TBD";
+          const sc = statusConfig[booking.status] ?? statusConfig.pending;
 
           return (
             <Card
               key={booking._id}
-              className="border border-border/50 bg-muted p-2"
+              className="border border-border/60 bg-card overflow-hidden transition-all hover:shadow-sm p-0"
             >
               <CardContent className="p-0">
                 {/* Desktop layout */}
-                <div className="hidden space-y-4 p-6 md:block">
-                  <div className="grid gap-6 md:grid-cols-[2fr_1.2fr_auto] md:items-start">
-                    <div className="space-y-2">
-                      <CardTitle className="text-xl font-semibold">
-                        {booking.eventDetails.title}
-                      </CardTitle>
-                      <CardDescription className="text-base text-foreground">
-                        {vendorName}
-                      </CardDescription>
-                      <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5" />
-                        {timeRange}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3 text-sm">
-                      <div className="flex items-center gap-2">
-                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                        <p className="font-medium text-foreground">
-                          {formattedDate}
-                        </p>
-                        <p className="text-muted-foreground">
-                          ({countdown})
+                <div className="hidden p-6 sm:block">
+                  <div className="flex flex-row items-start justify-between gap-6">
+                    {/* Left: Title, Vendor, Details */}
+                    <div className="space-y-5">
+                      <div>
+                        <h3 className="text-xl font-semibold tracking-tight text-foreground">
+                          {booking.eventDetails.title}
+                        </h3>
+                        <p className="mt-1 text-sm font-medium text-muted-foreground">
+                          Vendor · <span className="text-foreground/80">{vendorName}</span>
                         </p>
                       </div>
-                      <p className="text-muted-foreground">
-                        <span className="font-semibold text-foreground">
-                          Total:
-                        </span>{" "}
-                        {totalAmount}
-                      </p>
-                      <p className="flex items-center gap-1.5 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {location}
-                      </p>
+
+                      <div className="flex flex-col gap-2.5 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2.5">
+                          <CalendarDays className="h-4 w-4 shrink-0 text-primary/70" />
+                          <span className="font-medium text-foreground">{formattedDate}</span>
+                          <span className="text-xs">({countdown})</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <Clock className="h-4 w-4 shrink-0 text-primary/70" />
+                          <span>{timeRange}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <MapPin className="h-4 w-4 shrink-0 text-primary/70" />
+                          <span className="line-clamp-1">{location}</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 text-sm md:items-end">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/client/bookings/${booking._id}`}>View Booking</Link>
-                      </Button>
+                    {/* Right: Badge, Total, Button */}
+                    <div className="flex flex-col items-end justify-between self-stretch min-w-[140px]">
+                      <Badge
+                        variant="outline"
+                        className={cn("px-2.5 py-0.5 text-xs font-medium", sc.color)}
+                      >
+                        {sc.label}
+                      </Badge>
+
+                      <div className="flex flex-col items-end gap-3 mt-auto pt-4">
+                        <div className="text-right">
+                          <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Total</p>
+                          <p className="text-lg font-bold text-foreground">{totalAmount}</p>
+                        </div>
+                        <Button size="sm" className="w-full" asChild>
+                          <Link href={`/client/bookings/${booking._id}`}>View Booking</Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Mobile layout */}
-                <div className="md:hidden">
+                <div className="sm:hidden">
                   <button
                     type="button"
-                    className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left"
+                    className="flex w-full items-start justify-between gap-4 p-5 text-left focus:outline-none hover:bg-muted/30 transition-colors"
                     onClick={() => toggleEvent(booking._id)}
                   >
-                    <div className="space-y-1">
-                      <p className="text-lg font-semibold text-foreground">
+                    <div className="space-y-1.5 flex-1 pr-2">
+                      <h3 className="text-base font-semibold leading-tight text-foreground line-clamp-2">
                         {booking.eventDetails.title}
+                      </h3>
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Vendor · <span className="text-foreground/80">{vendorName}</span>
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        Next: {formattedDate}
-                      </p>
+                      <Badge
+                        variant="outline"
+                        className={cn("mt-1 w-fit text-[10px] px-2 py-0.5 font-medium", sc.color)}
+                      >
+                        {sc.label}
+                      </Badge>
                     </div>
 
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-sm font-medium text-foreground">
                         {countdown}
                       </p>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary">
+                      <span className="mt-1 inline-flex items-center justify-end gap-1 text-xs font-medium text-primary w-full">
                         {isExpanded ? "Hide" : "Show"}
                         <ChevronDown
                           className={cn(
@@ -189,30 +241,30 @@ export function UpcomingEvents({ events, isLoading }: UpcomingEventsProps) {
                         : "max-h-0 opacity-0",
                     )}
                   >
-                    <div className="grid gap-6 px-6 pb-6 pt-0">
-                      <div className="space-y-3 text-sm">
-                        <div className="space-y-1">
-                          <p className="font-medium text-foreground">
-                            {formattedDate}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {timeRange}
-                          </p>
+                    <div className="flex flex-col gap-4 px-5 pb-5 pt-0">
+                      <div className="space-y-3 rounded-lg bg-muted/50 p-3.5 text-sm text-muted-foreground border border-border/40">
+                        <div className="flex items-start gap-3">
+                          <CalendarDays className="h-4 w-4 shrink-0 mt-0.5 text-primary/70" />
+                          <div className="space-y-0.5">
+                            <p className="font-medium text-foreground">{formattedDate}</p>
+                          </div>
                         </div>
-                        <p className="text-muted-foreground">
-                          <span className="font-semibold text-foreground">
-                            Total:
-                          </span>{" "}
-                          {totalAmount}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Vendor · {vendorName}
-                        </p>
-                        <p className="text-muted-foreground">{location}</p>
+                        <div className="flex items-center gap-3">
+                          <Clock className="h-4 w-4 shrink-0 text-primary/70" />
+                          <p>{timeRange}</p>
+                        </div>
+                        <div className="flex items-start gap-3">
+                          <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-primary/70" />
+                          <p className="line-clamp-2 leading-relaxed">{location}</p>
+                        </div>
                       </div>
 
-                      <div className="flex flex-col gap-2 text-sm">
-                        <Button className="mt-1 w-full" asChild>
+                      <div className="flex items-center justify-between mt-1 pt-4 border-t border-border/50">
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-0.5">Total</p>
+                          <p className="text-base font-bold text-foreground">{totalAmount}</p>
+                        </div>
+                        <Button size="sm" asChild>
                           <Link href={`/client/bookings/${booking._id}`}>View Booking</Link>
                         </Button>
                       </div>

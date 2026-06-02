@@ -26,6 +26,7 @@ const FILTER_OPTIONS: FilterOption[] = [
   { label: "Pending Vendor Confirmation", value: "pending" },
   { label: "Reviewing", value: "reviewing" },
   { label: "Awaiting Payment", value: "awaiting_payment" },
+  { label: "Pending Payment", value: "pending_payment" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Paid", value: "paid" },
   { label: "Booked", value: "booked" },

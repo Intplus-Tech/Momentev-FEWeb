@@ -52,6 +52,10 @@ const statusConfig: Record<
     label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
+  pending_payment: {
+    label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
   paid: {
     label: "Paid",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
@@ -82,6 +86,7 @@ const filterOptions = [
   { label: "Pending Vendor Confirmation", value: "pending" },
   { label: "Reviewing", value: "reviewing" },
   { label: "Awaiting Payment", value: "awaiting_payment" },
+  { label: "Pending Payment", value: "pending_payment" },
   { label: "Paid", value: "paid" },
   { label: "Booked", value: "booked" },
   { label: "Confirmed", value: "confirmed" },

@@ -158,6 +158,7 @@ export type BookingStatus =
   | "pending"
   | "reviewing"
   | "awaiting_payment"
+  | "pending_payment"
   | "paid"
   | "booked"
   | "confirmed"

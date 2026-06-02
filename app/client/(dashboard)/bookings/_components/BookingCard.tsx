@@ -56,6 +56,10 @@ const statusConfig = {
     label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
+  pending_payment: {
+    label: "Pending Payment",
+    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
+  },
   paid: {
     label: "Paid",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
@@ -168,7 +172,7 @@ export function BookingCard({
     }
   };
 
-  const requiresPayment = booking.status === "awaiting_payment";
+  const requiresPayment = booking.status === "awaiting_payment" || booking.status === "pending_payment";
   const showCancelButton = requiresPayment;
   const showPayButton = requiresPayment;
   const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);

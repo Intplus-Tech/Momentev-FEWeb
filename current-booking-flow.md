@@ -7,10 +7,10 @@ This report describes the **current front-end integration** for bookings, includ
 1. **Client initiates a booking**
    - From vendor search: `app\(home)\search\_vendor-components\BookingModal.tsx`
    - From a quote: `app\client\(dashboard)\requests\quotes\_components\convert-quote-modal.tsx`
-2. **Booking is created** via `POST /api/v1/bookings` or `POST /api/v1/bookings/from-quote/{quoteId}`.
+2. **Booking is created** via `POST /api/v1/bookings` or `POST /api/v1/bookings/from-quote/{quoteId}`. (Alternatively, the **Unified Booking Flow** initiates via `POST /api/v1/bookings/unified` for complex interactions involving vendor review/adjustment prior to payment).
 3. **Client views bookings** on `/client/bookings` and can open a booking detail page.
 4. **Payment (if required)** happens from booking detail via Stripe.
-5. **Vendor views bookings** on `/vendor/bookings` and can confirm/reject after payment.
+5. **Vendor views bookings** on `/vendor/bookings` and can confirm/reject after payment. (In the Unified flow, vendors may also advance status, adjust pricing, and send invoices before payment).
 
 ## 2. UI entry points and client actions
 
@@ -46,6 +46,10 @@ This report describes the **current front-end integration** for bookings, includ
 |---|---|---|---|
 | Create booking | `createBooking` | `POST /api/v1/bookings` | Requires auth token |
 | Create from quote | `createBookingFromQuote` | `POST /api/v1/bookings/from-quote/{quoteId}` | Optional location override |
+| Create unified booking | `createUnifiedBooking` | `POST /api/v1/bookings/unified` | Initiates the unified multi-step process |
+| Update unified status | `updateUnifiedBookingStatus` | `PATCH /api/v1/bookings/{id}/unified-status` | Advances booking status (e.g. pending to reviewing) |
+| Adjust unified pricing | `adjustUnifiedBooking` | `PUT /api/v1/bookings/{id}/unified-adjust` | Vendor updates hours, line items, or final price |
+| Send unified invoice | `sendUnifiedBookingInvoice` | `POST /api/v1/bookings/{id}/unified-send-invoice` | Vendor triggers invoice generation for payment |
 | List client bookings | `fetchBookings` | `GET /api/v1/bookings?page=&limit=` | Used on `/client/bookings` |
 | Get booking by id | `fetchBookingById` | `GET /api/v1/bookings/{id}` | Client + vendor detail pages |
 | Cancel booking | `cancelBooking` | `POST /api/v1/bookings/{id}/cancel` | Client cancels from detail page |
@@ -97,7 +101,7 @@ This report describes the **current front-end integration** for bookings, includ
 ```
 
 **BookingStatus**
-`pending | pending_payment | paid | confirmed | cancelled | completed | rejected`
+`pending | reviewing | awaiting_payment | paid | booked | confirmed | cancelled | completed | rejected`
 
 ### 4.2 Client-side validation
 **File:** `validation\booking.ts`

@@ -20,6 +20,7 @@ const statusConfig = {
   pending: { label: "Pending Vendor Confirmation", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
   reviewing: { label: "Reviewing", color: "bg-sky-500/10 text-sky-600 border-sky-500/20" },
   awaiting_payment: { label: "Awaiting Payment", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+  pending_payment: { label: "Pending Payment", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   paid: { label: "Paid", color: "bg-green-500/10 text-green-600 border-green-500/20" },
   booked: { label: "Booked", color: "bg-green-500/10 text-green-600 border-green-500/20" },
   confirmed: { label: "Confirmed", color: "bg-green-500/10 text-green-600 border-green-500/20" },
@@ -58,6 +59,7 @@ export default async function BookingDetailPage({
   }
 
   const booking = response.data;
+  console.log("Client Booking Detail fetched:", booking);
   const status = statusConfig[booking.status] ?? statusConfig.pending;
 
   // Vendor details
