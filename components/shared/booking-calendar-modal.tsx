@@ -38,6 +38,7 @@ const STATUS_VARIANT: Record<BookingStatus, "default" | "secondary" | "destructi
   pending: "outline",
   reviewing: "outline",
   awaiting_payment: "outline",
+  pending_payment: "outline",
   cancelled: "destructive",
   rejected: "destructive",
 };
@@ -50,6 +51,7 @@ const STATUS_TONE: Record<BookingStatus, string> = {
   pending: "bg-amber-500",
   reviewing: "bg-amber-500",
   awaiting_payment: "bg-amber-500",
+  pending_payment: "bg-amber-500",
   cancelled: "bg-rose-500",
   rejected: "bg-rose-500",
 };
