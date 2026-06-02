@@ -9,7 +9,8 @@ import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Pagination } from "@/components/shared/pagination";
 
-const PAGE_LIMIT = 10;
+const API_LIMIT = 100;
+const DISPLAY_LIMIT = 10;
 
 export default async function ClientBookingsPage({
   searchParams,
@@ -20,9 +21,11 @@ export default async function ClientBookingsPage({
   const statusFilter = params.status || "all";
   const currentPage = Math.max(1, Number(params.page) || 1);
 
-  const response = await fetchBookings(currentPage, PAGE_LIMIT);
+  // Fetch all bookings at once for client-side filtering/pagination (up to API max 100)
+  const response = await fetchBookings(1, API_LIMIT);
 
   if (!response.success || !response.data) {
+    console.error("Failed to fetch client bookings:", response);
     return (
       <section className="space-y-6">
         <div>
@@ -43,13 +46,30 @@ export default async function ClientBookingsPage({
     );
   }
 
-  let bookings = response.data.data;
-  const totalBookings = response.data.total;
-  const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_LIMIT));
+  let allBookings = response.data.data;
 
+  // Client-side Phase Filtering
   if (statusFilter !== "all") {
-    bookings = bookings.filter((booking) => booking.status === statusFilter);
+    const statusMap: Record<string, string[]> = {
+      awaiting_vendor: ["pending", "reviewing"],
+      payment_required: ["awaiting_payment", "pending_payment"],
+      processing: ["paid"],
+      confirmed: ["booked", "confirmed"],
+      completed: ["completed"],
+      cancelled_rejected: ["cancelled", "rejected"],
+    };
+    
+    const allowedStatuses = statusMap[statusFilter] || [statusFilter];
+    allBookings = allBookings.filter((booking) => allowedStatuses.includes(booking.status));
   }
+
+  const filteredTotal = allBookings.length;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / DISPLAY_LIMIT));
+
+  // Client-side Pagination Slice
+  const startIndex = (currentPage - 1) * DISPLAY_LIMIT;
+  const endIndex = startIndex + DISPLAY_LIMIT;
+  const pageBookings = allBookings.slice(startIndex, endIndex);
 
   // Fetch vendor details for all bookings on this page
   const vendorDetailsMap = new Map<
@@ -59,7 +79,7 @@ export default async function ClientBookingsPage({
 
   const uniqueVendorIds = [
     ...new Set(
-      bookings.map((booking) => {
+      pageBookings.map((booking) => {
         const vendor = booking.vendorId;
         return typeof vendor === "string" ? vendor : vendor._id;
       }),
@@ -83,7 +103,7 @@ export default async function ClientBookingsPage({
   const serviceNamesMap: Record<string, string> = {};
   const uniqueSpecialtyIds = [
     ...new Set(
-      bookings
+      pageBookings
         .flatMap((b) =>
           b.budgetAllocations?.map(
             (a) => (a.vendorSpecialtyId as any)?.serviceSpecialty,
@@ -104,9 +124,9 @@ export default async function ClientBookingsPage({
     }),
   );
 
-  // Separate upcoming and past bookings
+  // Separate upcoming and past bookings for the current page
   const now = new Date();
-  const completedBookings = bookings.filter((booking) => {
+  const completedBookings = pageBookings.filter((booking) => {
     const isPastDate = new Date(booking.eventDetails.endDate) < now;
     return (
       booking.status === "completed" ||
@@ -115,7 +135,7 @@ export default async function ClientBookingsPage({
       isPastDate
     );
   });
-  const upcomingBookings = bookings.filter(
+  const upcomingBookings = pageBookings.filter(
     (booking) => !completedBookings.includes(booking),
   );
 
@@ -128,8 +148,8 @@ export default async function ClientBookingsPage({
     return `/client/bookings${query ? `?${query}` : ""}`;
   };
 
-  const rangeStart = (currentPage - 1) * PAGE_LIMIT + 1;
-  const rangeEnd = Math.min(currentPage * PAGE_LIMIT, totalBookings);
+  const rangeStart = startIndex + 1;
+  const rangeEnd = Math.min(endIndex, filteredTotal);
 
   return (
     <section className="space-y-6">
@@ -197,7 +217,7 @@ export default async function ClientBookingsPage({
         </div>
       )}
 
-      {bookings.length === 0 && (
+      {pageBookings.length === 0 && (
         <div className="flex flex-col items-center justify-center p-12 text-center rounded-xl border border-dashed border-border bg-card shadow-sm">
           <div className="h-16 w-16 bg-muted/50 text-muted-foreground flex items-center justify-center rounded-full mb-6">
             <svg
@@ -230,7 +250,7 @@ export default async function ClientBookingsPage({
       )}
 
       {/* Pagination — only shown when there are more results than one page */}
-      {totalBookings > PAGE_LIMIT && (
+      {filteredTotal > DISPLAY_LIMIT && (
         <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border pt-4">
           <p className="text-sm text-muted-foreground">
             Showing{" "}
@@ -238,7 +258,7 @@ export default async function ClientBookingsPage({
               {rangeStart}–{rangeEnd}
             </span>{" "}
             of{" "}
-            <span className="font-medium text-foreground">{totalBookings}</span>{" "}
+            <span className="font-medium text-foreground">{filteredTotal}</span>{" "}
             bookings
           </p>
 

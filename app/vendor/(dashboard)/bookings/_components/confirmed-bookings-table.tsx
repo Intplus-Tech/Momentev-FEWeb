@@ -83,19 +83,16 @@ const statusConfig: Record<
 };
 
 const filterOptions = [
-  { label: "Pending Vendor Confirmation", value: "pending" },
-  { label: "Reviewing", value: "reviewing" },
-  { label: "Awaiting Payment", value: "awaiting_payment" },
-  { label: "Pending Payment", value: "pending_payment" },
-  { label: "Paid", value: "paid" },
-  { label: "Booked", value: "booked" },
-  { label: "Confirmed", value: "confirmed" },
+  { label: "All Bookings", value: "all" },
+  { label: "Awaiting Vendor", value: "awaiting_vendor" },
+  { label: "Payment Required", value: "payment_required" },
+  { label: "Processing", value: "processing" },
+  { label: "Confirmed", value: "confirmed_group" },
   { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
-  { label: "Rejected", value: "rejected" },
+  { label: "Cancelled/Rejected", value: "cancelled_rejected" },
 ] as const;
 
-type FilterValue = BookingStatus | "all";
+type FilterValue = string;
 
 function getClientName(booking: BookingResponse): string {
   const customer = booking.customerId;
@@ -136,7 +133,18 @@ export function ConfirmedBookingsTable({
 
     const filtered = filteredByQuery.filter((booking) => {
       if (filter === "all") return true;
-      return booking.status === filter;
+      
+      const statusMap: Record<string, string[]> = {
+        awaiting_vendor: ["pending", "reviewing"],
+        payment_required: ["awaiting_payment", "pending_payment"],
+        processing: ["paid"],
+        confirmed_group: ["booked", "confirmed"],
+        completed: ["completed"],
+        cancelled_rejected: ["cancelled", "rejected"],
+      };
+      
+      const allowedStatuses = statusMap[filter] || [filter];
+      return allowedStatuses.includes(booking.status);
     });
 
     const start = (page - 1) * PAGE_SIZE;

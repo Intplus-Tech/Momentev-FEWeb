@@ -17,9 +17,11 @@ export default async function VendorBookingsPage() {
   const { allowed } = await checkPageAccess("view_orders", "read");
   if (!allowed) return <NotAuthorized module="view_orders" />;
 
-  const response = await fetchVendorBookings(1, 50);
+  // Temporarily fetch 100 (API maximum) for client-side filtering/pagination
+  const response = await fetchVendorBookings(1, 100);
 
   if (!response.success || !response.data) {
+    console.error("Failed to fetch vendor bookings:", response);
     return (
       <section className="space-y-6">
         <div>

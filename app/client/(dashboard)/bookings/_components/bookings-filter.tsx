@@ -21,19 +21,15 @@ type FilterOption = {
   value: BookingStatus | "all";
 };
 
-const FILTER_OPTIONS: FilterOption[] = [
+const FILTER_OPTIONS = [
   { label: "All Bookings", value: "all" },
-  { label: "Pending Vendor Confirmation", value: "pending" },
-  { label: "Reviewing", value: "reviewing" },
-  { label: "Awaiting Payment", value: "awaiting_payment" },
-  { label: "Pending Payment", value: "pending_payment" },
+  { label: "Awaiting Vendor", value: "awaiting_vendor" },
+  { label: "Payment Required", value: "payment_required" },
+  { label: "Processing", value: "processing" },
   { label: "Confirmed", value: "confirmed" },
-  { label: "Paid", value: "paid" },
-  { label: "Booked", value: "booked" },
   { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
-  { label: "Rejected", value: "rejected" },
-];
+  { label: "Cancelled/Rejected", value: "cancelled_rejected" },
+] as const;
 
 export function BookingsFilter() {
   const router = useRouter();
