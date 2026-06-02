@@ -26,12 +26,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Search, MoreHorizontal, Loader2 } from "lucide-react";
+import { Search, MoreHorizontal, Loader2, ChevronDown } from "lucide-react";
 import { decideVendorBooking } from "@/lib/actions/booking";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
 import formatMoney from "@/lib/formatMoney";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
+import { Pagination } from "@/components/shared/pagination";
 
 const PAGE_SIZE = 5;
 
@@ -47,16 +48,16 @@ const statusConfig: Record<
     label: "Reviewing",
     color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
-  pending_payment: {
-    label: "Pending Payment",
-    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  },
   awaiting_payment: {
     label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
     label: "Paid",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
+  booked: {
+    label: "Booked",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
   },
   confirmed: {
@@ -80,9 +81,9 @@ const statusConfig: Record<
 const filterOptions = [
   { label: "Pending Vendor Confirmation", value: "pending" },
   { label: "Reviewing", value: "reviewing" },
-  { label: "Pending Payment", value: "pending_payment" },
   { label: "Awaiting Payment", value: "awaiting_payment" },
   { label: "Paid", value: "paid" },
+  { label: "Booked", value: "booked" },
   { label: "Confirmed", value: "confirmed" },
   { label: "Completed", value: "completed" },
   { label: "Cancelled", value: "cancelled" },
@@ -145,15 +146,9 @@ export function ConfirmedBookingsTable({
 
   const confirmedCount = bookings.filter((b) => b.status === "confirmed" || b.status === "paid").length;
   const pendingCount = bookings.filter(
-    (b) => b.status === "pending" || b.status === "pending_payment"
+    (b) => b.status === "pending"
   ).length;
 
-  const handlePageChange = (direction: "prev" | "next") => {
-    setPage((current) => {
-      const nextPage = direction === "prev" ? current - 1 : current + 1;
-      return Math.min(Math.max(nextPage, 1), data.totalPages);
-    });
-  };
 
   return (
     <Card className="border border-border p-6">
@@ -292,30 +287,12 @@ export function ConfirmedBookingsTable({
               Showing {data.range.start}–{data.range.end} of{" "}
               {data.filtered.length} results
             </p>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => handlePageChange("prev")}
-                disabled={page === 1}
-                className={cn(
-                  "text-primary",
-                  page === 1 && "pointer-events-none opacity-40"
-                )}
-              >
-                Previous
-              </button>
-              <button
-                type="button"
-                onClick={() => handlePageChange("next")}
-                disabled={page === data.totalPages}
-                className={cn(
-                  "text-primary",
-                  page === data.totalPages && "pointer-events-none opacity-40"
-                )}
-              >
-                Next
-              </button>
-            </div>
+            <Pagination
+              currentPage={page}
+              totalPages={data.totalPages}
+              onPageChange={setPage}
+              siblingCount={1}
+            />
           </div>
         )}
       </CardContent>

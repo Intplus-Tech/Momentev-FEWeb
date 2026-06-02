@@ -22,16 +22,16 @@ const statusConfig = {
     label: "Reviewing",
     color: "bg-sky-500/10 text-sky-600 border-sky-500/20",
   },
-  pending_payment: {
-    label: "Pending Payment",
-    color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
-  },
   awaiting_payment: {
     label: "Awaiting Payment",
     color: "bg-orange-500/10 text-orange-600 border-orange-500/20",
   },
   paid: {
     label: "Paid",
+    color: "bg-green-500/10 text-green-600 border-green-500/20",
+  },
+  booked: {
+    label: "Booked",
     color: "bg-green-500/10 text-green-600 border-green-500/20",
   },
   confirmed: {

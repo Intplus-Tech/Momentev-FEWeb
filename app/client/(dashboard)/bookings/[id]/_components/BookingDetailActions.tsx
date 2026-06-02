@@ -43,8 +43,7 @@ export function BookingDetailActions({ booking, vendorId, formattedTotal }: Prop
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [blockedRestriction, setBlockedRestriction] = useState<any | null>(null);
 
-  const requiresPayment =
-    booking.status === "pending_payment" || booking.status === "awaiting_payment";
+  const requiresPayment = booking.status === "awaiting_payment";
   const showCancelButton = requiresPayment;
   const showPayButton = booking.status === "awaiting_payment";
   const showDisputeButton = ["paid", "confirmed", "completed"].includes(booking.status);

@@ -1,20 +1,26 @@
+
+import { AlertCircle } from "lucide-react";
+
 import { BookingCard } from "./_components/BookingCard";
 import { BookingsFilter } from "./_components/bookings-filter";
 import { fetchBookings } from "@/lib/actions/booking";
 import { getVendorPublicProfile } from "@/lib/actions/chat";
 import { fetchServiceSpecialtyById } from "@/lib/actions/service-specialties";
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Pagination } from "@/components/shared/pagination";
+
+const PAGE_LIMIT = 10;
 
 export default async function ClientBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const params = await searchParams;
   const statusFilter = params.status || "all";
+  const currentPage = Math.max(1, Number(params.page) || 1);
 
-  const response = await fetchBookings(1, 50);
+  const response = await fetchBookings(currentPage, PAGE_LIMIT);
 
   if (!response.success || !response.data) {
     return (
@@ -38,13 +44,14 @@ export default async function ClientBookingsPage({
   }
 
   let bookings = response.data.data;
-  
+  const totalBookings = response.data.total;
+  const totalPages = Math.max(1, Math.ceil(totalBookings / PAGE_LIMIT));
+
   if (statusFilter !== "all") {
     bookings = bookings.filter((booking) => booking.status === statusFilter);
   }
-  const totalBookings = response.data.total;
 
-  // Fetch vendor details for all bookings
+  // Fetch vendor details for all bookings on this page
   const vendorDetailsMap = new Map<
     string,
     { businessName: string; rating: number }
@@ -78,9 +85,11 @@ export default async function ClientBookingsPage({
     ...new Set(
       bookings
         .flatMap((b) =>
-          b.budgetAllocations?.map((a) => (a.vendorSpecialtyId as any)?.serviceSpecialty) || []
+          b.budgetAllocations?.map(
+            (a) => (a.vendorSpecialtyId as any)?.serviceSpecialty,
+          ) || [],
         )
-        .filter(Boolean)
+        .filter(Boolean),
     ),
   ];
 
@@ -97,15 +106,30 @@ export default async function ClientBookingsPage({
 
   // Separate upcoming and past bookings
   const now = new Date();
-  const completedBookings = bookings.filter(
-    (booking) => {
-      const isPastDate = new Date(booking.eventDetails.endDate) < now;
-      return booking.status === "completed" || booking.status === "cancelled" || booking.status === "rejected" || isPastDate;
-    }
-  );
+  const completedBookings = bookings.filter((booking) => {
+    const isPastDate = new Date(booking.eventDetails.endDate) < now;
+    return (
+      booking.status === "completed" ||
+      booking.status === "cancelled" ||
+      booking.status === "rejected" ||
+      isPastDate
+    );
+  });
   const upcomingBookings = bookings.filter(
-    (booking) => !completedBookings.includes(booking)
+    (booking) => !completedBookings.includes(booking),
   );
+
+  // Build href for pagination links, preserving status filter
+  const buildHref = (page: number) => {
+    const qs = new URLSearchParams();
+    if (statusFilter !== "all") qs.set("status", statusFilter);
+    if (page > 1) qs.set("page", String(page));
+    const query = qs.toString();
+    return `/client/bookings${query ? `?${query}` : ""}`;
+  };
+
+  const rangeStart = (currentPage - 1) * PAGE_LIMIT + 1;
+  const rangeEnd = Math.min(currentPage * PAGE_LIMIT, totalBookings);
 
   return (
     <section className="space-y-6">
@@ -116,7 +140,7 @@ export default async function ClientBookingsPage({
           Completed
         </p>
       </div>
-      
+
       <BookingsFilter />
 
       {upcomingBookings.length > 0 && (
@@ -128,7 +152,8 @@ export default async function ClientBookingsPage({
           <div className="space-y-4">
             {upcomingBookings.map((booking) => {
               const vendor = booking.vendorId;
-              const vendorId = typeof vendor === "string" ? vendor : vendor._id;
+              const vendorId =
+                typeof vendor === "string" ? vendor : vendor._id;
               const vendorDetails = vendorDetailsMap.get(vendorId);
 
               return (
@@ -154,7 +179,8 @@ export default async function ClientBookingsPage({
           <div className="space-y-4">
             {completedBookings.map((booking) => {
               const vendor = booking.vendorId;
-              const vendorId = typeof vendor === "string" ? vendor : vendor._id;
+              const vendorId =
+                typeof vendor === "string" ? vendor : vendor._id;
               const vendorDetails = vendorDetailsMap.get(vendorId);
 
               return (
@@ -196,9 +222,32 @@ export default async function ClientBookingsPage({
             {statusFilter === "all"
               ? "You haven't made any bookings yet. Once you accept a quote and book a vendor, it will appear here."
               : `There are currently no bookings with the "${
-                  statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1).replace("_", " ")
+                  statusFilter.charAt(0).toUpperCase() +
+                  statusFilter.slice(1).replace("_", " ")
                 }" status.`}
           </p>
+        </div>
+      )}
+
+      {/* Pagination — only shown when there are more results than one page */}
+      {totalBookings > PAGE_LIMIT && (
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border pt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing{" "}
+            <span className="font-medium text-foreground">
+              {rangeStart}–{rangeEnd}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-foreground">{totalBookings}</span>{" "}
+            bookings
+          </p>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            buildHref={buildHref}
+            siblingCount={1}
+          />
         </div>
       )}
     </section>

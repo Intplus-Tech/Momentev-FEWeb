@@ -44,15 +44,16 @@ export default async function VendorBookingsPage() {
 
   // Derive stats from real data
   const pendingCount = bookings.filter(
-    (b) => b.status === "pending" || b.status === "pending_payment",
+    (b) => b.status === "pending",
   ).length;
 
   const upcomingRevenue = bookings
     .filter(
       (b) =>
         b.status === "confirmed" ||
+        b.status === "booked" ||
         b.status === "paid" ||
-        b.status === "pending_payment",
+        b.status === "awaiting_payment",
     )
     .reduce((sum, b) => {
       const amt =

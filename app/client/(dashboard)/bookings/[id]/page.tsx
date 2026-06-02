@@ -19,9 +19,9 @@ import formatMoney from "@/lib/formatMoney";
 const statusConfig = {
   pending: { label: "Pending Vendor Confirmation", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
   reviewing: { label: "Reviewing", color: "bg-sky-500/10 text-sky-600 border-sky-500/20" },
-  pending_payment: { label: "Pending Payment", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   awaiting_payment: { label: "Awaiting Payment", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
   paid: { label: "Paid", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+  booked: { label: "Booked", color: "bg-green-500/10 text-green-600 border-green-500/20" },
   confirmed: { label: "Confirmed", color: "bg-green-500/10 text-green-600 border-green-500/20" },
   completed: { label: "Completed", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
   cancelled: { label: "Cancelled", color: "bg-gray-500/10 text-gray-500 border-gray-500/20" },

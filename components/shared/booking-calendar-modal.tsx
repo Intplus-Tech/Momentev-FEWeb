@@ -33,10 +33,10 @@ import { cn } from "@/lib/utils";
 const STATUS_VARIANT: Record<BookingStatus, "default" | "secondary" | "destructive" | "outline"> = {
   confirmed: "default",
   paid: "default",
+  booked: "default",
   completed: "secondary",
   pending: "outline",
   reviewing: "outline",
-  pending_payment: "outline",
   awaiting_payment: "outline",
   cancelled: "destructive",
   rejected: "destructive",
@@ -45,10 +45,10 @@ const STATUS_VARIANT: Record<BookingStatus, "default" | "secondary" | "destructi
 const STATUS_TONE: Record<BookingStatus, string> = {
   confirmed: "bg-emerald-500",
   paid: "bg-emerald-500",
+  booked: "bg-emerald-500",
   completed: "bg-sky-500",
   pending: "bg-amber-500",
   reviewing: "bg-amber-500",
-  pending_payment: "bg-amber-500",
   awaiting_payment: "bg-amber-500",
   cancelled: "bg-rose-500",
   rejected: "bg-rose-500",

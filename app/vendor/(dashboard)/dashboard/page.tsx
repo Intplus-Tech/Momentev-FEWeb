@@ -59,7 +59,7 @@ const DashboardPage = async () => {
 
   // Pending bookings count
   const pendingCount = bookings.filter(
-    (b) => b.status === "pending" || b.status === "pending_payment",
+    (b) => b.status === "pending",
   ).length;
 
 

@@ -33,8 +33,8 @@ export function TodaysSchedule({ bookings }: { bookings: BookingResponse[] }) {
       const isTodayOrFuture = isToday(start) || isFuture(start);
       const isAcceptedStatus =
         b.status === "confirmed" ||
+        b.status === "booked" ||
         b.status === "paid" ||
-        b.status === "pending_payment" ||
         b.status === "pending";
 
       return isAcceptedStatus && isTodayOrFuture;

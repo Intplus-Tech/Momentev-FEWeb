@@ -29,9 +29,11 @@ const STATUS_VARIANT: Record<
 > = {
   confirmed: "default",
   paid: "default",
+  booked: "default",
   completed: "secondary",
   pending: "outline",
-  pending_payment: "outline",
+  reviewing: "outline",
+  awaiting_payment: "outline",
   cancelled: "destructive",
   rejected: "destructive",
 };
