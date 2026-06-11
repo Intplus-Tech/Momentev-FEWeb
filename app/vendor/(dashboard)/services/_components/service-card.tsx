@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -60,7 +61,10 @@ import {
   createVendorSpecialty,
 } from "@/lib/actions/vendor-specialties";
 import { updateVendorService } from "@/lib/actions/vendor-services";
-import { useServiceSpecialties } from "@/hooks/api/use-service-categories";
+import {
+  useServiceCategories,
+  useServiceSpecialties,
+} from "@/hooks/api/use-service-categories";
 import { toast } from "sonner";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
@@ -399,6 +403,7 @@ export function ServiceCard({
             <div className="flex flex-wrap gap-3 pt-2">
               <PermissionActionGate module="manage_services" action="write">
                 <EditServiceDialog
+                  vendorId={vendorId}
                   disabled={Boolean(restriction)}
                   onBlocked={() => setBlockedOpen(true)}
                   service={service}
@@ -643,12 +648,14 @@ function AddSpecialtyDialog({
 // ── Edit Service Dialog ───────────────────────────────────────────────
 
 function EditServiceDialog({
+  vendorId,
   service,
   specialties,
   onUpdated,
   disabled = false,
   onBlocked,
 }: {
+  vendorId: string;
   service: VendorService;
   specialties: VendorSpecialtyItem[];
   onUpdated: (
@@ -661,6 +668,15 @@ function EditServiceDialog({
   const [loading, setLoading] = useState(false);
   const [tags, setTags] = useState<string[]>(service.tags || []);
   const [tagInput, setTagInput] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState(
+    service.serviceCategory?._id || "",
+  );
+  const [selectedSpecialtyIds, setSelectedSpecialtyIds] = useState<string[]>(
+    () =>
+      specialties
+        .map((specialty) => specialty.serviceSpecialty?._id)
+        .filter((id): id is string => Boolean(id)),
+  );
   const [minimumBookingDuration, setMinimumBookingDuration] = useState(
     service.minimumBookingDuration || "",
   );
@@ -682,6 +698,14 @@ function EditServiceDialog({
   const [price, setPrice] = useState(
     getUniversalSpecialtyPricing(specialties).priceMajor,
   );
+  const { data: categoriesData, isLoading: isLoadingCategories } =
+    useServiceCategories();
+  const {
+    data: categorySpecialtiesData,
+    isLoading: isLoadingCategorySpecialties,
+  } = useServiceSpecialties(open ? selectedCategoryId : null);
+  const categories = categoriesData?.data?.data || [];
+  const categorySpecialties = categorySpecialtiesData?.data || [];
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -690,6 +714,12 @@ function EditServiceDialog({
       setMinimumBookingDuration(service.minimumBookingDuration || "");
       setLeadTimeRequired(service.leadTimeRequired || "");
       setMaximumEventSize(service.maximumEventSize || "");
+      setSelectedCategoryId(service.serviceCategory?._id || "");
+      setSelectedSpecialtyIds(
+        specialties
+          .map((specialty) => specialty.serviceSpecialty?._id)
+          .filter((id): id is string => Boolean(id)),
+      );
       setFees(
         service.additionalFees?.map((f) => ({
           ...f,
@@ -708,8 +738,16 @@ function EditServiceDialog({
     service.leadTimeRequired,
     service.maximumEventSize,
     service.additionalFees,
+    service.serviceCategory?._id,
     specialties,
   ]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (selectedCategoryId !== service.serviceCategory?._id) {
+      setSelectedSpecialtyIds([]);
+    }
+  }, [open, selectedCategoryId, service.serviceCategory?._id]);
 
   const handleAddTag = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && tagInput.trim()) {
@@ -747,11 +785,36 @@ function EditServiceDialog({
     );
   };
 
+  const handleSpecialtyToggle = (specialtyId: string) => {
+    setSelectedSpecialtyIds((prev) =>
+      prev.includes(specialtyId)
+        ? prev.filter((id) => id !== specialtyId)
+        : [...prev, specialtyId],
+    );
+  };
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategoryId(value);
+    setSelectedSpecialtyIds([]);
+  };
+
   const handleSave = async () => {
     // Validate fees
     const validFees = fees.filter((f) => f.name.trim() && f.price);
+    const categoryChanged = selectedCategoryId !== service.serviceCategory?._id;
+    const currentSpecialtyIds = specialties
+      .map((specialty) => specialty.serviceSpecialty?._id)
+      .filter((id): id is string => Boolean(id));
+
+    if (selectedSpecialtyIds.length === 0) {
+      toast.error("Please select at least one specialty");
+      return;
+    }
+
     setLoading(true);
     const payload = {
+      vendorId,
+      serviceCategory: selectedCategoryId,
       tags,
       minimumBookingDuration,
       leadTimeRequired,
@@ -772,29 +835,114 @@ function EditServiceDialog({
 
     const res = await updateVendorService(service._id, payload);
     if (res.success) {
-      const specialtyIds = specialties.map((specialty) => specialty._id);
       const normalizedPricing = normalizeUniversalPricingInput(
         priceCharge,
         price,
       );
-      const pricingRes = await bulkUpdateVendorSpecialtiesPricing(
-        specialtyIds,
-        {
-          priceCharge: normalizedPricing.priceCharge,
-          price: normalizedPricing.price,
-        },
-      );
+      if (categoryChanged) {
+        const deleteResults = await Promise.all(
+          specialties.map((specialty) => deleteVendorSpecialty(specialty._id)),
+        );
 
-      if (!pricingRes.success) {
-        setLoading(false);
-        toast.error(pricingRes.error || "Failed to update specialty pricing");
-        return;
+        if (deleteResults.some((result) => !result.success)) {
+          setLoading(false);
+          toast.error("Failed to replace specialties for the new category");
+          return;
+        }
+
+        const createResults = await Promise.all(
+          selectedSpecialtyIds.map((specialtyId) =>
+            createVendorSpecialty({
+              vendorId,
+              serviceSpecialty: specialtyId,
+              priceCharge: normalizedPricing.priceCharge,
+              price: normalizedPricing.price,
+            }),
+          ),
+        );
+
+        if (createResults.some((result) => !result.success)) {
+          setLoading(false);
+          toast.error("Failed to create specialties for the new category");
+          return;
+        }
+      } else {
+        const specialtyIds = currentSpecialtyIds;
+        const specialtiesToAdd = selectedSpecialtyIds.filter(
+          (specialtyId) => !specialtyIds.includes(specialtyId),
+        );
+        const specialtiesToDelete = specialties.filter(
+          (specialty) =>
+            !selectedSpecialtyIds.includes(specialty.serviceSpecialty?._id || ""),
+        );
+
+        if (specialtiesToDelete.length > 0) {
+          const deleteResults = await Promise.all(
+            specialtiesToDelete.map((specialty) =>
+              deleteVendorSpecialty(specialty._id),
+            ),
+          );
+
+          if (deleteResults.some((result) => !result.success)) {
+            setLoading(false);
+            toast.error("Failed to update specialty selection");
+            return;
+          }
+        }
+
+        if (specialtiesToAdd.length > 0) {
+          const addResults = await Promise.all(
+            specialtiesToAdd.map((specialtyId) =>
+              createVendorSpecialty({
+                vendorId,
+                serviceSpecialty: specialtyId,
+                priceCharge: normalizedPricing.priceCharge,
+                price: normalizedPricing.price,
+              }),
+            ),
+          );
+
+          if (addResults.some((result) => !result.success)) {
+            setLoading(false);
+            toast.error("Failed to update specialty selection");
+            return;
+          }
+        }
+
+        const pricingRes = await bulkUpdateVendorSpecialtiesPricing(
+          specialties
+            .filter((specialty) =>
+              selectedSpecialtyIds.includes(
+                specialty.serviceSpecialty?._id || "",
+              ),
+            )
+            .map((specialty) => specialty._id),
+          {
+            priceCharge: normalizedPricing.priceCharge,
+            price: normalizedPricing.price,
+          },
+        );
+
+        if (!pricingRes.success) {
+          setLoading(false);
+          toast.error(pricingRes.error || "Failed to update specialty pricing");
+          return;
+        }
       }
 
       toast.success("Service configuration updated");
       setOpen(false);
+      const selectedCategory = categories.find(
+        (category) => category._id === selectedCategoryId,
+      );
       onUpdated({
         _id: service._id,
+        serviceCategory: selectedCategory
+          ? {
+            _id: selectedCategory._id,
+            name: selectedCategory.name,
+          }
+          : service.serviceCategory,
         tags,
         minimumBookingDuration,
         leadTimeRequired,
@@ -834,6 +982,90 @@ function EditServiceDialog({
             <div className="space-y-3">
               <Label className="text-sm font-semibold">Service Details</Label>
               <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Service Category</Label>
+                  {isLoadingCategories ? (
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading categories...
+                    </div>
+                  ) : (
+                    <Select
+                      value={selectedCategoryId}
+                      onValueChange={handleCategoryChange}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select service category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) => (
+                          <SelectItem key={category._id} value={category._id}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                <div className="space-y-2 rounded-xl border border-dashed border-border bg-muted/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        Specialties
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Select the specialties that belong to this category.
+                      </p>
+                    </div>
+                    {selectedCategoryId !== service.serviceCategory?._id && (
+                      <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700">
+                        Update required
+                      </span>
+                    )}
+                  </div>
+
+                  {isLoadingCategorySpecialties ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Loading specialties...
+                    </div>
+                  ) : categorySpecialties.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {categorySpecialties.map((specialty) => (
+                        <label
+                          key={specialty._id}
+                          className="flex cursor-pointer items-start gap-3 rounded-lg border border-border bg-background p-3 text-sm"
+                        >
+                          <Checkbox
+                            checked={selectedSpecialtyIds.includes(specialty._id)}
+                            onCheckedChange={() => handleSpecialtyToggle(specialty._id)}
+                            className="mt-0.5"
+                          />
+                          <div className="space-y-0.5">
+                            <div className="font-medium text-foreground">
+                              {specialty.name}
+                            </div>
+                            {specialty.description && (
+                              <div className="text-xs text-muted-foreground">
+                                {specialty.description}
+                              </div>
+                            )}
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No specialties are available for this category.
+                    </p>
+                  )}
+
+                  {selectedSpecialtyIds.length === 0 && (
+                    <p className="text-xs text-amber-700">
+                      At least one specialty is required.
+                    </p>
+                  )}
+                </div>
+
                 <div className="space-y-1">
                   <Label className="text-xs">Minimum Booking Duration</Label>
                   <Select

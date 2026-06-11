@@ -14,6 +14,8 @@ type ActionResponse<T = void> = {
 // -- Types --
 
 export type UpdateVendorServiceInput = {
+  vendorId?: string;
+  serviceCategory?: string;
   tags?: string[];
   minimumBookingDuration?: string;
   leadTimeRequired?: string;
@@ -28,8 +30,8 @@ export type UpdateVendorServiceInput = {
 // -- Actions --
 
 /**
- * Update an existing vendor service
- * PUT /api/v1/vendor-services/{id}
+ * Create or update a vendor service
+ * POST /api/v1/vendor-services
  */
 export async function updateVendorService(
   id: string,
@@ -46,20 +48,28 @@ export async function updateVendorService(
       return { success: false, error: "Authentication required" };
     }
 
-    const response = await fetch(`${API_URL}/api/v1/vendor-services/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
+    const useUpsertEndpoint = Boolean(input.vendorId);
+    const response = await fetch(
+      useUpsertEndpoint
+        ? `${API_URL}/api/v1/vendor-services`
+        : `${API_URL}/api/v1/vendor-services/${id}`,
+      {
+        method: useUpsertEndpoint ? "POST" : "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(input),
+        cache: "no-store",
       },
-      body: JSON.stringify(input),
-      cache: "no-store",
-    });
+    );
 
     const data = await response.json().catch(() => ({}));
 
     console.info("[updateVendorService] request/response", {
       id,
+      vendorId: input.vendorId,
+      serviceCategory: input.serviceCategory,
       tags: input.tags,
       minimumBookingDuration: input.minimumBookingDuration,
       leadTimeRequired: input.leadTimeRequired,

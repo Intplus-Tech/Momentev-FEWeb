@@ -212,7 +212,7 @@ This document lists all the backend API endpoints consumed by the Momentev front
 | Method   | Endpoint                   | Description                            | Auth Required | Source File                         |
 | -------- | -------------------------- | -------------------------------------- | ------------- | ----------------------------------- |
 | `POST`   | `/vendor-services`         | Create vendor service                  | ✅            | `lib/actions/service.ts`            |
-| `PUT`    | `/vendor-services/{id}`    | Update vendor service (tags, fees)     | ✅            | `lib/actions/vendor-services.ts`    |
+| `POST`   | `/vendor-services`         | Create or update vendor service (category, tags, fees) | ✅    | `lib/actions/vendor-services.ts`    |
 | `DELETE` | `/vendor-services/{id}`    | Delete vendor service                  | ✅            | `lib/actions/vendor-services.ts`    |
 | `POST`   | `/vendor-specialties`      | Create vendor specialty                | ✅            | `lib/actions/vendor-specialties.ts` |
 | `GET`    | `/vendor-specialties`      | Get vendor specialties with pagination | ✅            | `lib/actions/vendor-specialties.ts` |
