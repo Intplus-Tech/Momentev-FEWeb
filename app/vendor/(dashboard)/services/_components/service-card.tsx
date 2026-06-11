@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import formatMoney from "@/lib/formatMoney";
-import { minorToMajor } from "@/lib/currency";
+import { majorToMinor, minorToMajor } from "@/lib/currency";
 import {
   ChevronDown,
   ChevronUp,
@@ -179,241 +179,241 @@ export function ServiceCard({
   return (
     <>
       <Card className="rounded-2xl border border-border bg-card p-5 transition">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={expanded}
-          aria-controls={`service-panel-${service._id}`}
-          className="flex items-center gap-3 text-left text-lg font-semibold text-foreground transition-colors hover:text-primary"
-        >
-          {service.serviceCategory?.name || "Unnamed Service"}
-          {expanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </button>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={expanded}
+            aria-controls={`service-panel-${service._id}`}
+            className="flex items-center gap-3 text-left text-lg font-semibold text-foreground transition-colors hover:text-primary"
+          >
+            {service.serviceCategory?.name || "Unnamed Service"}
+            {expanded ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
 
-        <div className="flex items-center gap-2 text-xs">
-          <Badge variant="secondary" className="rounded-full">
-            {(specialties?.length ?? 0).toString()} specialties
-          </Badge>
-          <Badge variant="secondary" className="rounded-full">
-            {(service.additionalFees?.length ?? 0).toString()} fees
-          </Badge>
+          <div className="flex items-center gap-2 text-xs">
+            <Badge variant="secondary" className="rounded-full">
+              {(specialties?.length ?? 0).toString()} specialties
+            </Badge>
+            <Badge variant="secondary" className="rounded-full">
+              {(service.additionalFees?.length ?? 0).toString()} fees
+            </Badge>
+          </div>
         </div>
-      </div>
 
-      <div
-        id={`service-panel-${service._id}`}
-        ref={contentWrapperRef}
-        style={{ height: containerHeight }}
-        className="overflow-hidden transition-[height] duration-500 ease-in-out"
-      >
-        {/* <p className="mb-4 text-xs text-muted-foreground">
+        <div
+          id={`service-panel-${service._id}`}
+          ref={contentWrapperRef}
+          style={{ height: containerHeight }}
+          className="overflow-hidden transition-[height] duration-500 ease-in-out"
+        >
+          {/* <p className="mb-4 text-xs text-muted-foreground">
           Service ID: {service._id}
         </p> */}
-        <div
-          className={cn(
-            "mt-2 space-y-6 rounded-2xl transition-all duration-500",
-            expanded ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0",
-          )}
-        >
-          <div className="flex flex-wrap gap-2 text-sm">
-            {service.tags?.map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="rounded-full bg-slate-100 text-slate-700"
-              >
-                {tag}
-              </Badge>
-            ))}
-          </div>
+          <div
+            className={cn(
+              "mt-2 space-y-6 rounded-2xl transition-all duration-500",
+              expanded ? "translate-y-0 opacity-100" : "-translate-y-3 opacity-0",
+            )}
+          >
+            <div className="flex flex-wrap gap-2 text-sm">
+              {service.tags?.map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="rounded-full bg-slate-100 text-slate-700"
+                >
+                  {tag}
+                </Badge>
+              ))}
+            </div>
 
-          <div className="grid gap-4 text-sm sm:grid-cols-3">
-            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
-              <span className="font-semibold text-foreground">Lead Time</span>
-              <p className="text-muted-foreground">
-                {service.leadTimeRequired || "N/A"}
-              </p>
+            <div className="grid gap-4 text-sm sm:grid-cols-3">
+              <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+                <span className="font-semibold text-foreground">Lead Time</span>
+                <p className="text-muted-foreground">
+                  {service.leadTimeRequired || "N/A"}
+                </p>
+              </div>
+              <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+                <span className="font-semibold text-foreground">
+                  Min Duration
+                </span>
+                <p className="text-muted-foreground">
+                  {service.minimumBookingDuration || "N/A"}
+                </p>
+              </div>
+              <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+                <span className="font-semibold text-foreground">
+                  Max Event Size
+                </span>
+                <p className="text-muted-foreground">
+                  {service.maximumEventSize || "N/A"}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
-              <span className="font-semibold text-foreground">
-                Min Duration
-              </span>
-              <p className="text-muted-foreground">
-                {service.minimumBookingDuration || "N/A"}
-              </p>
-            </div>
-            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
-              <span className="font-semibold text-foreground">
-                Max Event Size
-              </span>
-              <p className="text-muted-foreground">
-                {service.maximumEventSize || "N/A"}
-              </p>
-            </div>
-          </div>
 
-          <div className="grid gap-4 text-sm sm:grid-cols-2">
-            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
-              <span className="font-semibold text-foreground">
-                Universal Pricing Model
-              </span>
-              <p className="text-muted-foreground capitalize">
-                {servicePricing.priceCharge}
-              </p>
+            <div className="grid gap-4 text-sm sm:grid-cols-2">
+              <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+                <span className="font-semibold text-foreground">
+                  Universal Pricing Model
+                </span>
+                <p className="text-muted-foreground capitalize">
+                  {servicePricing.priceCharge}
+                </p>
+              </div>
+              <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
+                <span className="font-semibold text-foreground">
+                  Universal Price
+                </span>
+                <p className="text-muted-foreground">
+                  {formatMoney(servicePricing.priceMinor)}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1 rounded-xl border border-border bg-muted/30 p-3">
-              <span className="font-semibold text-foreground">
-                Universal Price
-              </span>
-              <p className="text-muted-foreground">
-                {formatMoney(servicePricing.priceMinor)}
+            {servicePricing.isMixed && (
+              <p className="text-xs text-muted-foreground">
+                Existing specialty pricing is mixed. Saving the service will
+                normalize every specialty to the same value.
               </p>
-            </div>
-          </div>
-          {servicePricing.isMixed && (
-            <p className="text-xs text-muted-foreground">
-              Existing specialty pricing is mixed. Saving the service will
-              normalize every specialty to the same value.
-            </p>
-          )}
+            )}
 
-          {/* Specialties Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-foreground">Specialties</h4>
-              <PermissionActionGate module="manage_services" action="write">
-                <AddSpecialtyDialog
-                  disabled={Boolean(restriction)}
-                  onBlocked={() => setBlockedOpen(true)}
-                  vendorId={vendorId}
-                  categoryId={service.serviceCategory?._id}
-                  priceCharge={servicePricing.priceCharge}
-                  price={servicePricing.priceMajor}
-                  existingSpecialtyIds={specialties
-                    .map((s) => s.serviceSpecialty?._id)
-                    .filter(Boolean)}
-                  onCreated={onRefreshAll}
-                />
-              </PermissionActionGate>
-            </div>
-            {specialties.length > 0 ? (
-              <div className="rounded-xl border border-border overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      {/* <TableHead>ID</TableHead> */}
-                      <TableHead>Specialty</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Pricing Model</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {specialties.map((spec) => (
-                      <TableRow key={spec._id}>
-                        {/* <TableCell className="font-medium text-foreground text-xs">
+            {/* Specialties Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-foreground">Specialties</h4>
+                <PermissionActionGate module="manage_services" action="write">
+                  <AddSpecialtyDialog
+                    disabled={Boolean(restriction)}
+                    onBlocked={() => setBlockedOpen(true)}
+                    vendorId={vendorId}
+                    categoryId={service.serviceCategory?._id}
+                    priceCharge={servicePricing.priceCharge}
+                    price={servicePricing.priceMajor}
+                    existingSpecialtyIds={specialties
+                      .map((s) => s.serviceSpecialty?._id)
+                      .filter(Boolean)}
+                    onCreated={onRefreshAll}
+                  />
+                </PermissionActionGate>
+              </div>
+              {specialties.length > 0 ? (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        {/* <TableHead>ID</TableHead> */}
+                        <TableHead>Specialty</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Pricing Model</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {specialties.map((spec) => (
+                        <TableRow key={spec._id}>
+                          {/* <TableCell className="font-medium text-foreground text-xs">
                           {spec._id}
                         </TableCell> */}
-                        <TableCell className="font-medium capitalize text-foreground">
-                          {spec.serviceSpecialty?.name}
-                        </TableCell>
-                        <TableCell
-                          className="max-w-75 truncate"
-                          title={spec.serviceSpecialty?.description}
-                        >
-                          {spec.serviceSpecialty?.description || "-"}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {spec.priceCharge}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatMoney(spec.price)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
-                              <DeleteSpecialtyAlert
-                                disabled={Boolean(restriction)}
-                                onBlocked={() => setBlockedOpen(true)}
-                                specialty={spec}
-                                onUpdate={onRefreshAll}
-                              />
-                            </PermissionActionGate>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                No specialties mapped.
-              </p>
-            )}
-          </div>
+                          <TableCell className="font-medium capitalize text-foreground">
+                            {spec.serviceSpecialty?.name}
+                          </TableCell>
+                          <TableCell
+                            className="max-w-75 truncate"
+                            title={spec.serviceSpecialty?.description}
+                          >
+                            {spec.serviceSpecialty?.description || "-"}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {spec.priceCharge}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatMoney(spec.price)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <PermissionActionGate module="manage_services" action="write" visualIndication={false}>
+                                <DeleteSpecialtyAlert
+                                  disabled={Boolean(restriction)}
+                                  onBlocked={() => setBlockedOpen(true)}
+                                  specialty={spec}
+                                  onUpdate={onRefreshAll}
+                                />
+                              </PermissionActionGate>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No specialties mapped.
+                </p>
+              )}
+            </div>
 
-          {/* Additional Fees Section */}
-          <div className="space-y-3">
-            <h4 className="font-semibold text-foreground">Additional Fees</h4>
-            {service.additionalFees?.length > 0 ? (
-              <div className="rounded-xl border border-border overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead>Fee Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Price</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {service.additionalFees.map((fee, idx) => (
-                      <TableRow key={idx}>
-                        <TableCell className="font-medium text-foreground">
-                          {fee.name}
-                        </TableCell>
-                        <TableCell className="capitalize">
-                          {fee.feeCategory}
-                        </TableCell>
-                        <TableCell className="text-right font-medium">
-                          {formatMoney(fee.price)}
-                        </TableCell>
+            {/* Additional Fees Section */}
+            <div className="space-y-3">
+              <h4 className="font-semibold text-foreground">Additional Fees</h4>
+              {service.additionalFees?.length > 0 ? (
+                <div className="rounded-xl border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow>
+                        <TableHead>Fee Name</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground italic">
-                No additional fees configured.
-              </p>
-            )}
-          </div>
+                    </TableHeader>
+                    <TableBody>
+                      {service.additionalFees.map((fee, idx) => (
+                        <TableRow key={idx}>
+                          <TableCell className="font-medium text-foreground">
+                            {fee.name}
+                          </TableCell>
+                          <TableCell className="capitalize">
+                            {fee.feeCategory}
+                          </TableCell>
+                          <TableCell className="text-right font-medium">
+                            {formatMoney(fee.price)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic">
+                  No additional fees configured.
+                </p>
+              )}
+            </div>
 
-          <div className="flex flex-wrap gap-3 pt-2">
-            <PermissionActionGate module="manage_services" action="write">
-              <EditServiceDialog
-                disabled={Boolean(restriction)}
-                onBlocked={() => setBlockedOpen(true)}
-                service={service}
-                specialties={specialties}
-                onUpdated={onRefreshAll}
-              />
-            </PermissionActionGate>
-            {/* <DeleteServiceAlert
+            <div className="flex flex-wrap gap-3 pt-2">
+              <PermissionActionGate module="manage_services" action="write">
+                <EditServiceDialog
+                  disabled={Boolean(restriction)}
+                  onBlocked={() => setBlockedOpen(true)}
+                  service={service}
+                  specialties={specialties}
+                  onUpdated={onRefreshAll}
+                />
+              </PermissionActionGate>
+              {/* <DeleteServiceAlert
               serviceId={service._id}
               serviceName={service.serviceCategory?.name}
               onDeleted={onRefreshAll}
             /> */}
+            </div>
           </div>
         </div>
-      </div>
       </Card>
 
       <VendorActionBlockedDialog
@@ -671,7 +671,10 @@ function EditServiceDialog({
     service.maximumEventSize || "",
   );
   const [fees, setFees] = useState(
-    service.additionalFees?.map((f) => ({ ...f })) || [],
+    service.additionalFees?.map((f) => ({
+      ...f,
+      price: String(minorToMajor(f.price || "0")),
+    })) || [],
   );
   const [priceCharge, setPriceCharge] = useState(
     getUniversalSpecialtyPricing(specialties).priceCharge,
@@ -687,7 +690,12 @@ function EditServiceDialog({
       setMinimumBookingDuration(service.minimumBookingDuration || "");
       setLeadTimeRequired(service.leadTimeRequired || "");
       setMaximumEventSize(service.maximumEventSize || "");
-      setFees(service.additionalFees?.map((f) => ({ ...f })) || []);
+      setFees(
+        service.additionalFees?.map((f) => ({
+          ...f,
+          price: String(minorToMajor(f.price || "0")),
+        })) || [],
+      );
       setTagInput("");
       const universalPricing = getUniversalSpecialtyPricing(specialties);
       setPriceCharge(universalPricing.priceCharge);
@@ -748,7 +756,13 @@ function EditServiceDialog({
       minimumBookingDuration,
       leadTimeRequired,
       maximumEventSize,
-      additionalFees: validFees.length > 0 ? validFees : [],
+      additionalFees:
+        validFees.length > 0
+          ? validFees.map((fee) => ({
+            ...fee,
+            price: String(majorToMinor(fee.price)),
+          }))
+          : [],
     };
 
     if (disabled) {
@@ -787,7 +801,7 @@ function EditServiceDialog({
         maximumEventSize,
         additionalFees: validFees.map((fee) => ({
           name: fee.name,
-          price: fee.price,
+          price: String(majorToMinor(fee.price)),
           feeCategory: fee.feeCategory || "other",
         })),
         updatedAt: new Date().toISOString(),
@@ -812,224 +826,230 @@ function EditServiceDialog({
           <Button disabled={disabled}>Edit Service Configuration</Button>
         </DialogTrigger>
         <DialogContent className="sm:max-w-140 max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Edit Service Configuration</DialogTitle>
-        </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Edit Service Configuration</DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Service Details</Label>
-            <div className="grid grid-cols-1 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs">Minimum Booking Duration</Label>
-                <Select
-                  value={minimumBookingDuration}
-                  onValueChange={setMinimumBookingDuration}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select minimum booking duration" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MINIMUM_BOOKING_DURATION.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Lead Time Required</Label>
-                <Select
-                  value={leadTimeRequired}
-                  onValueChange={setLeadTimeRequired}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select lead time required" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEAD_TIME_REQUIRED.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Maximum Event Size</Label>
-                <Select
-                  value={maximumEventSize}
-                  onValueChange={setMaximumEventSize}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select maximum event size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {MAXIMUM_EVENT_SIZE.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Universal Pricing</Label>
-            <p className="text-xs text-muted-foreground">
-              This pricing is applied to every specialty in the service.
-            </p>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label className="text-xs">Pricing Model</Label>
-                <Select value={priceCharge} onValueChange={handlePriceChargeChange}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Pricing Model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="package_pricing">
-                      Package/Fixed Pricing
-                    </SelectItem>
-                    <SelectItem value="hourly_rate">
-                      Hourly/Per Hour
-                    </SelectItem>
-                    <SelectItem value="custom_quotes">Custom Quote</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs">Price (£)</Label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  disabled={priceCharge === "custom_quotes"}
-                  placeholder={priceCharge === "custom_quotes" ? "0" : "0"}
-                />
-                {priceCharge === "custom_quotes" && (
-                  <p className="text-[11px] text-muted-foreground">
-                    Custom quotes do not use a fixed price.
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-3">
-            <Label className="text-sm font-semibold">Keywords / Tags</Label>
-            <Input
-              placeholder="Add a tag and press Enter"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleAddTag}
-            />
-            <div className="flex flex-wrap gap-2">
-              {tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
-                >
-                  {tag}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveTag(tag)}
-                    className="rounded-full p-0.5 hover:bg-primary/20"
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Service Details</Label>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">Minimum Booking Duration</Label>
+                  <Select
+                    value={minimumBookingDuration}
+                    onValueChange={setMinimumBookingDuration}
                   >
-                    <X className="h-3 w-3" />
-                  </button>
-                </span>
-              ))}
-              {tags.length === 0 && (
-                <p className="text-sm italic text-muted-foreground">
-                  No tags added
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Additional Fees */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold">Additional Fees</Label>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleAddFee}
-                className="gap-1.5"
-              >
-                <Plus className="h-3.5 w-3.5" /> Add Fee
-              </Button>
-            </div>
-
-            {fees.length === 0 && (
-              <p className="text-sm italic text-muted-foreground">
-                No additional fees
-              </p>
-            )}
-
-            {fees.map((fee, idx) => (
-              <div key={idx} className="flex items-end gap-2">
-                <div className="flex-1 space-y-1">
-                  <Label className="text-xs">Name</Label>
-                  <Input
-                    value={fee.name}
-                    onChange={(e) =>
-                      handleFeeChange(idx, "name", e.target.value)
-                    }
-                    placeholder="e.g. Extra hour"
-                  />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select minimum booking duration" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MINIMUM_BOOKING_DURATION.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="w-28 space-y-1">
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Lead Time Required</Label>
+                  <Select
+                    value={leadTimeRequired}
+                    onValueChange={setLeadTimeRequired}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select lead time required" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LEAD_TIME_REQUIRED.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs">Maximum Event Size</Label>
+                  <Select
+                    value={maximumEventSize}
+                    onValueChange={setMaximumEventSize}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select maximum event size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {MAXIMUM_EVENT_SIZE.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Universal Pricing</Label>
+              <p className="text-xs text-muted-foreground">
+                This pricing is applied to every specialty in the service.
+              </p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Pricing Model</Label>
+                  <Select value={priceCharge} onValueChange={handlePriceChargeChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Pricing Model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="package_pricing">
+                        Package/Fixed Pricing
+                      </SelectItem>
+                      <SelectItem value="hourly_rate">
+                        Hourly/Per Hour
+                      </SelectItem>
+                      <SelectItem value="custom_quotes">Custom Quote</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1">
                   <Label className="text-xs">Price (£)</Label>
                   <Input
                     type="number"
                     min="0"
-                    value={fee.price}
-                    onChange={(e) =>
-                      handleFeeChange(idx, "price", e.target.value)
-                    }
-                    placeholder="0"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    disabled={priceCharge === "custom_quotes"}
+                    placeholder={priceCharge === "custom_quotes" ? "0" : "0"}
                   />
+                  {priceCharge === "custom_quotes" && (
+                    <p className="text-[11px] text-muted-foreground">
+                      Custom quotes do not use a fixed price.
+                    </p>
+                  )}
                 </div>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Keywords / Tags</Label>
+              <Input
+                placeholder="Add a tag and press Enter"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleAddTag}
+              />
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(tag)}
+                      className="rounded-full p-0.5 hover:bg-primary/20"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+                {tags.length === 0 && (
+                  <p className="text-sm italic text-muted-foreground">
+                    No tags added
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Additional Fees */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">Additional Fees</Label>
                 <Button
                   type="button"
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => handleRemoveFee(idx)}
-                  className="h-9 w-9 shrink-0 text-muted-foreground hover:text-red-600"
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddFee}
+                  className="gap-1.5"
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" /> Add Fee
                 </Button>
               </div>
-            ))}
-          </div>
-        </div>
 
-        <DialogFooter>
-          <Button
-            disabled={loading}
-            onClick={handleSave}
-            className="bg-[#2F6BFF] text-white hover:bg-[#1e4dcc]"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-              </>
-            ) : (
-              "Save changes"
-            )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+              {fees.length === 0 && (
+                <p className="text-sm italic text-muted-foreground">
+                  No additional fees
+                </p>
+              )}
+
+              {fees.map((fee, idx) => (
+                <div key={idx} className="flex items-end gap-2">
+                  <div className="flex-1 space-y-1">
+                    <Label className="text-xs">Name</Label>
+                    <Input
+                      value={fee.name}
+                      onChange={(e) =>
+                        handleFeeChange(idx, "name", e.target.value)
+                      }
+                      placeholder="e.g. Extra hour"
+                    />
+                  </div>
+                  <div className="w-28 space-y-1">
+                    <Label className="text-xs">Price (£)</Label>
+                    <div className="relative">
+                      <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                        £
+                      </span>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={fee.price}
+                        onChange={(e) =>
+                          handleFeeChange(idx, "price", e.target.value)
+                        }
+                        placeholder="0"
+                        className="pl-7"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => handleRemoveFee(idx)}
+                    className="h-9 w-9 shrink-0 text-muted-foreground hover:text-red-600"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              disabled={loading}
+              onClick={handleSave}
+              className="bg-[#2F6BFF] text-white hover:bg-[#1e4dcc]"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                </>
+              ) : (
+                "Save changes"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   );

@@ -273,13 +273,19 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
                   updateLineItem(index, "description", event.target.value)
                 }
               />
-              <Input
-                type="number"
-                min={1}
-                placeholder="Amount"
-                value={item.amount}
-                onChange={(event) => updateLineItem(index, "amount", event.target.value)}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                  £
+                </span>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="0"
+                  value={item.amount}
+                  onChange={(event) => updateLineItem(index, "amount", event.target.value)}
+                  className="pl-7"
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -287,16 +293,22 @@ export function UnifiedBookingActions({ booking }: UnifiedBookingActionsProps) {
 
       {pricingType === "custom_quotes" && (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Final price</label>
-          <Input
-            type="number"
-            min={1}
-            value={finalPrice}
-            onChange={(event) => setFinalPrice(event.target.value)}
-            placeholder="e.g., 2500"
-          />
+          <label className="text-sm font-medium text-foreground">Final price (£)</label>
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+              £
+            </span>
+            <Input
+              type="number"
+              min={1}
+              value={finalPrice}
+              onChange={(event) => setFinalPrice(event.target.value)}
+              placeholder="0"
+              className="pl-7"
+            />
+          </div>
           <p className="text-xs text-muted-foreground">
-            Set the final quoted price for the customer.
+            Enter the quoted amount in pounds.
           </p>
         </div>
       )}

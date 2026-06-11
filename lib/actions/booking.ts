@@ -45,12 +45,8 @@ function normalizeAdjustedBookingPayload(
 ): AdjustUnifiedBookingInput {
   return {
     ...payload,
-    finalPrice:
-      payload.finalPrice !== undefined ? majorToMinor(payload.finalPrice) : payload.finalPrice,
-    extraLineItems: payload.extraLineItems?.map((item) => ({
-      ...item,
-      amount: majorToMinor(item.amount),
-    })),
+    finalPrice: payload.finalPrice,
+    extraLineItems: payload.extraLineItems,
   };
 }
 
