@@ -390,123 +390,88 @@ export function PaymentConfigurationForm() {
                   </h3>
                 </div>
 
-                <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.95fr)]">
-                  <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">
-                      We use Stripe for secure, compliant payments
-                    </p>
+                <div className="space-y-5">
+                  <p className="text-sm text-muted-foreground">
+                    Stripe is optional during onboarding. You can connect it now or finish it later from the dashboard.
+                  </p>
 
-                    {isStripeAccountLoading ? (
-                      <Button disabled className="w-full sm:w-auto">
-                        Checking Stripe status...
-                      </Button>
-                    ) : stripeStatusIssue ? (
-                      <div className="space-y-3">
-                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                          <div className="flex items-start gap-2">
-                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                            <p>{stripeStatusMessage}</p>
-                          </div>
-                          <p className="mt-2 text-xs text-amber-800/90">
-                            You can retry now or skip this step and finish Stripe later in the dashboard.
-                          </p>
-                        </div>
-
-                        <div className="flex flex-col gap-3 sm:flex-row">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleRetryStripeStatus}
-                            disabled={isStripeAccountRefreshing}
-                            className="w-full sm:w-auto"
-                          >
-                            {isStripeAccountRefreshing ? "Retrying..." : "Retry Stripe"}
-                          </Button>
-                          <Button
-                            type="button"
-                            onClick={handleSkipStripeForNow}
-                            className="w-full sm:w-auto"
-                          >
-                            Skip and continue later
-                          </Button>
-                        </div>
-                      </div>
-                    ) : stripeAccount?.stripeAccountId ? (
-                      <div className="space-y-3">
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                          Stripe account already created. You can continue to the commission step now and finish the Stripe setup later in the dashboard.
-                        </div>
+                  {isStripeAccountLoading ? (
+                    <Button disabled className="w-full sm:w-auto">
+                      Checking Stripe status...
+                    </Button>
+                  ) : stripeStatusIssue ? (
+                    <div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm text-amber-900">{stripeStatusMessage}</p>
+                      <div className="flex flex-col gap-3 sm:flex-row">
                         <Button
                           type="button"
-                          onClick={handleContinueToCommission}
+                          variant="outline"
+                          onClick={handleRetryStripeStatus}
+                          disabled={isStripeAccountRefreshing}
                           className="w-full sm:w-auto"
                         >
-                          Continue to commission
+                          {isStripeAccountRefreshing ? "Retrying..." : "Retry Stripe"}
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleSkipStripeForNow}
+                          className="w-full sm:w-auto"
+                        >
+                          Skip for now
                         </Button>
                       </div>
-                    ) : (
+                    </div>
+                  ) : stripeAccount?.stripeAccountId ? (
+                    <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                      <p className="text-sm text-emerald-800">
+                        Stripe account detected. You can continue to commission now and finish setup later in the dashboard.
+                      </p>
                       <Button
-                        onClick={handleStripeConnect}
-                        disabled={stripeConnected || isConnecting}
+                        type="button"
+                        onClick={handleContinueToCommission}
                         className="w-full sm:w-auto"
                       >
-                        {isConnecting ? (
-                          <>
-                            <span className="animate-spin mr-2">⚡</span>
-                            Connecting...
-                          </>
-                        ) : stripeConnected ? (
-                          <>
-                            <Check className="h-4 w-4 mr-2" />
-                            Connected
-                          </>
-                        ) : (
-                          "Connect with Stripe"
-                        )}
+                        Continue to commission
                       </Button>
-                    )}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div className="flex flex-col gap-3 sm:flex-row">
+                        <Button
+                          onClick={handleStripeConnect}
+                          disabled={stripeConnected || isConnecting}
+                          className="w-full sm:w-auto"
+                        >
+                          {isConnecting ? (
+                            <>
+                              <span className="animate-spin mr-2">⚡</span>
+                              Connecting...
+                            </>
+                          ) : stripeConnected ? (
+                            <>
+                              <Check className="h-4 w-4 mr-2" />
+                              Connected
+                            </>
+                          ) : (
+                            "Connect with Stripe"
+                          )}
+                        </Button>
 
-                    <div className="mt-6">
-                      <p className="text-sm font-medium mb-3">Once connected:</p>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span>Bank account verified</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span>Payouts enabled</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-600" />
-                          <span>Secure payment processing</span>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSkipStripeForNow}
+                          className="w-full sm:w-auto"
+                        >
+                          Skip for now
+                        </Button>
                       </div>
-                    </div>
 
-                    <p className="text-xs text-muted-foreground mt-4">
-                      Your bank details are never stored on our servers. Feature
-                      powered by Stripe.
-                    </p>
-                  </div>
-
-                  <div className="relative overflow-hidden rounded-2xl border bg-card p-5 shadow-sm">
-                    <div className="absolute right-4 top-4 h-7 w-7 rounded-full bg-primary/15" />
-                    <div className="absolute left-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-destructive/90 text-white shadow-md">
-                      <AlertCircle className="h-5 w-5" />
-                    </div>
-
-                    <div className="pt-12">
-
-                      <p className="text-sm leading-6 text-muted-foreground">
-                        To ensure secure and compliant payments, we use Stripe.
-                        You will be temporarily redirected to their secure portal
-                        to link your account. After completion, Stripe will bring
-                        you back to this page so you can finalize your account
-                        setup.
+                      <p className="text-xs text-muted-foreground">
+                        Stripe is optional here. You can finish it later in the dashboard.
                       </p>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             )}
