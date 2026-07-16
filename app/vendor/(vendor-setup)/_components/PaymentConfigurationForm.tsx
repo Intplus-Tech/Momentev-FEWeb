@@ -66,8 +66,15 @@ export function PaymentConfigurationForm() {
   const [commissionAgreed, setCommissionAgreed] = useState(false);
   const [paymentsProtected, setPaymentsProtected] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
-  const { data: stripeAccount, isLoading: isStripeAccountLoading } =
-    useStripeAccount();
+  const [stripeActionError, setStripeActionError] = useState<string | null>(null);
+  const {
+    data: stripeAccount,
+    isLoading: isStripeAccountLoading,
+    isError: isStripeAccountError,
+    error: stripeAccountError,
+    refetch: refetchStripeAccount,
+    isFetching: isStripeAccountRefreshing,
+  } = useStripeAccount();
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -111,6 +118,7 @@ export function PaymentConfigurationForm() {
   // --- Step 2: Stripe Connect ---
   const handleStripeConnect = async () => {
     setIsConnecting(true);
+    setStripeActionError(null);
 
     try {
       const result: PaymentActionResponse<{ stripeAccountId: string }> =
@@ -131,15 +139,50 @@ export function PaymentConfigurationForm() {
       }, 3000);
     } catch (error) {
       console.error(error);
-      toast.error("Failed to connect Stripe");
+      const message =
+        error instanceof Error ? error.message : "Failed to connect Stripe";
+      setStripeActionError(message);
+      toast.error(message);
     } finally {
       setIsConnecting(false);
     }
   };
 
   const handleContinueToCommission = () => {
+    setStripeActionError(null);
     markSectionComplete(3, 2); // Step 3, Section 2
     setExpandedSection(3); // Move to commission agreement
+  };
+
+  const handleSkipStripeForNow = () => {
+    setStripeActionError(null);
+    markSectionComplete(3, 2); // Step 3, Section 2
+    setExpandedSection(3); // Move to commission agreement
+    toast.info("You can set up Stripe later from the dashboard.");
+  };
+
+  const handleRetryStripeStatus = async () => {
+    setStripeActionError(null);
+
+    try {
+      const result = await refetchStripeAccount();
+
+      if (result.data?.stripeAccountId) {
+        handleContinueToCommission();
+        return;
+      }
+
+      if (result.isError) {
+        throw new Error(
+          (result.error as Error)?.message || "Unable to refresh Stripe status",
+        );
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to refresh Stripe status";
+      setStripeActionError(message);
+      toast.error(message);
+    }
   };
 
   // --- Step 3: Commission & Final Save ---
@@ -205,10 +248,19 @@ export function PaymentConfigurationForm() {
   const isMainButtonDisabled = () => {
     if (isSubmitting) return true;
     if (expandedSection === 1) return !paymentModel;
-    if (expandedSection === 2) return !stripeConnected; // Force connect before continue
+    if (expandedSection === 2) return !stripeConnected && !stripeAccount?.stripeAccountId; // Force connect before continue when Stripe is available
     if (expandedSection === 3) return !canProceedStep3;
     return false;
   };
+
+  const stripeStatusIssue =
+    isStripeAccountError || Boolean(stripeActionError);
+  const stripeStatusMessage =
+    stripeActionError ||
+    (isStripeAccountError
+      ? (stripeAccountError as Error)?.message ||
+        "We could not check Stripe right now. You can retry or continue and finish it later in the dashboard."
+      : "");
 
   return (
     <>
@@ -348,6 +400,37 @@ export function PaymentConfigurationForm() {
                       <Button disabled className="w-full sm:w-auto">
                         Checking Stripe status...
                       </Button>
+                    ) : stripeStatusIssue ? (
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                            <p>{stripeStatusMessage}</p>
+                          </div>
+                          <p className="mt-2 text-xs text-amber-800/90">
+                            You can retry now or skip this step and finish Stripe later in the dashboard.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 sm:flex-row">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleRetryStripeStatus}
+                            disabled={isStripeAccountRefreshing}
+                            className="w-full sm:w-auto"
+                          >
+                            {isStripeAccountRefreshing ? "Retrying..." : "Retry Stripe"}
+                          </Button>
+                          <Button
+                            type="button"
+                            onClick={handleSkipStripeForNow}
+                            className="w-full sm:w-auto"
+                          >
+                            Skip and continue later
+                          </Button>
+                        </div>
+                      </div>
                     ) : stripeAccount?.stripeAccountId ? (
                       <div className="space-y-3">
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
