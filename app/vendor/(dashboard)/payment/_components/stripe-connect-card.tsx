@@ -86,91 +86,92 @@ export function StripeConnectCard() {
   }
 
   const isFullyOnboarded =
+    Boolean(account) &&
     account?.chargesEnabled &&
     account?.payoutsEnabled &&
     account?.detailsSubmitted;
 
   return (
     <>
-    <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        {/* Left: Status info */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold tracking-tight text-foreground">
-              Stripe Connect
-            </h3>
+      <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* Left: Status info */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold tracking-tight text-foreground">
+                Stripe Connect
+              </h3>
+              {isFullyOnboarded ? (
+                <Badge variant="default" className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+                  Connected
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
+                  Action Required
+                </Badge>
+              )}
+            </div>
+
             {isFullyOnboarded ? (
-              <Badge variant="default" className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
-                Connected
-              </Badge>
+              <p className="text-sm text-muted-foreground">
+                Your Stripe account is fully connected. You can receive payments and payouts.
+              </p>
             ) : (
-              <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
-                Action Required
-              </Badge>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Complete Stripe onboarding to start receiving payments.
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <StatusFlag label="Details Submitted" ok={account?.detailsSubmitted} />
+                  <StatusFlag label="Charges Enabled" ok={account?.chargesEnabled} />
+                  <StatusFlag label="Payouts Enabled" ok={account?.payoutsEnabled} />
+                </div>
+              </div>
             )}
           </div>
 
-          {isFullyOnboarded ? (
-            <p className="text-sm text-muted-foreground">
-              Your Stripe account is fully connected. You can receive payments and payouts.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                Complete Stripe onboarding to start receiving payments.
-              </p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <StatusFlag label="Details Submitted" ok={account?.detailsSubmitted} />
-                <StatusFlag label="Charges Enabled" ok={account?.chargesEnabled} />
-                <StatusFlag label="Payouts Enabled" ok={account?.payoutsEnabled} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Action */}
-        {!isFullyOnboarded ? (
-          <Button
+          {/* Right: Action */}
+          {!isFullyOnboarded ? (
+            <Button
               onClick={handleOnboard}
               disabled={onboarding.isPending || Boolean(restriction)}
               className="shrink-0 sm:min-w-44"
             >
-            {onboarding.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
-            Go to Stripe
-          </Button>
-        ) : (
-          <Button
+              {onboarding.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="mr-2 h-4 w-4" />
+              )}
+              Go to Stripe
+            </Button>
+          ) : (
+            <Button
               variant="outline"
               onClick={handleDashboard}
               disabled={dashboard.isPending || Boolean(restriction)}
               className="shrink-0 sm:min-w-44"
             >
-            {dashboard.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
-            Login to Stripe
-          </Button>
-        )}
-      </div>
+              {dashboard.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="mr-2 h-4 w-4" />
+              )}
+              Login to Stripe
+            </Button>
+          )}
+        </div>
 
-      {(onboarding.isError || dashboard.isError) && (
-        <p className="mt-3 text-sm text-destructive">
-          {(onboarding.error as Error)?.message || (dashboard.error as Error)?.message || "Failed to process request"}
-        </p>
-      )}
-    </Card>
-    <VendorActionBlockedDialog
-      open={blockedOpen}
-      onOpenChange={setBlockedOpen}
-      restriction={restriction || undefined}
-    />
+        {(onboarding.isError || dashboard.isError) && (
+          <p className="mt-3 text-sm text-destructive">
+            {(onboarding.error as Error)?.message || (dashboard.error as Error)?.message || "Failed to process request"}
+          </p>
+        )}
+      </Card>
+      <VendorActionBlockedDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        restriction={restriction || undefined}
+      />
     </>
   );
 }

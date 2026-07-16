@@ -35,6 +35,7 @@ import {
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
+import { useStripeAccount } from "@/hooks/api/use-stripe-account";
 
 export function PaymentConfigurationForm() {
   const router = useRouter();
@@ -57,7 +58,7 @@ export function PaymentConfigurationForm() {
   const setErrors = useVendorSetupStore((state) => state.setErrors);
 
   // Local State
-  const [paymentModel, setLocalPaymentModel] = useState<string>("upfront");
+  const [paymentModel, setLocalPaymentModel] = useState<string>("split");
   const [stripeConnected, setStripeConnected] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -65,6 +66,8 @@ export function PaymentConfigurationForm() {
   const [commissionAgreed, setCommissionAgreed] = useState(false);
   const [paymentsProtected, setPaymentsProtected] = useState(false);
   const [termsAgreed, setTermsAgreed] = useState(false);
+  const { data: stripeAccount, isLoading: isStripeAccountLoading } =
+    useStripeAccount();
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -132,6 +135,11 @@ export function PaymentConfigurationForm() {
     } finally {
       setIsConnecting(false);
     }
+  };
+
+  const handleContinueToCommission = () => {
+    markSectionComplete(3, 2); // Step 3, Section 2
+    setExpandedSection(3); // Move to commission agreement
   };
 
   // --- Step 3: Commission & Final Save ---
@@ -336,25 +344,44 @@ export function PaymentConfigurationForm() {
                       We use Stripe for secure, compliant payments
                     </p>
 
-                    <Button
-                      onClick={handleStripeConnect}
-                      disabled={stripeConnected || isConnecting}
-                      className="w-full sm:w-auto"
-                    >
-                      {isConnecting ? (
-                        <>
-                          <span className="animate-spin mr-2">⚡</span>
-                          Connecting...
-                        </>
-                      ) : stripeConnected ? (
-                        <>
-                          <Check className="h-4 w-4 mr-2" />
-                          Connected
-                        </>
-                      ) : (
-                        "Connect with Stripe"
-                      )}
-                    </Button>
+                    {isStripeAccountLoading ? (
+                      <Button disabled className="w-full sm:w-auto">
+                        Checking Stripe status...
+                      </Button>
+                    ) : stripeAccount?.stripeAccountId ? (
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                          Stripe account already created. You can continue to the commission step now and finish the Stripe setup later in the dashboard.
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={handleContinueToCommission}
+                          className="w-full sm:w-auto"
+                        >
+                          Continue to commission
+                        </Button>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={handleStripeConnect}
+                        disabled={stripeConnected || isConnecting}
+                        className="w-full sm:w-auto"
+                      >
+                        {isConnecting ? (
+                          <>
+                            <span className="animate-spin mr-2">⚡</span>
+                            Connecting...
+                          </>
+                        ) : stripeConnected ? (
+                          <>
+                            <Check className="h-4 w-4 mr-2" />
+                            Connected
+                          </>
+                        ) : (
+                          "Connect with Stripe"
+                        )}
+                      </Button>
+                    )}
 
                     <div className="mt-6">
                       <p className="text-sm font-medium mb-3">Once connected:</p>

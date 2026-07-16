@@ -71,10 +71,10 @@ export function VendorOnboardingGuard({
           // Determine which step to redirect to based on onBoardingStage
           const stageRoutes: Record<number, string> = {
             0: "/vendor/business-setup",
-            1: "/vendor/business-setup",
-            2: "/vendor/service-setup",
-            3: "/vendor/payment-setup",
-            4: "/vendor/profile-setup",
+            1: "/vendor/service-setup",
+            2: "/vendor/payment-setup",
+            3: "/vendor/profile-setup",
+            4: "/vendor/setup-review",
           };
 
           const redirectRoute =

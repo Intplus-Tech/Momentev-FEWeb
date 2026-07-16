@@ -36,6 +36,7 @@ export function StripeConnectBanner() {
   if (isLoading) return null;
 
   const isFullyOnboarded =
+    Boolean(account) &&
     account?.chargesEnabled &&
     account?.payoutsEnabled &&
     account?.detailsSubmitted;

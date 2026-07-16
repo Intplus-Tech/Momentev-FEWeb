@@ -98,13 +98,14 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
         );
 
         if (!effectiveOnBoarded) {
-          // Redirect to appropriate setup step based on onBoardingStage
+          // Redirect to the next incomplete setup step based on onBoardingStage.
+          // Stage n means step n has already been completed.
           const stageRoutes: Record<number, string> = {
             0: "/vendor/business-setup",
-            1: "/vendor/business-setup",
-            2: "/vendor/service-setup",
-            3: "/vendor/payment-setup",
-            4: "/vendor/profile-setup",
+            1: "/vendor/service-setup",
+            2: "/vendor/payment-setup",
+            3: "/vendor/profile-setup",
+            4: "/vendor/setup-review",
           };
           const redirectRoute =
             stageRoutes[vendor.onBoardingStage] || "/vendor/business-setup";

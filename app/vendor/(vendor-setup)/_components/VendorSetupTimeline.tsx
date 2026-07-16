@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { cn } from "@/lib/utils";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 
@@ -45,19 +46,25 @@ const ROUTE_TO_STEP: Record<string, number> = {
 
 export default function VendorSetupTimeline() {
   const pathname = usePathname();
+  const { data: profile } = useUserProfile();
   const currentStep = useVendorSetupStore((state) => state.currentStep);
   const completedSections = useVendorSetupStore(
     (state) => state.completedSections,
   );
 
   const activeStep = ROUTE_TO_STEP[pathname] ?? currentStep;
+  const backendCompletedSteps =
+    profile?.vendor?.onBoarded === true
+      ? STEP_LABELS.length
+      : profile?.vendor?.onBoardingStage ?? 0;
+  const localCompletedSteps = Array.from(completedSections).length;
+  const completedSteps =
+    profile?.vendor ? backendCompletedSteps : localCompletedSteps;
 
   return (
     <div className="space-y-12">
       {STEP_LABELS.map((item, index) => {
-        const isCompleted =
-          item.completionKeys.length > 0 &&
-          item.completionKeys.every((key) => completedSections.has(key));
+        const isCompleted = item.step <= completedSteps;
         const isActive = item.step === activeStep;
         const isLast = index === STEP_LABELS.length - 1;
 
@@ -95,7 +102,6 @@ export default function VendorSetupTimeline() {
               </p>
               <p
                 className={cn(
-                  "mt-2 text-xs font-medium",
                   isCompleted
                     ? "text-primary"
                     : isActive
@@ -115,7 +121,7 @@ export default function VendorSetupTimeline() {
       })}
 
       <div className="rounded-xl bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-        {Array.from(completedSections).length} of {STEP_LABELS.length} steps
+        {completedSteps} of {STEP_LABELS.length} steps
         completed
       </div>
     </div>
