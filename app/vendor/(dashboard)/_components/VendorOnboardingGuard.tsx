@@ -44,17 +44,17 @@ export function VendorOnboardingGuard({
 
         const { vendor } = result.data;
 
-        console.log("[VendorGuard] User profile:", {
-          firstName: result.data.firstName,
-          lastName: result.data.lastName,
-          email: result.data.email,
-          hasVendor: !!vendor,
-          vendorId: vendor?.id,
-          onBoarded: vendor?.onBoarded,
-          onBoardingStage: vendor?.onBoardingStage,
-          isActive: vendor?.isActive,
-          businessName: vendor?.businessProfile?.businessName,
-        });
+        // console.log("[VendorGuard] User profile:", {
+        //   firstName: result.data.firstName,
+        //   lastName: result.data.lastName,
+        //   email: result.data.email,
+        //   hasVendor: !!vendor,
+        //   vendorId: vendor?.id,
+        //   onBoarded: vendor?.onBoarded,
+        //   onBoardingStage: vendor?.onBoardingStage,
+        //   isActive: vendor?.isActive,
+        //   businessName: vendor?.businessProfile?.businessName,
+        // });
 
         // Check if user is a vendor
         if (!vendor) {

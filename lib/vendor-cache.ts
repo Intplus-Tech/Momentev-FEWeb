@@ -63,7 +63,7 @@ export function setOnboardedCache(onBoarded: boolean, vendorId?: string): void {
       ...(vendorId ? { vendorId } : {}),
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(cache));
-    console.log(`✅ [Vendor Cache] Cached onBoarded=${onBoarded} for 5 minutes`);
+    // console.log(`✅ [Vendor Cache] Cached onBoarded=${onBoarded} for 5 minutes`);
   } catch (error) {
     console.error('❌ [Vendor Cache] Error writing cache:', error);
   }
@@ -80,7 +80,7 @@ export function clearOnboardedCache(): void {
 
   try {
     localStorage.removeItem(CACHE_KEY);
-    console.log('✅ [Vendor Cache] Cache cleared');
+    // console.log('✅ [Vendor Cache] Cache cleared');
   } catch (error) {
     console.error('❌ [Vendor Cache] Error clearing cache:', error);
   }
@@ -102,13 +102,13 @@ export function getEffectiveOnboardedStatus(
 
   // If cache says onBoarded=true and is valid, trust the cache over stale backend data
   if (cache?.onBoarded === true && isVendorMatch) {
-    console.log(
-      '✅ [Vendor Cache] Using cached onBoarded=true (backend:',
-      backendOnBoarded,
-      ', vendorId:',
-      vendorId,
-      ')',
-    );
+    // console.log(
+    //   '✅ [Vendor Cache] Using cached onBoarded=true (backend:',
+    //   backendOnBoarded,
+    //   ', vendorId:',
+    //   vendorId,
+    //   ')',
+    // );
     return true;
   }
 

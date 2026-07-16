@@ -119,7 +119,7 @@ export async function updateUserProfile(input: UpdateProfileInput) {
 
     const data = await response.json().catch(() => null);
 
-    console.log(data);
+    // console.log(data);
 
     if (!response.ok) {
       const errorData = data as any;
@@ -517,7 +517,7 @@ export async function updateVendorStaff(staffId: string, input: UpdateVendorStaf
     }
     const vendorId = profileResult.data.vendor._id;
 
-    console.log('[updateVendorStaff] Payload:', JSON.stringify(input, null, 2));
+    // console.log('[updateVendorStaff] Payload:', JSON.stringify(input, null, 2));
 
     const response = await fetch(`${process.env.BACKEND_URL}/api/v1/vendors/${vendorId}/staff/${staffId}`, {
       method: 'PATCH',
@@ -530,8 +530,8 @@ export async function updateVendorStaff(staffId: string, input: UpdateVendorStaf
     });
 
     const data = await response.json().catch(() => null);
-    
-    console.log(`[updateVendorStaff] Response status: ${response.status}`, JSON.stringify(data, null, 2));
+
+    // console.log(`[updateVendorStaff] Response status: ${response.status}`, JSON.stringify(data, null, 2));
 
     if (!response.ok) {
       if (response.status === 401) {

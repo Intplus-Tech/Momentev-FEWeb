@@ -54,7 +54,7 @@ function CheckoutForm({
     e.preventDefault();
     if (!stripe || !elements) return;
 
-    console.log("[PaymentModal] Starting payment process...");
+    // console.log("[PaymentModal] Starting payment process...");
     setIsProcessing(true);
     setError(null);
 
@@ -71,7 +71,7 @@ function CheckoutForm({
       return;
     }
 
-    console.log("[PaymentModal] Stripe charge successful. Syncing with backend...");
+    // console.log("[PaymentModal] Stripe charge successful. Syncing with backend...");
 
     // Step 2: tell our backend the payment succeeded → updates booking status
     const confirmResult = await confirmBookingPayment(bookingId);
@@ -79,13 +79,13 @@ function CheckoutForm({
       console.error("[PaymentModal] Backend confirmation failed:", confirmResult.error);
       setError(
         confirmResult.error ??
-          "Payment was charged but we could not confirm your booking. Please contact support."
+        "Payment was charged but we could not confirm your booking. Please contact support."
       );
       setIsProcessing(false);
       return;
     }
 
-    console.log("[PaymentModal] Booking fully confirmed!");
+    // console.log("[PaymentModal] Booking fully confirmed!");
     setSucceeded(true);
     setIsProcessing(false);
     setTimeout(() => {
@@ -205,7 +205,7 @@ export function PaymentModal({
   // Fetch payment methods when modal opens
   useEffect(() => {
     if (!open) return;
-    
+
     // Reset states
     setClientSecret(null);
     setInitError(null);
@@ -220,7 +220,7 @@ export function PaymentModal({
         if (pmResult.success && pmResult.data?.paymentMethods?.length) {
           const methods = pmResult.data.paymentMethods;
           setPaymentMethods(methods);
-          
+
           // Auto-select the first card (which is usually default)
           if (methods.length > 0) {
             setSelectedMethod(methods[0].id);
@@ -254,7 +254,7 @@ export function PaymentModal({
 
   const handlePayWithSavedCard = async () => {
     if (!selectedMethod || selectedMethod === "new_card" || !clientSecret || !stripePromise) return;
-    
+
     setIsChargingSavedCard(true);
     setInitError(null);
 
@@ -270,7 +270,7 @@ export function PaymentModal({
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: selectedMethod,
       });
-      
+
       if (stripeError) {
         setInitError(stripeError.message ?? "Payment failed with the selected card.");
         setIsChargingSavedCard(false);
@@ -361,7 +361,7 @@ export function PaymentModal({
                     </Label>
                   </div>
                 ))}
-                
+
                 <div className="flex items-center space-x-3 rounded-md border border-border p-3">
                   <RadioGroupItem value="new_card" id="pm-new_card" />
                   <Label htmlFor="pm-new_card" className="flex flex-1 cursor-pointer items-center">
@@ -403,8 +403,8 @@ export function PaymentModal({
                 >
                   Cancel
                 </Button>
-                <Button 
-                  onClick={handlePayWithSavedCard} 
+                <Button
+                  onClick={handlePayWithSavedCard}
                   disabled={isChargingSavedCard}
                 >
                   {isChargingSavedCard ? (

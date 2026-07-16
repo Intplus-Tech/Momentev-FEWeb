@@ -71,7 +71,7 @@ export async function createBooking(
       throw err;
     }
     const normalizedPayload = normalizeBookingPayload(payload);
-    console.log("[Booking] createBooking payload:", normalizedPayload);
+    // console.log("[Booking] createBooking payload:", normalizedPayload);
     const accessToken = await getAccessToken();
 
     if (!accessToken) {
@@ -105,7 +105,7 @@ export async function createBooking(
           });
 
           const retryData = await retryResponse.json();
-          console.log("[Booking] createBooking response (retry):", retryData);
+          // console.log("[Booking] createBooking response (retry):", retryData);
 
 
           if (retryResponse.ok) {
@@ -473,7 +473,7 @@ export async function createUnifiedBooking(
       throw err;
     }
     const normalizedPayload = normalizeUnifiedBookingPayload(payload);
-    console.log("[Booking] createUnifiedBooking payload:", normalizedPayload);
+    // console.log("[Booking] createUnifiedBooking payload:", normalizedPayload);
     const { response, error } = await fetchWithAuthRetry((token) =>
       fetch(`${API_URL}/api/v1/bookings/unified`, {
         method: "POST",
@@ -490,7 +490,7 @@ export async function createUnifiedBooking(
     }
 
     const data = await response.json().catch(() => ({}));
-    console.log("[Booking] createUnifiedBooking response:", data);
+    // console.log("[Booking] createUnifiedBooking response:", data);
 
     if (!response.ok) {
       return {

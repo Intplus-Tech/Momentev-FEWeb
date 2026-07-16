@@ -37,13 +37,13 @@ export default async function VendorSetupLayoutShell({
       }
       : null;
 
-    console.log("[Vendor Setup Layout] User info:", userInfo);
-    console.log("[Vendor Setup Layout] Vendor/business info:", vendorInfo);
+    // console.log("[Vendor Setup Layout] User info:", userInfo);
+    // console.log("[Vendor Setup Layout] Vendor/business info:", vendorInfo);
   } else {
-    console.log(
-      "[Vendor Setup Layout] Failed to load user profile:",
-      profileResult.error
-    );
+    // console.log(
+    //   "[Vendor Setup Layout] Failed to load user profile:",
+    //   profileResult.error
+    // );
   }
 
   return (

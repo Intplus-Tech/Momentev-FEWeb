@@ -53,13 +53,13 @@ export async function submitVendorProfile(
   }
 
   try {
-    console.log("📤 [Step 4 Submission] Starting vendor profile submission...");
-    console.log("📋 [Step 4 Submission] Payload:", {
-      profilePhoto: data.profilePhoto,
-      coverPhoto: data.coverPhoto || "omitted",
-      portfolioGallery: data.portfolioGallery ? `[${data.portfolioGallery.length} images]` : "omitted",
-      socialMediaLinks: data.socialMediaLinks ? `[${data.socialMediaLinks.length} links]` : "none",
-    });
+    // console.log("📤 [Step 4 Submission] Starting vendor profile submission...");
+    // console.log("📋 [Step 4 Submission] Payload:", {
+    //   profilePhoto: data.profilePhoto,
+    //   coverPhoto: data.coverPhoto || "omitted",
+    //   portfolioGallery: data.portfolioGallery ? `[${data.portfolioGallery.length} images]` : "omitted",
+    //   socialMediaLinks: data.socialMediaLinks ? `[${data.socialMediaLinks.length} links]` : "none",
+    // });
 
     // Get user profile to extract vendorId
     const profileResult = await getUserProfile();
@@ -80,7 +80,7 @@ export async function submitVendorProfile(
       };
     }
 
-    console.log(`🎫 [Step 4 Submission] Vendor ID: ${vendorId}`);
+    // console.log(`🎫 [Step 4 Submission] Vendor ID: ${vendorId}`);
 
     const payload: VendorProfilePayload = {
       profilePhoto: data.profilePhoto,
@@ -97,8 +97,8 @@ export async function submitVendorProfile(
       onBoarded: true,
     };
 
-    console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
-    console.log("📦 [Step 4 Submission] Full payload:", JSON.stringify(payload, null, 2));
+    // console.log(`🌐 [Step 4 Submission] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
+    // console.log("📦 [Step 4 Submission] Full payload:", JSON.stringify(payload, null, 2));
 
     const { response, error, errorCode } = await fetchWithAuthRetry((authToken) =>
       fetch(`${API_URL}/api/v1/vendors/${vendorId}`, {
@@ -120,7 +120,7 @@ export async function submitVendorProfile(
       };
     }
 
-    console.log(`📡 [Step 4 Submission] Response status: ${response.status} ${response.statusText}`);
+    // console.log(`📡 [Step 4 Submission] Response status: ${response.status} ${response.statusText}`);
 
     if (errorCode === 'FORBIDDEN') {
 
@@ -150,7 +150,7 @@ export async function submitVendorProfile(
     }
 
     const responseData: VendorProfileResponse = await response.json();
-    console.log("✅ [Step 4 Submission] Success! Profile updated.");
+    // console.log("✅ [Step 4 Submission] Success! Profile updated.");
 
 
     return {
@@ -185,7 +185,7 @@ export async function updateVendorOnboardingStage(
   }
 
   try {
-    console.log(`📤 [Onboarding] Updating onboarding stage to ${newStage}...`);
+    // console.log(`📤 [Onboarding] Updating onboarding stage to ${newStage}...`);
 
     // Reuse provided IDs/tokens from the calling action when possible.
     let vendorId = options?.vendorId;
@@ -214,7 +214,7 @@ export async function updateVendorOnboardingStage(
       onBoardingStage: newStage,
     };
 
-    console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
+    // console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
 
     const { response, error, errorCode } = await fetchWithAuthRetry(
       (authToken) =>
@@ -238,7 +238,7 @@ export async function updateVendorOnboardingStage(
       };
     }
 
-    console.log(`📡 [Onboarding] Response status: ${response.status} ${response.statusText}`);
+    // console.log(`📡 [Onboarding] Response status: ${response.status} ${response.statusText}`);
 
     if (errorCode === 'FORBIDDEN') {
 
@@ -268,7 +268,7 @@ export async function updateVendorOnboardingStage(
     }
 
     const responseData: VendorProfileResponse = await response.json();
-    console.log(`✅ [Onboarding] Successfully updated to stage ${newStage}`);
+    // console.log(`✅ [Onboarding] Successfully updated to stage ${newStage}`);
 
     return {
       success: true,

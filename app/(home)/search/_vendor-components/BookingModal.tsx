@@ -310,7 +310,7 @@ export function BookingModal({
   const onSubmit = async (values: CreateUnifiedBookingFormValues) => {
     try {
       const booking = await createBookingMutation.mutateAsync(values);
-      console.log("Booking submission response:", booking);
+      // console.log("Booking submission response:", booking);
       if (!booking?._id) {
         throw new Error("Booking created without an ID");
       }

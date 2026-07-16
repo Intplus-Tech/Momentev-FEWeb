@@ -45,7 +45,7 @@ export default function ClientDashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const { data: user } = useUserProfile();
-  console.log("Logged in user:", user?.id);
+  // console.log("Logged in user:", user?.id);
 
   return (
     <SidebarProvider>

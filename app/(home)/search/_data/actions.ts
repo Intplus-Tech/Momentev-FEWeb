@@ -477,7 +477,7 @@ export async function getVendorSpecialtiesAction(vendorId: string): Promise<Vend
     const data: VendorSpecialtiesResponse = await res.json();
     // Log specialties response for debugging storage/units (server-side log)
     try {
-      console.log("[VendorSpecialties] fetched for vendorId=", vendorId, data);
+      // console.log("[VendorSpecialties] fetched for vendorId=", vendorId, data);
     } catch (e) {
       // ignore logging errors
     }

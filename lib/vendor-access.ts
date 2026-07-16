@@ -37,15 +37,14 @@ export function getVendorActionRestriction(user?: Pick<UserProfile, "status" | "
 
   const vendor = user.vendor as
     | {
-        isActive?: boolean;
-        status?: string;
-      }
+      isActive?: boolean;
+      status?: string;
+    }
     | undefined;
 
   const isRestricted =
     isSuspendedVendorStatus(user.status) ||
-    isSuspendedVendorStatus(vendor?.status) ||
-    vendor?.isActive === false;
+    isSuspendedVendorStatus(vendor?.status);
 
   return isRestricted ? suspendedRestriction : null;
 }

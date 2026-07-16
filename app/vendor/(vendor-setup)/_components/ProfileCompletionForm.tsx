@@ -219,10 +219,10 @@ export function ProfileCompletionForm() {
 
       // Sync the business profile photo as the user avatar (best-effort)
       if (profilePhoto?.url) {
-        console.log("🖼️ [ProfileSetup] Syncing business profile photo as user avatar:", profilePhoto.url);
+        // console.log("🖼️ [ProfileSetup] Syncing business profile photo as user avatar:", profilePhoto.url);
         updateUserProfile({ avatar: profilePhoto.url })
           .then((res) => {
-            console.log("✅ [ProfileSetup] Avatar sync result:", res);
+            // console.log("✅ [ProfileSetup] Avatar sync result:", res);
           })
           .catch((err) => {
             console.warn("⚠️ [ProfileSetup] Could not sync avatar with user profile:", err);

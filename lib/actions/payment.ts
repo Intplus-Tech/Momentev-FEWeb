@@ -610,10 +610,10 @@ export async function createPaymentIntent(
     }
 
     const data = await res.json();
-    console.log("[PaymentAction] Payment intent created successfully:", {
-      bookingId: data.data?.bookingId,
-      intentId: data.data?.paymentIntentId
-    });
+    // console.log("[PaymentAction] Payment intent created successfully:", {
+    //   bookingId: data.data?.bookingId,
+    //   intentId: data.data?.paymentIntentId
+    // });
     return { success: true, data: data.data };
   } catch (error) {
     console.error("[PaymentAction] createPaymentIntent error:", error);

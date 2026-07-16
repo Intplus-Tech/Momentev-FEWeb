@@ -17,6 +17,7 @@ export function useUserProfile() {
         return null;
       }
 
+      // console.log('User profile fetched:', result.data);
       return result.data;
     },
     retry: (failureCount, error) => {

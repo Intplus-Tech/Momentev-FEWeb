@@ -70,7 +70,7 @@ export function VendorHeader({
         return;
       }
 
-      console.log("Book Vendor clicked (client flow pending)");
+      // console.log("Book Vendor clicked (client flow pending)");
       return;
     }
 
