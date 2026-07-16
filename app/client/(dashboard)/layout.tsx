@@ -44,9 +44,6 @@ function ClientBanner() {
 export default function ClientDashboardLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { data: user } = useUserProfile();
-  console.log("Logged in user:", user?.id);
-
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-muted/40 text-foreground">

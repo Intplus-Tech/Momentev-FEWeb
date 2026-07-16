@@ -59,7 +59,7 @@ export default async function BookingDetailPage({
   }
 
   const booking = response.data;
-  console.log("Client Booking Detail fetched:", booking);
+  // console.log("Client Booking Detail fetched:", booking);
   const status = statusConfig[booking.status] ?? statusConfig.pending;
 
   // Vendor details

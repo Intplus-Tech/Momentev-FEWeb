@@ -155,10 +155,3 @@ const data = {
 };
 
 const parsed = VendorDetailsSchema.safeParse(data);
-
-if (parsed.success) {
-  console.log("Validation Successful");
-  console.log("Parsed AddressId:", JSON.stringify(parsed.data.businessProfile?.contactInfo?.addressId, null, 2));
-} else {
-  console.log("Validation Failed:", JSON.stringify(parsed.error.format(), null, 2));
-}

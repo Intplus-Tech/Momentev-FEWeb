@@ -75,7 +75,7 @@ export async function createAddress(input: CreateAddressInput) {
       return { success: false, error: 'Not authenticated' };
     }
 
-    console.log('Creating address with payload:', input);
+    // console.log('Creating address with payload:', input);
 
     const response = await fetch(`${process.env.BACKEND_URL}/api/v1/addresses`, {
       method: 'POST',
@@ -89,7 +89,7 @@ export async function createAddress(input: CreateAddressInput) {
 
     const data = await response.json().catch(() => null);
 
-    console.log('Backend response:', { status: response.status, data });
+    // console.log('Backend response:', { status: response.status, data });
 
     if (!response.ok) {
       const errorData = data as any;

@@ -69,8 +69,6 @@ export function VendorHeader({
         onBookVendor();
         return;
       }
-
-      console.log("Book Vendor clicked (client flow pending)");
       return;
     }
 

@@ -74,11 +74,11 @@ const ClientThreadPage = () => {
     vendorProfile?.businessProfile?.businessName || "Vendor";
 
   const handleFileSelect = (file: File) => {
-    console.log("[Chat] File selected:", {
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    });
+    // console.log("[Chat] File selected:", {
+    //   name: file.name,
+    //   size: file.size,
+    //   type: file.type,
+    // });
 
     const previewUrl = file.type.startsWith("image/")
       ? URL.createObjectURL(file)
@@ -87,7 +87,7 @@ const ClientThreadPage = () => {
   };
 
   const handleRemoveAttachment = () => {
-    console.log("[Chat] Attachment removed");
+    // console.log("[Chat] Attachment removed");
     if (pendingAttachment?.previewUrl) {
       URL.revokeObjectURL(pendingAttachment.previewUrl);
     }
@@ -189,10 +189,10 @@ const ClientThreadPage = () => {
     // Text-only message
     if (!trimmed) return;
 
-    console.log("[Chat] Sending text message...", {
-      conversationId: threadId,
-      textLength: trimmed.length,
-    });
+    // console.log("[Chat] Sending text message...", {
+    //   conversationId: threadId,
+    //   textLength: trimmed.length,
+    // });
 
     sendMessage({
       conversationId: threadId,

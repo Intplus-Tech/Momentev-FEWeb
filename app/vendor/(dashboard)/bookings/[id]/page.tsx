@@ -66,8 +66,6 @@ export default async function VendorBookingDetailPage({
   const { id } = await params;
   const response = await fetchBookingById(id);
 
-  console.log("[VendorBookingDetailPage] Booking Response:", JSON.stringify(response, null, 2));
-
   if (!response.success || !response.data) {
     if (response.error === "Booking not found") notFound();
 

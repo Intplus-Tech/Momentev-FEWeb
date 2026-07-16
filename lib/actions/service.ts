@@ -93,7 +93,7 @@ export async function submitServiceSetup(
       additionalFees: additionalFees.length > 0 ? additionalFees : undefined,
     };
 
-    console.log("Creating Vendor Service...", servicePayload);
+    // console.log("Creating Vendor Service...", servicePayload);
     const serviceRes = await fetch(`${API_URL}/api/v1/vendor-services`, {
       method: "POST",
       headers: {
@@ -133,7 +133,7 @@ export async function submitServiceSetup(
     }
     // Custom is default "custom_quotes" with price "0"
 
-    console.log(`Creating ${serviceData.specialties.length} Specialties...`);
+    // console.log(`Creating ${serviceData.specialties.length} Specialties...`);
 
     const specialtyPromises = serviceData.specialties.map(specialtyId => {
       const bodyPayload = {
@@ -164,7 +164,6 @@ export async function submitServiceSetup(
     await Promise.all(specialtyPromises);
 
     // Update onboarding stage to 2 (Payment Setup)
-    console.log('📋 [Step 2 Submission] Incrementing onboarding stage to 2...');
     const stageUpdateResult = await updateVendorOnboardingStage(2, {
       vendorId,
       accessToken,
@@ -173,8 +172,6 @@ export async function submitServiceSetup(
     if (!stageUpdateResult.success) {
       console.warn('⚠️ [Step 2 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
       // Continue anyway - stage update is secondary to service setup submission
-    } else {
-      console.log('✅ [Step 2 Submission] Onboarding stage successfully updated to 2');
     }
 
     return { success: true };

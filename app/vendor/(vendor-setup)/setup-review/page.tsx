@@ -7,7 +7,7 @@ import { StepGuard } from "../_components/StepGuard";
 export default function SetupReviewPage() {
   const handleSubmit = () => {
     // Final submission - could redirect to dashboard or show success message
-    console.log("🎉 Final submission complete!");
+    // console.log("🎉 Final submission complete!");
     // TODO: Navigate to vendor dashboard
     window.location.href = "/vendor/dashboard";
   };

@@ -179,16 +179,3 @@ const data = {
 };
 
 const parsed = VendorDetailsSchema.safeParse(data);
-
-if (parsed.success) {
-  console.log("Validation Successful");
-  console.log(
-    "Parsed contactInfo:",
-    JSON.stringify(parsed.data.businessProfile?.contactInfo, null, 2),
-  );
-} else {
-  console.log(
-    "Validation Failed:",
-    JSON.stringify(parsed.error.format(), null, 2),
-  );
-}
