@@ -259,7 +259,7 @@ export function PaymentConfigurationForm() {
     stripeActionError ||
     (isStripeAccountError
       ? (stripeAccountError as Error)?.message ||
-        "We could not check Stripe right now. You can retry or continue and finish it later in the dashboard."
+      "We could not check Stripe right now. You can retry or continue and finish it later in the dashboard."
       : "");
 
   return (
