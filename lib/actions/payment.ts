@@ -579,8 +579,6 @@ export async function createPaymentIntent(
 ): Promise<PaymentActionResponse<PaymentIntentResult>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
-  console.log(`[PaymentAction] Creating payment intent for booking: ${bookingId}`);
-
   try {
     const accessToken = await getAccessToken();
     if (!accessToken) {
@@ -610,10 +608,6 @@ export async function createPaymentIntent(
     }
 
     const data = await res.json();
-    // console.log("[PaymentAction] Payment intent created successfully:", {
-    //   bookingId: data.data?.bookingId,
-    //   intentId: data.data?.paymentIntentId
-    // });
     return { success: true, data: data.data };
   } catch (error) {
     console.error("[PaymentAction] createPaymentIntent error:", error);
@@ -636,8 +630,6 @@ export async function confirmBookingPayment(
   bookingId: string
 ): Promise<PaymentActionResponse<ConfirmPaymentResult>> {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
-
-  console.log(`[PaymentAction] Confirming payment for booking: ${bookingId}`);
 
   try {
     const accessToken = await getAccessToken();
@@ -668,7 +660,6 @@ export async function confirmBookingPayment(
     }
 
     const data = await res.json();
-    console.log("[PaymentAction] Payment confirmed successfully:", data.data);
     return { success: true, data: data.data };
   } catch (error) {
     console.error("[PaymentAction] confirmBookingPayment error:", error);

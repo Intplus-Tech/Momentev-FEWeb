@@ -67,12 +67,6 @@ const VendorThreadPage = () => {
   );
 
   const handleFileSelect = (file: File) => {
-    // console.log("[Vendor Chat] File selected:", {
-    //   name: file.name,
-    //   size: file.size,
-    //   type: file.type,
-    // });
-
     const previewUrl = file.type.startsWith("image/")
       ? URL.createObjectURL(file)
       : undefined;
@@ -80,7 +74,6 @@ const VendorThreadPage = () => {
   };
 
   const handleRemoveAttachment = () => {
-    // console.log("[Vendor Chat] Attachment removed");
     if (pendingAttachment?.previewUrl) {
       URL.revokeObjectURL(pendingAttachment.previewUrl);
     }
@@ -174,11 +167,6 @@ const VendorThreadPage = () => {
     }
 
     if (!trimmed) return;
-
-    // console.log("[Vendor Chat] Sending text message...", {
-    //   conversationId: threadId,
-    //   textLength: trimmed.length,
-    // });
 
     sendMessage({
       conversationId: threadId,

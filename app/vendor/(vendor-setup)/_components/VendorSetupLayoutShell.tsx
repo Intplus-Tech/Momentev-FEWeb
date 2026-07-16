@@ -1,7 +1,5 @@
 import { ReactNode } from "react";
 
-import { getUserProfile } from "@/lib/actions/user";
-
 import Header from "./header";
 import Sidebar from "./sidebar";
 import SetupTitle from "./SetupTitle";
@@ -13,39 +11,6 @@ type VendorSetupLayoutShellProps = {
 export default async function VendorSetupLayoutShell({
   children,
 }: VendorSetupLayoutShellProps) {
-  const profileResult = await getUserProfile();
-
-  if (profileResult.success && profileResult.data) {
-    const userInfo = {
-      id: profileResult.data._id,
-      firstName: profileResult.data.firstName,
-      lastName: profileResult.data.lastName,
-      email: profileResult.data.email,
-      role: profileResult.data.role,
-      status: profileResult.data.status,
-      emailVerified: profileResult.data.emailVerified,
-      phoneNumber: profileResult.data.phoneNumber,
-    };
-
-    const vendorInfo = profileResult.data.vendor
-      ? {
-        vendorId: profileResult.data.vendor._id,
-        isActive: profileResult.data.vendor.isActive,
-        onBoardingStage: profileResult.data.vendor.onBoardingStage,
-        onBoarded: profileResult.data.vendor.onBoarded,
-        businessProfile: profileResult.data.vendor.businessProfile ?? null,
-      }
-      : null;
-
-    // console.log("[Vendor Setup Layout] User info:", userInfo);
-    // console.log("[Vendor Setup Layout] Vendor/business info:", vendorInfo);
-  } else {
-    // console.log(
-    //   "[Vendor Setup Layout] Failed to load user profile:",
-    //   profileResult.error
-    // );
-  }
-
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />

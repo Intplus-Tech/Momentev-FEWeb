@@ -159,14 +159,11 @@ export function PaymentConfigurationForm() {
         }
 
         // Update onboarding stage to 3 (Profile Setup)
-        // console.log('📋 [Step 3 Submission] Incrementing onboarding stage to 3...');
         const stageUpdateResult = await updateVendorOnboardingStage(3);
 
         if (!stageUpdateResult.success) {
           console.warn('⚠️ [Step 3 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
           // Continue anyway - stage update is secondary to payment setup submission
-        } else {
-          // console.log('✅ [Step 3 Submission] Onboarding stage successfully updated to 3');
         }
 
         markSectionComplete(3, 3); // Step 3, Section 3
