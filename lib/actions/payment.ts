@@ -178,7 +178,7 @@ export type StripeAccountStatus = {
 };
 
 export async function getStripeAccount(): Promise<
-  PaymentActionResponse<StripeAccountStatus>
+  PaymentActionResponse<StripeAccountStatus | null>
 > {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
 
@@ -204,6 +204,11 @@ export async function getStripeAccount(): Promise<
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
+
+      if (res.status === 404) {
+        return { success: true, data: null };
+      }
+
       console.error("getStripeAccount failed:", err);
       return {
         success: false,

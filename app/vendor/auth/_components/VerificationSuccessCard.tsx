@@ -61,18 +61,17 @@ export function VerificationSuccessCard({
     if (status !== "success") return;
 
     const timer = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          router.push(redirectPath);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCountdown((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [status, router, redirectPath]);
+
+  useEffect(() => {
+    if (status === "success" && countdown === 0) {
+      router.push(redirectPath);
+    }
+  }, [countdown, redirectPath, router, status]);
 
   return (
     <div className="mx-auto w-full max-w-xl xl:min-w-md pb-6 text-center">

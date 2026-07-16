@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Momentev • Experience design platform",
+  title: "Momentev • Plan with Confidence.",
   description:
     "Momentev brings clients and vendors together with dedicated onboarding flows, verification, and landing experiences in one workspace.",
   metadataBase: new URL("https://momentev.local"),

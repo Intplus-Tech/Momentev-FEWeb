@@ -10,12 +10,12 @@ import { queryKeys } from "@/lib/react-query/keys";
 // --- Query: Fetch Stripe account status ---
 
 export function useStripeAccount() {
-  return useQuery<StripeAccountStatus>({
+  return useQuery<StripeAccountStatus | null>({
     queryKey: queryKeys.vendor.stripeAccount(),
     queryFn: async () => {
       const result = await getStripeAccount();
       if (!result.success) throw new Error(result.error || "Failed to fetch Stripe account");
-      return result.data!;
+      return result.data ?? null;
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
     retry: 1,

@@ -3,17 +3,24 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useStripeAccount,
   useStripeOnboarding,
   useStripeDashboard,
 } from "@/hooks/api/use-stripe-account";
+import {
+  createStripeAccount,
+  type PaymentActionResponse,
+} from "@/lib/actions/payment";
+import { queryKeys } from "@/lib/react-query/keys";
 import { ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
 export function StripeConnectCard() {
+  const queryClient = useQueryClient();
   const {
     data: account,
     isLoading,
@@ -25,7 +32,42 @@ export function StripeConnectCard() {
   const dashboard = useStripeDashboard();
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [blockedOpen, setBlockedOpen] = useState(false);
-  const handleOnboard = async () => {
+  const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+
+  const hasStripeAccount = Boolean(account?.stripeAccountId);
+  const isFullyOnboarded =
+    Boolean(account) &&
+    account?.chargesEnabled &&
+    account?.payoutsEnabled &&
+    account?.detailsSubmitted;
+  const isStripeIncomplete = hasStripeAccount && !isFullyOnboarded;
+
+  const handleCreateAccount = async () => {
+    if (!canPerformAction()) {
+      setBlockedOpen(true);
+      return;
+    }
+
+    try {
+      setIsCreatingAccount(true);
+      const result: PaymentActionResponse<{ stripeAccountId: string }> =
+        await createStripeAccount();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create Stripe account");
+      }
+
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.vendor.stripeAccount(),
+      });
+    } catch {
+      // Error is handled by the UI state or toast elsewhere
+    } finally {
+      setIsCreatingAccount(false);
+    }
+  };
+
+  const handleGoToStripe = async () => {
     if (!canPerformAction()) {
       setBlockedOpen(true);
       return;
@@ -85,92 +127,103 @@ export function StripeConnectCard() {
     );
   }
 
-  const isFullyOnboarded =
-    account?.chargesEnabled &&
-    account?.payoutsEnabled &&
-    account?.detailsSubmitted;
-
   return (
     <>
-    <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-        {/* Left: Status info */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base font-semibold tracking-tight text-foreground">
-              Stripe Connect
-            </h3>
+      <Card className="rounded-3xl border border-slate-200/70 bg-linear-to-br from-white via-white to-slate-50/70 p-6 shadow-sm">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+          {/* Left: Status info */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-base font-semibold tracking-tight text-foreground">
+                Stripe Connect
+              </h3>
+              {isFullyOnboarded ? (
+                <Badge variant="default" className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+                  Connected
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
+                  {hasStripeAccount ? "Action Required" : "Not Created"}
+                </Badge>
+              )}
+            </div>
+
             {isFullyOnboarded ? (
-              <Badge variant="default" className="border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
-                Connected
-              </Badge>
+              <p className="text-sm text-muted-foreground">
+                Your Stripe account is fully connected. You can receive payments and payouts.
+              </p>
+            ) : !hasStripeAccount ? (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  You do not have a Stripe account yet. Create one first, then come back here to finish setup and enable payouts.
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <StatusFlag label="Details Submitted" ok={account?.detailsSubmitted} />
+                  <StatusFlag label="Charges Enabled" ok={account?.chargesEnabled} />
+                  <StatusFlag label="Payouts Enabled" ok={account?.payoutsEnabled} />
+                </div>
+              </div>
             ) : (
-              <Badge variant="secondary" className="border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
-                Action Required
-              </Badge>
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">
+                  Complete Stripe onboarding to start receiving payments.
+                </p>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <StatusFlag label="Details Submitted" ok={account?.detailsSubmitted} />
+                  <StatusFlag label="Charges Enabled" ok={account?.chargesEnabled} />
+                  <StatusFlag label="Payouts Enabled" ok={account?.payoutsEnabled} />
+                </div>
+              </div>
             )}
           </div>
 
-          {isFullyOnboarded ? (
-            <p className="text-sm text-muted-foreground">
-              Your Stripe account is fully connected. You can receive payments and payouts.
-            </p>
-          ) : (
-            <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">
-                Complete Stripe onboarding to start receiving payments.
-              </p>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                <StatusFlag label="Details Submitted" ok={account?.detailsSubmitted} />
-                <StatusFlag label="Charges Enabled" ok={account?.chargesEnabled} />
-                <StatusFlag label="Payouts Enabled" ok={account?.payoutsEnabled} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Right: Action */}
-        {!isFullyOnboarded ? (
-          <Button
-              onClick={handleOnboard}
-              disabled={onboarding.isPending || Boolean(restriction)}
+          {/* Right: Action */}
+          {!isFullyOnboarded ? (
+            <Button
+              onClick={hasStripeAccount ? handleGoToStripe : handleCreateAccount}
+              disabled={
+                onboarding.isPending ||
+                dashboard.isPending ||
+                isCreatingAccount ||
+                Boolean(restriction)
+              }
               className="shrink-0 sm:min-w-44"
             >
-            {onboarding.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
-            Go to Stripe
-          </Button>
-        ) : (
-          <Button
+              {onboarding.isPending || dashboard.isPending || isCreatingAccount ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="mr-2 h-4 w-4" />
+              )}
+              {isStripeIncomplete ? "Go to Stripe" : "Create Stripe Account"}
+            </Button>
+          ) : (
+            <Button
               variant="outline"
               onClick={handleDashboard}
               disabled={dashboard.isPending || Boolean(restriction)}
               className="shrink-0 sm:min-w-44"
             >
-            {dashboard.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <ExternalLink className="mr-2 h-4 w-4" />
-            )}
-            Login to Stripe
-          </Button>
-        )}
-      </div>
+              {dashboard.isPending ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ExternalLink className="mr-2 h-4 w-4" />
+              )}
+              Login to Stripe
+            </Button>
+          )}
+        </div>
 
-      {(onboarding.isError || dashboard.isError) && (
-        <p className="mt-3 text-sm text-destructive">
-          {(onboarding.error as Error)?.message || (dashboard.error as Error)?.message || "Failed to process request"}
-        </p>
-      )}
-    </Card>
-    <VendorActionBlockedDialog
-      open={blockedOpen}
-      onOpenChange={setBlockedOpen}
-      restriction={restriction || undefined}
-    />
+        {(onboarding.isError || dashboard.isError) && (
+          <p className="mt-3 text-sm text-destructive">
+            {(onboarding.error as Error)?.message || (dashboard.error as Error)?.message || "Failed to process request"}
+          </p>
+        )}
+      </Card>
+      <VendorActionBlockedDialog
+        open={blockedOpen}
+        onOpenChange={setBlockedOpen}
+        restriction={restriction || undefined}
+      />
     </>
   );
 }
