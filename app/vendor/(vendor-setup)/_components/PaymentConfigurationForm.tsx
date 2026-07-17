@@ -36,6 +36,7 @@ import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 import { useStripeAccount } from "@/hooks/api/use-stripe-account";
+import { useStripeCountries } from "@/hooks/api/use-stripe-countries";
 
 export function PaymentConfigurationForm() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export function PaymentConfigurationForm() {
   const [stripeConnected, setStripeConnected] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   const [commissionAgreed, setCommissionAgreed] = useState(false);
   const [paymentsProtected, setPaymentsProtected] = useState(false);
@@ -75,6 +77,19 @@ export function PaymentConfigurationForm() {
     refetch: refetchStripeAccount,
     isFetching: isStripeAccountRefreshing,
   } = useStripeAccount();
+
+  const {
+    data: stripeCountries,
+    isLoading: isCountriesLoading,
+    isError: isCountriesError,
+  } = useStripeCountries();
+
+  // Default selected country to first available
+  useEffect(() => {
+    if (!selectedCountry && stripeCountries && stripeCountries.length > 0) {
+      setSelectedCountry(stripeCountries[0].code);
+    }
+  }, [stripeCountries, selectedCountry]);
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -122,7 +137,7 @@ export function PaymentConfigurationForm() {
 
     try {
       const result: PaymentActionResponse<{ stripeAccountId: string }> =
-        await createStripeAccount();
+        await createStripeAccount(selectedCountry || undefined);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to connect Stripe");
@@ -436,10 +451,32 @@ export function PaymentConfigurationForm() {
                     </div>
                   ) : (
                     <div className="space-y-3">
+                      {/* Country selector for creating a Stripe account */}
+                      {isCountriesLoading ? (
+                        <div className="text-sm text-muted-foreground">Loading countries...</div>
+                      ) : isCountriesError ? (
+                        <div className="text-sm text-destructive">Unable to load supported countries</div>
+                      ) : (
+                        <div className="mb-2">
+                          <label className="text-xs font-medium mb-1 block">Select account country</label>
+                          <select
+                            value={selectedCountry ?? ""}
+                            onChange={(e) => setSelectedCountry(e.target.value)}
+                            className="w-full max-w-xs border rounded px-2 py-1 text-sm"
+                          >
+                            {stripeCountries?.map((c) => (
+                              <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
                       <div className="flex flex-col gap-3 sm:flex-row">
                         <Button
                           onClick={handleStripeConnect}
-                          disabled={stripeConnected || isConnecting}
+                          disabled={
+                            stripeConnected || isConnecting || isCountriesLoading || (!selectedCountry && stripeCountries && stripeCountries.length > 0)
+                          }
                           className="w-full sm:w-auto"
                         >
                           {isConnecting ? (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import {
 } from "@/hooks/api/use-stripe-account";
 import { createStripeAccount, type PaymentActionResponse } from "@/lib/actions/payment";
 import { queryKeys } from "@/lib/react-query/keys";
+import { useStripeCountries } from "@/hooks/api/use-stripe-countries";
 import { AlertTriangle, CheckCircle2, AlertCircle, ExternalLink, Loader2, ShieldCheck } from "lucide-react";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
@@ -23,6 +24,14 @@ export function StripeConnectBanner() {
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+
+  const { data: countries, isLoading: isCountriesLoading } = useStripeCountries();
+
+  // default selection
+  useEffect(() => {
+    if (!selectedCountry && countries && countries.length > 0) setSelectedCountry(countries[0].code);
+  }, [countries, selectedCountry]);
 
   const isFullyOnboarded =
     Boolean(account) &&
@@ -40,7 +49,7 @@ export function StripeConnectBanner() {
     setIsCreatingAccount(true);
     try {
       const result: PaymentActionResponse<{ stripeAccountId: string }> =
-        await createStripeAccount();
+        await createStripeAccount(selectedCountry || undefined);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to create Stripe account");
@@ -120,23 +129,44 @@ export function StripeConnectBanner() {
           </div>
         </div>
 
-        <Button
-          onClick={hasStripeAccount ? handleGoToStripe : handleCreateAccount}
-          disabled={
-            Boolean(restriction) ||
-            onboarding.isPending ||
-            dashboard.isPending ||
-            isCreatingAccount
-          }
-          className="shrink-0 bg-amber-600 text-white hover:bg-amber-700"
-        >
-          {isCreatingAccount || onboarding.isPending || dashboard.isPending ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <ExternalLink className="mr-2 h-4 w-4" />
+        <div className="flex flex-col items-end gap-3">
+          {!hasStripeAccount && (
+            <div className="mb-1">
+              {isCountriesLoading ? (
+                <div className="text-sm text-muted-foreground">Loading countries...</div>
+              ) : (
+                <select
+                  value={selectedCountry ?? ""}
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                >
+                  {countries?.map((c) => (
+                    <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                  ))}
+                </select>
+              )}
+            </div>
           )}
-          {isStripeIncomplete ? "Continue Stripe Setup" : "Create Stripe Account"}
-        </Button>
+
+          <Button
+            onClick={hasStripeAccount ? handleGoToStripe : handleCreateAccount}
+            disabled={
+              Boolean(restriction) ||
+              onboarding.isPending ||
+              dashboard.isPending ||
+              isCreatingAccount ||
+              (!hasStripeAccount && !selectedCountry && countries && countries.length > 0)
+            }
+            className="shrink-0 bg-amber-600 text-white hover:bg-amber-700"
+          >
+            {isCreatingAccount || onboarding.isPending || dashboard.isPending ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <ExternalLink className="mr-2 h-4 w-4" />
+            )}
+            {isStripeIncomplete ? "Continue Stripe Setup" : "Create Stripe Account"}
+          </Button>
+        </div>
       </div>
 
       {onboarding.isError && (

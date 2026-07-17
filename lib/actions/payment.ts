@@ -62,7 +62,7 @@ export async function setPaymentModel(
  * Create Stripe Connected Account
  * POST /api/v1/vendors/{vendorId}/stripe-account
  */
-export async function createStripeAccount(): Promise<
+export async function createStripeAccount(country?: string): Promise<
   PaymentActionResponse<{ stripeAccountId: string }>
 > {
   if (!API_URL) return { success: false, error: "Backend URL not configured" };
@@ -76,6 +76,9 @@ export async function createStripeAccount(): Promise<
     if (!accessToken)
       return { success: false, error: "Authentication required" };
 
+    const payload: Record<string, unknown> = {};
+    if (country) payload.country = country;
+
     const res = await fetch(
       `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
       {
@@ -84,7 +87,7 @@ export async function createStripeAccount(): Promise<
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({}),
+        body: JSON.stringify(payload),
       },
     );
 
@@ -111,6 +114,48 @@ export async function createStripeAccount(): Promise<
   } catch (error) {
     console.error("createStripeAccount error:", error);
     return { success: false, error: "Failed to create Stripe account" };
+  }
+}
+
+/**
+ * Get list of Stripe supported countries
+ * GET /api/v1/config/stripe/countries
+ */
+export type StripeCountry = {
+  code: string; // ISO alpha-2 code
+  name: string;
+  defaultCurrency?: string;
+};
+
+export async function getStripeCountries(): Promise<
+  PaymentActionResponse<StripeCountry[]>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(`${API_URL}/api/v1/config/stripe/countries`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error("getStripeCountries failed:", err);
+      return { success: false, error: err.message || "Failed to fetch countries" };
+    }
+
+    const data = await res.json();
+    return { success: true, data: data.data || [] };
+  } catch (error) {
+    console.error("getStripeCountries error:", error);
+    return { success: false, error: "Failed to fetch countries" };
   }
 }
 
