@@ -48,7 +48,7 @@ export const queryKeys = {
   },
   quotes: {
     all: ['quotes'] as const,
-    vendorList: (page: number, limit: number, filters?: Record<string, unknown>) => 
+    vendorList: (page: number, limit: number, filters?: Record<string, unknown>) =>
       [...queryKeys.quotes.all, 'vendorList', page, limit, filters] as const,
     customerList: (page?: number, limit?: number, filters?: Record<string, unknown>) =>
       [...queryKeys.quotes.all, 'customerList', page, limit, filters] as const,
@@ -59,5 +59,9 @@ export const queryKeys = {
       [...queryKeys.quoteRequests.all, 'vendorList', page, limit, filters] as const,
     customerList: (page?: number, limit?: number, filters?: Record<string, unknown>) =>
       [...queryKeys.quoteRequests.all, 'customerList', page, limit, filters] as const,
+  },
+  config: {
+    all: ['config'] as const,
+    stripeCountries: () => [...queryKeys.config.all, 'stripeCountries'] as const,
   },
 };
