@@ -118,6 +118,63 @@ export async function createStripeAccount(country?: string): Promise<
 }
 
 /**
+ * Delete / reset Stripe Connected Account
+ * DELETE /api/v1/vendors/{vendorId}/stripe-account
+ */
+export type StripeAccountResetResult = {
+  vendorId: string;
+  stripeAccountId: string;
+  deleted: boolean;
+};
+
+export async function deleteStripeAccount(): Promise<
+  PaymentActionResponse<StripeAccountResetResult>
+> {
+  if (!API_URL) return { success: false, error: "Backend URL not configured" };
+
+  try {
+    const profileResult = await getUserProfile();
+    const vendorId = profileResult.data?.vendor?._id;
+    if (!vendorId) return { success: false, error: "Vendor profile not found" };
+
+    const accessToken = await getAccessToken();
+    if (!accessToken)
+      return { success: false, error: "Authentication required" };
+
+    const res = await fetch(
+      `${API_URL}/api/v1/vendors/${vendorId}/stripe-account`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    );
+
+    const rawResponse = await res.text();
+    const responseData = rawResponse ? JSON.parse(rawResponse) : {};
+
+    if (!res.ok) {
+      console.error("deleteStripeAccount failed raw response:", rawResponse);
+      console.error("deleteStripeAccount failed parsed response:", responseData);
+      return {
+        success: false,
+        error: responseData.message || "Failed to delete Stripe account",
+      };
+    }
+
+    return {
+      success: true,
+      data: responseData.data,
+    };
+  } catch (error) {
+    console.error("deleteStripeAccount error:", error);
+    return { success: false, error: "Failed to delete Stripe account" };
+  }
+}
+
+/**
  * Get list of Stripe supported countries
  * GET /api/v1/config/stripe/countries
  */
@@ -413,6 +470,19 @@ export async function getVendorBalance(): Promise<
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("getVendorBalance failed:", err);
+
+      if (res.status === 404) {
+        return {
+          success: true,
+          data: {
+            vendorId,
+            available: 0,
+            pending: 0,
+            currency: "GBP",
+          },
+        };
+      }
+
       return {
         success: false,
         error: err.message || "Failed to fetch balance",
@@ -474,6 +544,18 @@ export async function getVendorEarnings(): Promise<
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("getVendorEarnings failed:", err);
+
+      if (res.status === 404) {
+        return {
+          success: true,
+          data: {
+            vendorId,
+            earnings: [],
+            total: 0,
+          },
+        };
+      }
+
       return {
         success: false,
         error: err.message || "Failed to fetch earnings",
@@ -534,6 +616,17 @@ export async function getVendorPayouts(): Promise<
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("getVendorPayouts failed:", err);
+
+      if (res.status === 404) {
+        return {
+          success: true,
+          data: {
+            vendorId,
+            payouts: [],
+          },
+        };
+      }
+
       return {
         success: false,
         error: err.message || "Failed to fetch payouts",
@@ -599,6 +692,18 @@ export async function getVendorPaymentMethods(): Promise<
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       console.error("getVendorPaymentMethods failed:", err);
+
+      if (res.status === 404) {
+        return {
+          success: true,
+          data: {
+            vendorId,
+            stripeAccountId: "",
+            paymentMethods: [],
+          },
+        };
+      }
+
       return {
         success: false,
         error: err.message || "Failed to fetch payment methods",
