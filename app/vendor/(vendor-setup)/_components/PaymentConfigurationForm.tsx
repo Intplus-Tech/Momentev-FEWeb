@@ -26,6 +26,7 @@ import { StepSection } from "./StepSection";
 import { ProgressBar } from "./ProgressBar";
 import { useVendorSetupStore } from "../_store/vendorSetupStore";
 import { SubmissionOverlay } from "./SubmissionOverlay";
+import { StripeCreateAccountModal } from "@/components/shared/stripe-create-account-modal";
 import {
   setPaymentModel,
   createStripeAccount,
@@ -63,6 +64,7 @@ export function PaymentConfigurationForm() {
   const [stripeConnected, setStripeConnected] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
 
   const [commissionAgreed, setCommissionAgreed] = useState(false);
@@ -83,13 +85,6 @@ export function PaymentConfigurationForm() {
     isLoading: isCountriesLoading,
     isError: isCountriesError,
   } = useStripeCountries();
-
-  // Default selected country to first available
-  useEffect(() => {
-    if (!selectedCountry && stripeCountries && stripeCountries.length > 0) {
-      setSelectedCountry(stripeCountries[0].code);
-    }
-  }, [stripeCountries, selectedCountry]);
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -131,13 +126,13 @@ export function PaymentConfigurationForm() {
   };
 
   // --- Step 2: Stripe Connect ---
-  const handleStripeConnect = async () => {
+  const handleConfirmStripeConnect = async (country: string) => {
     setIsConnecting(true);
     setStripeActionError(null);
 
     try {
       const result: PaymentActionResponse<{ stripeAccountId: string }> =
-        await createStripeAccount(selectedCountry || undefined);
+        await createStripeAccount(country);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to connect Stripe");
@@ -160,6 +155,7 @@ export function PaymentConfigurationForm() {
       toast.error(message);
     } finally {
       setIsConnecting(false);
+      setShowCreateDialog(false);
     }
   };
 
@@ -456,27 +452,12 @@ export function PaymentConfigurationForm() {
                         <div className="text-sm text-muted-foreground">Loading countries...</div>
                       ) : isCountriesError ? (
                         <div className="text-sm text-destructive">Unable to load supported countries</div>
-                      ) : (
-                        <div className="mb-2">
-                          <label className="text-xs font-medium mb-1 block">Select account country</label>
-                          <select
-                            value={selectedCountry ?? ""}
-                            onChange={(e) => setSelectedCountry(e.target.value)}
-                            className="w-full max-w-xs border rounded px-2 py-1 text-sm"
-                          >
-                            {stripeCountries?.map((c) => (
-                              <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                            ))}
-                          </select>
-                        </div>
                       )}
 
                       <div className="flex flex-col gap-3 sm:flex-row">
                         <Button
-                          onClick={handleStripeConnect}
-                          disabled={
-                            stripeConnected || isConnecting || isCountriesLoading || (!selectedCountry && stripeCountries && stripeCountries.length > 0)
-                          }
+                          onClick={() => setShowCreateDialog(true)}
+                          disabled={stripeConnected || isConnecting}
                           className="w-full sm:w-auto"
                         >
                           {isConnecting ? (
@@ -634,6 +615,15 @@ export function PaymentConfigurationForm() {
           </div>
         </DialogContent>
       </Dialog>
+
+        <StripeCreateAccountModal
+          open={showCreateDialog}
+          onOpenChange={setShowCreateDialog}
+          countries={stripeCountries}
+          isLoadingCountries={isCountriesLoading}
+          isCreating={isConnecting}
+          onConfirm={handleConfirmStripeConnect}
+        />
     </>
   );
 }

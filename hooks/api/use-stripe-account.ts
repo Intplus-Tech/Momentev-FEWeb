@@ -3,7 +3,9 @@ import {
   getStripeAccount,
   getStripeOnboarding,
   getStripeDashboard,
+  deleteStripeAccount,
   type StripeAccountStatus,
+  type StripeAccountResetResult,
 } from "@/lib/actions/payment";
 import { queryKeys } from "@/lib/react-query/keys";
 
@@ -41,6 +43,18 @@ export function useStripeDashboard() {
     mutationFn: async () => {
       const result = await getStripeDashboard();
       if (!result.success) throw new Error(result.error || "Failed to get dashboard link");
+      return result.data!;
+    },
+  });
+}
+
+// --- Mutation: Reset Stripe account ---
+
+export function useResetStripeAccount() {
+  return useMutation<StripeAccountResetResult>({
+    mutationFn: async () => {
+      const result = await deleteStripeAccount();
+      if (!result.success) throw new Error(result.error || "Failed to reset Stripe account");
       return result.data!;
     },
   });

@@ -5,9 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   useStripeAccount,
   useStripeOnboarding,
   useStripeDashboard,
+  useResetStripeAccount,
 } from "@/hooks/api/use-stripe-account";
 import { useStripeCountries } from "@/hooks/api/use-stripe-countries";
 import {
@@ -15,10 +22,13 @@ import {
   type PaymentActionResponse,
 } from "@/lib/actions/payment";
 import { queryKeys } from "@/lib/react-query/keys";
-import { ExternalLink, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { StripeResetModal } from "@/components/shared/stripe-reset-modal";
+import { StripeCreateAccountModal } from "@/components/shared/stripe-create-account-modal";
+import { ExternalLink, CheckCircle2, AlertCircle, Loader2, MoreVertical } from "lucide-react";
+import { useState } from "react";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
+import { toast } from "sonner";
 
 export function StripeConnectCard() {
   const queryClient = useQueryClient();
@@ -31,15 +41,13 @@ export function StripeConnectCard() {
 
   const onboarding = useStripeOnboarding();
   const dashboard = useStripeDashboard();
+  const resetStripeAccount = useResetStripeAccount();
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [blockedOpen, setBlockedOpen] = useState(false);
+  const [resetOpen, setResetOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
   const { data: countries, isLoading: isCountriesLoading } = useStripeCountries();
-
-  useEffect(() => {
-    if (!selectedCountry && countries && countries.length > 0) setSelectedCountry(countries[0].code);
-  }, [countries, selectedCountry]);
 
   const hasStripeAccount = Boolean(account?.stripeAccountId);
   const isFullyOnboarded =
@@ -49,7 +57,7 @@ export function StripeConnectCard() {
     account?.detailsSubmitted;
   const isStripeIncomplete = hasStripeAccount && !isFullyOnboarded;
 
-  const handleCreateAccount = async () => {
+  const handleConfirmCreateAccount = async (country: string) => {
     if (!canPerformAction()) {
       setBlockedOpen(true);
       return;
@@ -58,7 +66,7 @@ export function StripeConnectCard() {
     try {
       setIsCreatingAccount(true);
       const result: PaymentActionResponse<{ stripeAccountId: string }> =
-        await createStripeAccount(selectedCountry || undefined);
+        await createStripeAccount(country);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to create Stripe account");
@@ -71,6 +79,7 @@ export function StripeConnectCard() {
       // Error is handled by the UI state or toast elsewhere
     } finally {
       setIsCreatingAccount(false);
+      setCreateOpen(false);
     }
   };
 
@@ -103,6 +112,29 @@ export function StripeConnectCard() {
       }
     } catch {
       // Error is handled by the mutation state
+    }
+  };
+
+  const handleResetStripe = async () => {
+    if (!canPerformAction()) {
+      setBlockedOpen(true);
+      return;
+    }
+
+    try {
+      await resetStripeAccount.mutateAsync();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.vendor.stripeAccount(),
+      });
+      toast.success("Stripe setup reset", {
+        description: "You can create a fresh Stripe account from the dashboard.",
+      });
+      setResetOpen(false);
+    } catch (error) {
+      toast.error("Failed to reset Stripe setup", {
+        description:
+          error instanceof Error ? error.message : "Please try again.",
+      });
     }
   };
 
@@ -187,57 +219,92 @@ export function StripeConnectCard() {
           {/* Right: Action */}
           {!isFullyOnboarded ? (
             <div className="flex flex-col items-end gap-3">
-              {!hasStripeAccount && (
-                <div className="w-full sm:w-auto mb-1">
-                  {isCountriesLoading ? (
-                    <div className="text-sm text-muted-foreground">Loading countries...</div>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={hasStripeAccount ? handleGoToStripe : () => setCreateOpen(true)}
+                  disabled={
+                    onboarding.isPending ||
+                    dashboard.isPending ||
+                    isCreatingAccount ||
+                    Boolean(restriction)
+                  }
+                  className="shrink-0 sm:min-w-44"
+                >
+                  {onboarding.isPending || dashboard.isPending || isCreatingAccount ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <select
-                      value={selectedCountry ?? ""}
-                      onChange={(e) => setSelectedCountry(e.target.value)}
-                      className="border rounded px-2 py-1 text-sm"
-                    >
-                      {countries?.map((c) => (
-                        <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                      ))}
-                    </select>
+                    <ExternalLink className="mr-2 h-4 w-4" />
                   )}
-                </div>
-              )}
+                  {isStripeIncomplete ? "Go to Stripe" : "Create Stripe Account"}
+                </Button>
 
-              <Button
-                onClick={hasStripeAccount ? handleGoToStripe : handleCreateAccount}
-                disabled={
-                  onboarding.isPending ||
-                  dashboard.isPending ||
-                  isCreatingAccount ||
-                  Boolean(restriction) ||
-                  (!hasStripeAccount && !selectedCountry && countries && countries.length > 0)
-                }
-                className="shrink-0 sm:min-w-44"
-              >
-                {onboarding.isPending || dashboard.isPending || isCreatingAccount ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <ExternalLink className="mr-2 h-4 w-4" />
+                {hasStripeAccount && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="shrink-0"
+                        aria-label="More Stripe actions"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem
+                        variant="destructive"
+                        disabled={Boolean(restriction)}
+                        onClick={() => setResetOpen(true)}
+                      >
+                        Reset Stripe setup
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
-                {isStripeIncomplete ? "Go to Stripe" : "Create Stripe Account"}
-              </Button>
+              </div>
             </div>
           ) : (
-            <Button
-              variant="outline"
-              onClick={handleDashboard}
-              disabled={dashboard.isPending || Boolean(restriction)}
-              className="shrink-0 sm:min-w-44"
-            >
-              {dashboard.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <ExternalLink className="mr-2 h-4 w-4" />
-              )}
-              Login to Stripe
-            </Button>
+            <div className="flex flex-col items-end gap-3">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleDashboard}
+                  disabled={dashboard.isPending || Boolean(restriction)}
+                  className="shrink-0 sm:min-w-44"
+                >
+                  {dashboard.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ExternalLink className="mr-2 h-4 w-4" />
+                  )}
+                  Login to Stripe
+                </Button>
+
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="shrink-0"
+                      aria-label="More Stripe actions"
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      variant="destructive"
+                      disabled={Boolean(restriction)}
+                      onClick={() => setResetOpen(true)}
+                    >
+                      Reset Stripe setup
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           )}
         </div>
 
@@ -251,6 +318,22 @@ export function StripeConnectCard() {
         open={blockedOpen}
         onOpenChange={setBlockedOpen}
         restriction={restriction || undefined}
+      />
+
+      <StripeResetModal
+        open={resetOpen}
+        onOpenChange={setResetOpen}
+        onConfirm={handleResetStripe}
+        isResetting={resetStripeAccount.isPending}
+      />
+
+      <StripeCreateAccountModal
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        countries={countries}
+        isLoadingCountries={isCountriesLoading}
+        isCreating={isCreatingAccount}
+        onConfirm={handleConfirmCreateAccount}
       />
     </>
   );
