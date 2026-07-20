@@ -447,13 +447,6 @@ export function PaymentConfigurationForm() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {/* Country selector for creating a Stripe account */}
-                      {isCountriesLoading ? (
-                        <div className="text-sm text-muted-foreground">Loading countries...</div>
-                      ) : isCountriesError ? (
-                        <div className="text-sm text-destructive">Unable to load supported countries</div>
-                      )}
-
                       <div className="flex flex-col gap-3 sm:flex-row">
                         <Button
                           onClick={() => setShowCreateDialog(true)}
@@ -616,14 +609,14 @@ export function PaymentConfigurationForm() {
         </DialogContent>
       </Dialog>
 
-        <StripeCreateAccountModal
-          open={showCreateDialog}
-          onOpenChange={setShowCreateDialog}
-          countries={stripeCountries}
-          isLoadingCountries={isCountriesLoading}
-          isCreating={isConnecting}
-          onConfirm={handleConfirmStripeConnect}
-        />
+      <StripeCreateAccountModal
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        countries={stripeCountries}
+        isLoadingCountries={isCountriesLoading}
+        isCreating={isConnecting}
+        onConfirm={handleConfirmStripeConnect}
+      />
     </>
   );
 }
