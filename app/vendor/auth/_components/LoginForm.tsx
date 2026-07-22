@@ -262,6 +262,7 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
               <Separator className="flex-1" />
             </div>
 
+            {/*
             <Button
               type="button"
               variant="outline"
@@ -279,6 +280,7 @@ export function LoginForm({ verificationToken }: LoginFormProps) {
                 </>
               )}
             </Button>
+            */}
           </div>
         </form>
       </Form>
