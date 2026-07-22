@@ -211,6 +211,7 @@ export function ClientSignUpForm() {
               <Separator className="flex-1" />
             </div>
 
+            {/*
             <Button
               type="button"
               variant="outline"
@@ -228,6 +229,7 @@ export function ClientSignUpForm() {
                 </>
               )}
             </Button>
+            */}
           </div>
         </form>
       </Form>

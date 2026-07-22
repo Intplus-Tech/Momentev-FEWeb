@@ -201,6 +201,7 @@ export default function SignUpForm() {
               <Separator className="flex-1" />
             </div>
 
+            {/*
             <Button
               type="button"
               variant="outline"
@@ -218,6 +219,7 @@ export default function SignUpForm() {
                 </>
               )}
             </Button>
+            */}
           </div>
         </form>
       </Form>
