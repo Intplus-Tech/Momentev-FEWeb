@@ -6,7 +6,7 @@ import { ContactInfoSection } from "../settings/_components/contact-info-section
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 
 export default function VendorProfilePage() {
-  const { data: user } = useUserProfile();
+  const { data: user, isLoading } = useUserProfile();
   const businessProfile = user?.vendor?.businessProfile;
 
   return (
@@ -20,8 +20,8 @@ export default function VendorProfilePage() {
 
       <div className="space-y-4">
         <ProfileSection />
-        <BusinessInfoSection businessProfile={businessProfile} />
-        <ContactInfoSection businessProfile={businessProfile} />
+        <BusinessInfoSection businessProfile={businessProfile} isLoading={isLoading} />
+        <ContactInfoSection businessProfile={businessProfile} isLoading={isLoading} />
       </div>
     </section>
   );

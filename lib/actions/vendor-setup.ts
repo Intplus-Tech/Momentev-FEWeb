@@ -4,12 +4,14 @@ import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getUserProfile } from "@/lib/actions/user";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import type {
+  BusinessProfileContactInfo,
   BusinessProfilePayload,
   BusinessProfileResponse,
 } from "@/types/vendor";
 import type { BusinessInfoFormData } from "@/app/vendor/(vendor-setup)/_schemas/businessInfoSchema";
 
 const API_URL = process.env.BACKEND_URL;
+const isDev = process.env.NODE_ENV !== "production";
 
 type ActionResponse<T = void> = {
   success: boolean;
@@ -24,9 +26,51 @@ export type BusinessProfileUpdateInput = Partial<
     | "yearInBusiness"
     | "companyRegNo"
     | "businessDescription"
-    | "contactInfo"
   >
->;
+> & {
+  contactInfo?: Partial<BusinessProfileContactInfo> | string;
+};
+
+function normalizeUpdateInput(input: BusinessProfileUpdateInput): BusinessProfileUpdateInput {
+  if (!input.contactInfo || typeof input.contactInfo !== "object") {
+    return input;
+  }
+
+  const contactInfo = input.contactInfo as {
+    primaryContactName?: string;
+    emailAddress?: string;
+    phoneNumber?: string;
+    meansOfIdentification?: string;
+    addressId?: string | { _id?: string };
+  };
+  const normalizedAddressId =
+    typeof contactInfo.addressId === "string"
+      ? contactInfo.addressId
+      : contactInfo.addressId?._id;
+
+  const normalizedContactInfo: Partial<BusinessProfileContactInfo> = {
+    ...(typeof contactInfo.primaryContactName === "string"
+      ? { primaryContactName: contactInfo.primaryContactName }
+      : {}),
+    ...(typeof contactInfo.emailAddress === "string"
+      ? { emailAddress: contactInfo.emailAddress }
+      : {}),
+    ...(typeof contactInfo.phoneNumber === "string"
+      ? { phoneNumber: contactInfo.phoneNumber }
+      : {}),
+    ...(typeof contactInfo.meansOfIdentification === "string"
+      ? { meansOfIdentification: contactInfo.meansOfIdentification }
+      : {}),
+    ...(typeof normalizedAddressId === "string"
+      ? { addressId: normalizedAddressId }
+      : {}),
+  };
+
+  return {
+    ...input,
+    contactInfo: normalizedContactInfo,
+  };
+}
 
 export async function updateBusinessProfile(
   businessProfileId: string,
@@ -37,14 +81,15 @@ export async function updateBusinessProfile(
   }
 
   try {
+    const requestPayload = normalizeUpdateInput(input);
     const { response, error, errorCode } = await fetchWithAuthRetry((authToken) =>
       fetch(`${API_URL}/api/v1/business-profiles/${businessProfileId}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify(input),
+        body: JSON.stringify(requestPayload),
         cache: "no-store",
       }),
     );
@@ -58,6 +103,14 @@ export async function updateBusinessProfile(
     }
 
     const data = await response.json().catch(() => null);
+    if (isDev) {
+      console.log("[Server][Vendor Profile][updateBusinessProfile]", {
+        businessProfileId,
+        status: response.status,
+        ok: response.ok,
+        message: data?.message,
+      });
+    }
 
     if (!response.ok) {
       return {
@@ -68,6 +121,7 @@ export async function updateBusinessProfile(
 
     return { success: true, data };
   } catch (error) {
+    console.error('[Server][Vendor Profile][updateBusinessProfile] Exception:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update business profile",

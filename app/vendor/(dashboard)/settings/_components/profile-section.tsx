@@ -1,16 +1,11 @@
 "use client";
 
-import { useRef, useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  CalendarIcon,
-  ChevronDownIcon,
-  Loader2,
-  UploadCloud,
-} from "lucide-react";
+import { ChevronDownIcon, Loader2 } from "lucide-react";
 
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,15 +17,21 @@ import { FloatingLabelInput } from "@/components/ui/floating-label-input";
 import { FileUpload } from "@/components/ui/file-upload";
 import { toast } from "sonner";
 import { updateUserProfile } from "@/lib/actions/user";
-import { uploadFile, UploadedFile } from "@/lib/actions/upload";
+import { uploadFile } from "@/lib/actions/upload";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
@@ -54,44 +55,77 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
+function normalizeGender(value?: string | null): string {
+  if (!value) return "";
+
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "male" || normalized === "m") return "male";
+  if (normalized === "female" || normalized === "f") return "female";
+  if (
+    normalized === "other" ||
+    normalized === "non-binary" ||
+    normalized === "non_binary" ||
+    normalized === "nonbinary"
+  ) {
+    return "other";
+  }
+
+  return normalized;
+}
+
+function formatGender(value: string): string {
+  return value
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
 export const ProfileSection = () => {
   const [open, setOpen] = useState(false);
   const { data: user, isLoading } = useUserProfile();
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const queryClient = useQueryClient();
-  const [date, setDate] = useState<Date | undefined>(undefined);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const defaultValues = useMemo<ProfileFormValues>(
-    () => ({
-      fullName: "",
-      email: "",
-      phone: "",
-      gender: "",
-      dob: "" as unknown as Date,
-      avatar: "",
-    }),
-    [],
-  );
+  const emptyDefaults: ProfileFormValues = {
+    fullName: "",
+    email: "",
+    phone: "",
+    gender: "",
+    dob: "" as unknown as Date,
+    avatar: "",
+  };
+
+  // Derived, memoized snapshot of the server data mapped to form shape.
+  // Only recomputes when the underlying user object actually changes
+  // (react-query keeps a stable reference between renders), so it never
+  // spuriously marks the form dirty on unrelated re-renders.
+  const values = useMemo<ProfileFormValues | undefined>(() => {
+    if (!user) return undefined;
+    const profileData = user as typeof user & {
+      user?: { gender?: string | null };
+      profile?: { gender?: string | null };
+    };
+    return {
+      fullName: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      phone: user.phoneNumber || "",
+      gender: normalizeGender(
+        user.gender ?? profileData.user?.gender ?? profileData.profile?.gender,
+      ),
+      dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
+      avatar: user.avatar?.url || "",
+    };
+  }, [user]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues,
+    defaultValues: values ?? emptyDefaults,
+    values,
+    // Preserve any in-progress, unsaved edits if a background refetch
+    // (e.g. window refocus) resolves while the user is typing.
+    resetOptions: { keepDirtyValues: true },
   });
-
-  useEffect(() => {
-    if (user) {
-      form.reset({
-        fullName: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        phone: user.phoneNumber || "",
-        gender: user.gender || "",
-        dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
-        avatar: user.avatar?.url || "",
-      });
-    }
-  }, [user, form]);
 
   const onSubmit = async (values: ProfileFormValues) => {
     if (!canPerformAction(() => setShowBlockedDialog(true))) {
@@ -100,6 +134,7 @@ export const ProfileSection = () => {
 
     try {
       let finalAvatarId = undefined;
+      let finalAvatarUrl = values.avatar;
 
       // Handle file upload if a new file was selected
       if (selectedFile) {
@@ -112,6 +147,7 @@ export const ProfileSection = () => {
           return;
         }
         finalAvatarId = uploadResult.data?._id;
+        finalAvatarUrl = uploadResult.data?.url || finalAvatarUrl;
       }
 
       // Split full name into first and last name (naive implementation)
@@ -141,12 +177,18 @@ export const ProfileSection = () => {
 
       if (result.success) {
         toast.success("Profile updated successfully");
-        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
         setSelectedFile(null);
+        // Mark the form clean immediately with what was just saved, then
+        // reconcile with the server in the background.
+        form.reset({ ...values, avatar: finalAvatarUrl });
+        queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
       } else {
         toast.error(result.error || "Failed to update profile");
       }
     } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[Vendor Profile][Personal Information] submit error:", error);
+      }
       toast.error("An unexpected error occurred");
     }
   };
@@ -156,15 +198,8 @@ export const ProfileSection = () => {
 
   const onReset = () => {
     setSelectedFile(null);
-    if (user) {
-      form.reset({
-        fullName: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        phone: user.phoneNumber || "",
-        gender: user.gender || "",
-        dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
-        avatar: user.avatar?.url || "",
-      });
+    if (values) {
+      form.reset(values);
     }
   };
 
@@ -234,6 +269,7 @@ export const ProfileSection = () => {
                           type="email"
                           inputMode="email"
                           autoComplete="email"
+                          readOnly
                           {...field}
                         />
                       </FormControl>
@@ -266,15 +302,19 @@ export const ProfileSection = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <select
-                          {...field}
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
-                        >
-                          <option value="">Select gender</option>
-                          <option value="female">Female</option>
-                          <option value="male">Male</option>
-                          <option value="other">Other</option>
-                        </select>
+                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select gender" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="female">Female</SelectItem>
+                            <SelectItem value="male">Male</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                            {field.value && !["female", "male", "other"].includes(field.value) && (
+                              <SelectItem value={field.value}>{formatGender(field.value)}</SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

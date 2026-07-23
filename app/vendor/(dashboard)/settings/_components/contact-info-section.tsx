@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,14 +36,29 @@ type ContactInfoFormValues = z.infer<typeof contactInfoSchema>;
 
 interface ContactInfoSectionProps {
   businessProfile: any;
+  isLoading?: boolean;
 }
 
-export function ContactInfoSection({ businessProfile }: ContactInfoSectionProps) {
+export function ContactInfoSection({ businessProfile, isLoading }: ContactInfoSectionProps) {
   const queryClient = useQueryClient();
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
   const businessProfileId = businessProfile?._id;
-  const contactInfo = businessProfile?.contactInfo || {};
+  const contactInfo = businessProfile?.contactInfo;
+
+  // Derived, memoized snapshot of the server data mapped to form shape.
+  // Only recomputes when the underlying businessProfile object actually
+  // changes, so it never spuriously marks the form dirty on unrelated
+  // re-renders (e.g. background query refetches with equal data).
+  const values = useMemo<ContactInfoFormValues | undefined>(() => {
+    if (!businessProfile) return undefined;
+    return {
+      primaryContactName: contactInfo?.primaryContactName || "",
+      emailAddress: contactInfo?.emailAddress || "",
+      phoneNumber: contactInfo?.phoneNumber || "",
+      meansOfIdentification: contactInfo?.meansOfIdentification || "",
+    };
+  }, [businessProfile, contactInfo]);
 
   const form = useForm<ContactInfoFormValues>({
     resolver: zodResolver(contactInfoSchema),
@@ -53,16 +68,11 @@ export function ContactInfoSection({ businessProfile }: ContactInfoSectionProps)
       phoneNumber: "",
       meansOfIdentification: "",
     },
+    values,
+    // Preserve any in-progress, unsaved edits if a background refetch
+    // resolves while the user is typing.
+    resetOptions: { keepDirtyValues: true },
   });
-
-  useEffect(() => {
-    form.reset({
-      primaryContactName: contactInfo.primaryContactName || "",
-      emailAddress: contactInfo.emailAddress || "",
-      phoneNumber: contactInfo.phoneNumber || "",
-      meansOfIdentification: contactInfo.meansOfIdentification || "",
-    });
-  }, [businessProfile, form, contactInfo]);
 
   const onSubmit = async (values: ContactInfoFormValues) => {
     if (!businessProfileId) {
@@ -76,10 +86,13 @@ export function ContactInfoSection({ businessProfile }: ContactInfoSectionProps)
 
     const result = await updateBusinessProfile(businessProfileId, {
       contactInfo: {
-        ...contactInfo,
+        ...(contactInfo || {}),
         ...values,
       },
     });
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[Vendor Profile][Contact Information] updateBusinessProfile response:", result);
+    }
 
     if (!result.success) {
       toast.error(result.error || "Failed to update contact information");
@@ -87,8 +100,21 @@ export function ContactInfoSection({ businessProfile }: ContactInfoSectionProps)
     }
 
     toast.success("Contact information updated successfully");
+    // Mark the form clean immediately with what was just saved, then
+    // reconcile with the server in the background.
+    form.reset(values);
     await queryClient.invalidateQueries({ queryKey: queryKeys.auth.user() });
   };
+
+  if (isLoading) {
+    return (
+      <SectionShell title="Contact Information">
+        <div className="flex items-center justify-center p-8 min-h-[30vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </SectionShell>
+    );
+  }
 
   return (
     <SectionShell title="Contact Information">
