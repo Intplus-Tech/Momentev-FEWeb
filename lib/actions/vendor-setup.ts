@@ -4,18 +4,130 @@ import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getUserProfile } from "@/lib/actions/user";
 import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
 import type {
+  BusinessProfileContactInfo,
   BusinessProfilePayload,
   BusinessProfileResponse,
 } from "@/types/vendor";
 import type { BusinessInfoFormData } from "@/app/vendor/(vendor-setup)/_schemas/businessInfoSchema";
 
 const API_URL = process.env.BACKEND_URL;
+const isDev = process.env.NODE_ENV !== "production";
 
 type ActionResponse<T = void> = {
   success: boolean;
   data?: T;
   error?: string;
 };
+
+export type BusinessProfileUpdateInput = Partial<
+  Pick<
+    BusinessProfilePayload,
+    | "businessName"
+    | "yearInBusiness"
+    | "companyRegNo"
+    | "businessDescription"
+  >
+> & {
+  contactInfo?: Partial<BusinessProfileContactInfo> | string;
+};
+
+function normalizeUpdateInput(input: BusinessProfileUpdateInput): BusinessProfileUpdateInput {
+  if (!input.contactInfo || typeof input.contactInfo !== "object") {
+    return input;
+  }
+
+  const contactInfo = input.contactInfo as {
+    primaryContactName?: string;
+    emailAddress?: string;
+    phoneNumber?: string;
+    meansOfIdentification?: string;
+    addressId?: string | { _id?: string };
+  };
+  const normalizedAddressId =
+    typeof contactInfo.addressId === "string"
+      ? contactInfo.addressId
+      : contactInfo.addressId?._id;
+
+  const normalizedContactInfo: Partial<BusinessProfileContactInfo> = {
+    ...(typeof contactInfo.primaryContactName === "string"
+      ? { primaryContactName: contactInfo.primaryContactName }
+      : {}),
+    ...(typeof contactInfo.emailAddress === "string"
+      ? { emailAddress: contactInfo.emailAddress }
+      : {}),
+    ...(typeof contactInfo.phoneNumber === "string"
+      ? { phoneNumber: contactInfo.phoneNumber }
+      : {}),
+    ...(typeof contactInfo.meansOfIdentification === "string"
+      ? { meansOfIdentification: contactInfo.meansOfIdentification }
+      : {}),
+    ...(typeof normalizedAddressId === "string"
+      ? { addressId: normalizedAddressId }
+      : {}),
+  };
+
+  return {
+    ...input,
+    contactInfo: normalizedContactInfo,
+  };
+}
+
+export async function updateBusinessProfile(
+  businessProfileId: string,
+  input: BusinessProfileUpdateInput,
+): Promise<ActionResponse<BusinessProfileResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  try {
+    const requestPayload = normalizeUpdateInput(input);
+    const { response, error, errorCode } = await fetchWithAuthRetry((authToken) =>
+      fetch(`${API_URL}/api/v1/business-profiles/${businessProfileId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(requestPayload),
+        cache: "no-store",
+      }),
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    if (errorCode === "FORBIDDEN") {
+      return { success: false, error: "You do not have permission to perform this action." };
+    }
+
+    const data = await response.json().catch(() => null);
+    if (isDev) {
+      console.log("[Server][Vendor Profile][updateBusinessProfile]", {
+        businessProfileId,
+        status: response.status,
+        ok: response.ok,
+        message: data?.message,
+      });
+    }
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.message || `Failed to update business profile (${response.status})`,
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    console.error('[Server][Vendor Profile][updateBusinessProfile] Exception:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update business profile",
+    };
+  }
+}
 
 /**
  * Redact sensitive fields from an object for logging
@@ -189,18 +301,6 @@ export async function submitBusinessInformation(
         existingAddressId = addrId;
       } else if (typeof addrId === 'object' && addrId._id) {
         existingAddressId = addrId._id;
-      }
-    }
-
-    // Checking for existing personal address to link if business address doesn't exist yet
-    if (!existingAddressId && profileResult.data.addressId) {
-      const personalAddrId = profileResult.data.addressId;
-      if (typeof personalAddrId === 'string') {
-        existingAddressId = personalAddrId;
-        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
-      } else if (typeof personalAddrId === 'object' && personalAddrId._id) {
-        existingAddressId = personalAddrId._id;
-        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
       }
     }
 

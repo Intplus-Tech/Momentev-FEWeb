@@ -89,11 +89,11 @@ export async function getUserProfile() {
 export type UpdateProfileInput = {
   firstName?: string;
   lastName?: string;
+  email?: string;
   phoneNumber?: string;
   dateOfBirth?: string;
   gender?: string;
   avatar?: string;
-  addressId?: string;
 };
 
 export async function updateUserProfile(input: UpdateProfileInput) {
@@ -119,8 +119,11 @@ export async function updateUserProfile(input: UpdateProfileInput) {
     });
 
     const data = await response.json().catch(() => null);
-
-    // console.log(data);
+    console.log('[Server][Vendor Profile][updateUserProfile] API response:', {
+      status: response.status,
+      ok: response.ok,
+      data,
+    });
 
     if (!response.ok) {
       const errorData = data as any;
@@ -139,6 +142,7 @@ export async function updateUserProfile(input: UpdateProfileInput) {
 
     return { success: true, data: data?.data };
   } catch (error) {
+    console.error('[Server][Vendor Profile][updateUserProfile] Exception:', error);
     const message = error instanceof Error ? error.message : 'An unexpected error occurred';
     return { success: false, error: message };
   }
