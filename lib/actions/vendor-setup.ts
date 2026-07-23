@@ -17,6 +17,64 @@ type ActionResponse<T = void> = {
   error?: string;
 };
 
+export type BusinessProfileUpdateInput = Partial<
+  Pick<
+    BusinessProfilePayload,
+    | "businessName"
+    | "yearInBusiness"
+    | "companyRegNo"
+    | "businessDescription"
+    | "contactInfo"
+  >
+>;
+
+export async function updateBusinessProfile(
+  businessProfileId: string,
+  input: BusinessProfileUpdateInput,
+): Promise<ActionResponse<BusinessProfileResponse>> {
+  if (!API_URL) {
+    return { success: false, error: "Backend URL not configured" };
+  }
+
+  try {
+    const { response, error, errorCode } = await fetchWithAuthRetry((authToken) =>
+      fetch(`${API_URL}/api/v1/business-profiles/${businessProfileId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(input),
+        cache: "no-store",
+      }),
+    );
+
+    if (!response) {
+      return { success: false, error: error || "Authentication required" };
+    }
+
+    if (errorCode === "FORBIDDEN") {
+      return { success: false, error: "You do not have permission to perform this action." };
+    }
+
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok) {
+      return {
+        success: false,
+        error: data?.message || `Failed to update business profile (${response.status})`,
+      };
+    }
+
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update business profile",
+    };
+  }
+}
+
 /**
  * Redact sensitive fields from an object for logging
  */
@@ -189,18 +247,6 @@ export async function submitBusinessInformation(
         existingAddressId = addrId;
       } else if (typeof addrId === 'object' && addrId._id) {
         existingAddressId = addrId._id;
-      }
-    }
-
-    // Checking for existing personal address to link if business address doesn't exist yet
-    if (!existingAddressId && profileResult.data.addressId) {
-      const personalAddrId = profileResult.data.addressId;
-      if (typeof personalAddrId === 'string') {
-        existingAddressId = personalAddrId;
-        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
-      } else if (typeof personalAddrId === 'object' && personalAddrId._id) {
-        existingAddressId = personalAddrId._id;
-        console.log(`🔗 [Step 1 Submission] Found existing personal address: ${existingAddressId}. Linking business profile to it.`);
       }
     }
 

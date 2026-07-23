@@ -89,11 +89,11 @@ export async function getUserProfile() {
 export type UpdateProfileInput = {
   firstName?: string;
   lastName?: string;
+  email?: string;
   phoneNumber?: string;
   dateOfBirth?: string;
   gender?: string;
   avatar?: string;
-  addressId?: string;
 };
 
 export async function updateUserProfile(input: UpdateProfileInput) {

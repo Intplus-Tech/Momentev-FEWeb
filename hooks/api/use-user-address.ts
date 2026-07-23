@@ -6,13 +6,10 @@ import { useUserProfile } from '@/hooks/api/use-user-profile';
 export function useUserAddress() {
   const { data: user } = useUserProfile();
 
-  // Resolve address from profile (Try Personal, then Vendor Business)
-  // The API might return a populated Address object OR just a string ID
-  const personalAddress = user?.addressId;
+  // Use the vendor business-profile address as the single source of truth.
+  // The API might return a populated Address object OR just a string ID.
   // @ts-ignore - businessProfile is typed as any or we need to be safe
-  const businessAddress = user?.vendor?.businessProfile?.contactInfo?.addressId;
-
-  const resolvedAddress = personalAddress || businessAddress;
+  const resolvedAddress = user?.vendor?.businessProfile?.contactInfo?.addressId;
 
   // Extract ID if it's an object, or use the string directly
   // Extract ID if it's an object, or use the string directly
@@ -20,7 +17,7 @@ export function useUserAddress() {
     ? resolvedAddress._id
     : resolvedAddress;
 
-  const source = personalAddress ? 'personal' : (businessAddress ? 'business' : null);
+  const source = resolvedAddress ? 'business' : null;
 
   return useQuery({
     queryKey: queryKeys.address.detail(addressId as string),

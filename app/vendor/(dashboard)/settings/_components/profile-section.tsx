@@ -47,6 +47,7 @@ const profileSchema = z.object({
   fullName: z.string().min(2, "Full name is required"),
   email: z.email("Enter a valid email"),
   phone: z.string().min(7, "Phone is required"),
+  gender: z.string().optional(),
   dob: z.date({ message: "Date of birth is required" }),
   avatar: z.string().optional(),
 });
@@ -67,6 +68,7 @@ export const ProfileSection = () => {
       fullName: "",
       email: "",
       phone: "",
+      gender: "",
       dob: "" as unknown as Date,
       avatar: "",
     }),
@@ -84,6 +86,7 @@ export const ProfileSection = () => {
         fullName: `${user.firstName} ${user.lastName}`,
         email: user.email,
         phone: user.phoneNumber || "",
+        gender: user.gender || "",
         dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
         avatar: user.avatar?.url || "",
       });
@@ -158,6 +161,7 @@ export const ProfileSection = () => {
         fullName: `${user.firstName} ${user.lastName}`,
         email: user.email,
         phone: user.phoneNumber || "",
+        gender: user.gender || "",
         dob: user.dateOfBirth ? new Date(user.dateOfBirth) : new Date(),
         avatar: user.avatar?.url || "",
       });
@@ -250,6 +254,27 @@ export const ProfileSection = () => {
                           autoComplete="tel"
                           {...field}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <select
+                          {...field}
+                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                        >
+                          <option value="">Select gender</option>
+                          <option value="female">Female</option>
+                          <option value="male">Male</option>
+                          <option value="other">Other</option>
+                        </select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>

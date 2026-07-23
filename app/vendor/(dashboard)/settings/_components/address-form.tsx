@@ -18,7 +18,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createAddress, updateAddress } from "@/lib/actions/address";
-import { updateUserProfile } from "@/lib/actions/user";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
@@ -47,9 +46,10 @@ type AddressFormValues = z.infer<typeof addressSchema>;
 
 interface AddressFormProps {
   address?: Address | null;
+  onAddressCreated?: (addressId: string) => Promise<{ success: boolean; error?: string }>;
 }
 
-export function AddressForm({ address }: AddressFormProps) {
+export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
   const [isEditing, setIsEditing] = useState(!address);
   const queryClient = useQueryClient();
   const { restriction, canPerformAction } = useVendorActionGuard();
@@ -105,24 +105,24 @@ export function AddressForm({ address }: AddressFormProps) {
       }
 
       if (result.success) {
+        if (!address && result.data?._id && onAddressCreated) {
+          const linkResult = await onAddressCreated(result.data._id);
+          if (!linkResult.success) {
+            toast.error(linkResult.error || "Address was created but could not be linked to the business profile");
+            return;
+          }
+        }
+
         toast.success(
           address
             ? "Address updated successfully"
             : "Address created successfully",
         );
-        // Invalidate user profile query to refetch with new addressId
+
+        // Refetch the vendor profile so the nested business address can refresh.
         await queryClient.invalidateQueries({
           queryKey: queryKeys.auth.user(),
         });
-
-        // If we created a new address, link it to the user profile
-        if (!address && result.data?._id) {
-          await updateUserProfile({ addressId: result.data._id });
-          // Invalidate again to ensure profile reflects the link
-          await queryClient.invalidateQueries({
-            queryKey: queryKeys.auth.user(),
-          });
-        }
 
         // Invalidate address query
         if (result.data?._id) {
