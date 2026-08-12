@@ -3,21 +3,31 @@ import { getAddress } from '@/lib/actions/address';
 import { queryKeys } from '@/lib/react-query/keys';
 import { useUserProfile } from '@/hooks/api/use-user-profile';
 
+function resolveAddressId(value: unknown): string | null {
+  if (!value) return null;
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value !== null && '_id' in value) {
+    const id = (value as { _id?: unknown })._id;
+    return id ? String(id) : null;
+  }
+  return null;
+}
+
+/**
+ * Resolve the authenticated user's effective address:
+ * - Vendor users: business-profile contact address (when present)
+ * - Otherwise: trusted User.addressId (customer / self)
+ */
 export function useUserAddress() {
   const { data: user } = useUserProfile();
 
-  // Use the vendor business-profile address as the single source of truth.
-  // The API might return a populated Address object OR just a string ID.
-  // @ts-ignore - businessProfile is typed as any or we need to be safe
-  const resolvedAddress = user?.vendor?.businessProfile?.contactInfo?.addressId;
+  const businessAddress = user?.vendor?.businessProfile?.contactInfo?.addressId;
+  const businessAddressId = resolveAddressId(businessAddress);
+  const userAddressId = resolveAddressId(user?.addressId);
 
-  // Extract ID if it's an object, or use the string directly
-  // Extract ID if it's an object, or use the string directly
-  const addressId = typeof resolvedAddress === 'object' && resolvedAddress !== null
-    ? resolvedAddress._id
-    : resolvedAddress;
-
-  const source = resolvedAddress ? 'business' : null;
+  const resolvedAddress = businessAddressId ? businessAddress : user?.addressId;
+  const addressId = businessAddressId ?? userAddressId;
+  const source = businessAddressId ? 'business' : userAddressId ? 'user' : null;
 
   return useQuery({
     queryKey: queryKeys.address.detail(addressId as string),
@@ -26,7 +36,7 @@ export function useUserAddress() {
         return { address: null, source: null };
       }
 
-      const result = await getAddress(addressId as string);
+      const result = await getAddress(addressId);
 
       if (!result.success) {
         throw new Error(result.error || 'Failed to fetch address');
@@ -35,10 +45,10 @@ export function useUserAddress() {
       return { address: result.data || null, source };
     },
     enabled: !!addressId,
-    // If we already have the populated address object from the profile, use it as initial data
-    initialData: typeof resolvedAddress === 'object' && resolvedAddress !== null
-      ? { address: resolvedAddress, source }
-      : undefined,
+    initialData:
+      typeof resolvedAddress === 'object' && resolvedAddress !== null
+        ? { address: resolvedAddress, source }
+        : undefined,
     retry: 1,
     staleTime: 1 * 60 * 1000,
   });
