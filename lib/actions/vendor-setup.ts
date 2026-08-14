@@ -2,7 +2,7 @@
 
 import { fetchWithAuthRetry } from "@/lib/actions/auth-retry";
 import { getUserProfile } from "@/lib/actions/user";
-import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
+import { advanceVendorOnboarding } from "@/lib/actions/vendor-profile";
 import type {
   BusinessProfileContactInfo,
   BusinessProfilePayload,
@@ -376,7 +376,7 @@ export async function submitBusinessInformation(
 
     // Update onboarding stage to 1 (Service Setup)
     console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
-    const stageUpdateResult = await updateVendorOnboardingStage(1, {
+    const stageUpdateResult = await advanceVendorOnboarding({
       vendorId,
       accessToken: token,
     });

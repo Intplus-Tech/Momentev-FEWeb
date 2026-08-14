@@ -33,7 +33,7 @@ import {
   acceptCommission,
   type PaymentActionResponse,
 } from "@/lib/actions/payment";
-import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
+import { advanceVendorOnboarding } from "@/lib/actions/vendor-profile";
 import { FormFieldLabel } from "./FormFieldLabel";
 import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 import { useStripeAccount } from "@/hooks/api/use-stripe-account";
@@ -221,7 +221,7 @@ export function PaymentConfigurationForm() {
         }
 
         // Update onboarding stage to 3 (Profile Setup)
-        const stageUpdateResult = await updateVendorOnboardingStage(3);
+        const stageUpdateResult = await advanceVendorOnboarding();
 
         if (!stageUpdateResult.success) {
           console.warn('⚠️ [Step 3 Submission] Warning: Failed to update onboarding stage:', stageUpdateResult.error);
