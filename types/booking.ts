@@ -9,14 +9,21 @@ export interface SocialMediaLink {
   link: string;
 }
 
+export interface SpecialtyCommission {
+  serviceSpecialty: string;
+  serviceSpecialtyName: string;
+  commission: string;
+  commissionType: "percentage" | "flat_rate" | string;
+  commissionAmount: number;
+  currency: string;
+}
+
 // Commission agreement
 export interface CommissionAgreement {
   accepted: boolean;
   acceptedAt: string;
   version: string;
-  commissionType: string;
-  commissionAmount: number;
-  currency: string;
+  commissions: SpecialtyCommission[];
 }
 
 export interface ServiceCategory {
@@ -191,7 +198,7 @@ export interface CreateUnifiedBookingInput {
   };
   currency: string; // e.g., 'GBP'
   estimatedServiceHours?: number; // Required if pricingType is hourly_rate
-  vendorSpecialtyId?: string; // Required if pricingType is hourly_rate or package_pricing
+  vendorSpecialtyId: string; // Required for every pricing type
   budget?: number; // Required if pricingType is custom_quotes
 }
 

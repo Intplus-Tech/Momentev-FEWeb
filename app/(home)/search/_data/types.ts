@@ -165,6 +165,16 @@ export interface VendorDetails {
   socialMediaLinks: SocialMediaLink[];
   commissionAgreement: {
     accepted: boolean;
+    acceptedAt?: string;
+    version?: string;
+    commissions: Array<{
+      serviceSpecialty: string;
+      serviceSpecialtyName: string;
+      commission: string;
+      commissionType: "percentage" | "flat_rate" | string;
+      commissionAmount: number;
+      currency: string;
+    }>;
   };
   createdAt: string;
   updatedAt: string;

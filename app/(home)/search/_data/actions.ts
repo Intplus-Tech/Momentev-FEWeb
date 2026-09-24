@@ -340,8 +340,18 @@ const VendorDetailsSchema = z.object({
     link: z.string()
   })).optional().default([]),
   commissionAgreement: z.object({
-    accepted: z.boolean().optional().default(false)
-  }).optional().default({ accepted: false }),
+    accepted: z.boolean().optional().default(false),
+    acceptedAt: z.string().optional(),
+    version: z.string().optional(),
+    commissions: z.array(z.object({
+      serviceSpecialty: z.string(),
+      serviceSpecialtyName: z.string(),
+      commission: z.string(),
+      commissionType: z.string(),
+      commissionAmount: z.number(),
+      currency: z.string(),
+    })).optional().default([]),
+  }).optional().default({ accepted: false, commissions: [] }),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
   __v: z.number().optional().default(0),

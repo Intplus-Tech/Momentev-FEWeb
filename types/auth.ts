@@ -1,4 +1,6 @@
 
+import type { CommissionAgreement } from "@/types/booking";
+
 export type UserRole = 'CUSTOMER' | 'VENDOR' | 'VENDORSTAFF' | 'ADMIN' | 'AUDITOR';
 
 /**
@@ -76,7 +78,7 @@ export interface Vendor {
   onBoardingStage: number;
   onBoarded: boolean;
   socialMediaLinks: string[];
-  commissionAgreement?: Record<string, any>;
+  commissionAgreement?: CommissionAgreement;
   createdAt: string;
   updatedAt: string;
   reviewCount: number;
