@@ -234,9 +234,6 @@ export async function acceptCommission(): Promise<PaymentActionResponse> {
 
     const payload = {
       version: "v1",
-      commissionType: "percentage",
-      commissionAmount: 10,
-      currency: "GBP",
     };
 
     const res = await fetch(

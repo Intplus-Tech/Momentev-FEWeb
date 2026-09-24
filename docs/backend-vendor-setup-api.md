@@ -266,15 +266,14 @@ Response:
 
 **`POST /api/v1/vendors/{vendorId}/commission-agreement/accept`**
 
-Request (hardcoded by frontend — do not change without coordinating):
+Request:
 ```json
 {
-  "version": "v1",
-  "commissionType": "percentage",
-  "commissionAmount": 10,
-  "currency": "GBP"
+  "version": "v1"
 }
 ```
+
+The server derives commissions from the vendor's specialties. The vendor should review the `commissionAgreement.commissions` list before accepting the agreement.
 
 ---
 

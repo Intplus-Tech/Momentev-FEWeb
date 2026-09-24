@@ -38,6 +38,8 @@ import { FormFieldLabel } from "./FormFieldLabel";
 import { setOnboardingStageOverride } from "../_utils/onboardingStageOverride";
 import { useStripeAccount } from "@/hooks/api/use-stripe-account";
 import { useStripeCountries } from "@/hooks/api/use-stripe-countries";
+import { useUserProfile } from "@/hooks/api/use-user-profile";
+import type { SpecialtyCommission } from "@/types/booking";
 
 export function PaymentConfigurationForm() {
   const router = useRouter();
@@ -85,6 +87,10 @@ export function PaymentConfigurationForm() {
     isLoading: isCountriesLoading,
     isError: isCountriesError,
   } = useStripeCountries();
+  const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
+  const commissions: SpecialtyCommission[] = Array.isArray(userProfile?.vendor?.commissionAgreement?.commissions)
+    ? userProfile.vendor.commissionAgreement.commissions
+    : [];
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -505,15 +511,33 @@ export function PaymentConfigurationForm() {
                 </div>
 
                 <p className="text-sm">
-                  Our platform fee is 10% of your booking value
+                  Your commission terms are based on the specialties you offer.
                 </p>
 
-                <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                  <p className="text-sm font-medium">Example: £1,000 booking</p>
-                  <ul className="text-sm space-y-1 list-none">
-                    <li>• You receive: £900</li>
-                    <li>• Momentev commission: £100</li>
-                  </ul>
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                  {isProfileLoading ? (
+                    <p className="text-sm text-muted-foreground">Loading commission terms...</p>
+                  ) : commissions.length > 0 ? (
+                    <ul className="text-sm space-y-2">
+                      {commissions.map((commission) => (
+                        <li key={commission.serviceSpecialty} className="flex justify-between gap-4">
+                          <span>{commission.serviceSpecialtyName}</span>
+                          <span className="font-medium whitespace-nowrap">
+                            {commission.commissionType === "percentage"
+                              ? `${commission.commissionAmount}%`
+                              : `${new Intl.NumberFormat("en-GB", {
+                                style: "currency",
+                                currency: commission.currency,
+                              }).format(commission.commissionAmount)} per booking`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      No commission terms are available yet. Your terms will appear here after commissions are configured for your specialties.
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-4 pt-2">
@@ -527,7 +551,7 @@ export function PaymentConfigurationForm() {
                       htmlFor="commission"
                       className="text-sm cursor-pointer leading-relaxed"
                     >
-                      I agree to Momentev's 10% commission on all bookings
+                      I agree to the commission terms listed above for my specialties
                     </label>
                   </div>
 

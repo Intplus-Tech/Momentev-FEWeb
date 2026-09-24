@@ -303,13 +303,15 @@ export function BookingModal({
     : null;
 
   const pricingType = form.watch("pricingType");
-  const requiresSpecialty =
-    pricingType === "hourly_rate" || pricingType === "package_pricing";
+  const requiresSpecialty = true;
   const pricingTypeLabel = PRICING_TYPE_LABELS[pricingType] ?? pricingType.replace(/_/g, " ");
 
   const onSubmit = async (values: CreateUnifiedBookingFormValues) => {
     try {
-      const booking = await createBookingMutation.mutateAsync(values);
+      const booking = await createBookingMutation.mutateAsync({
+        ...values,
+        vendorSpecialtyId: values.vendorSpecialtyId!,
+      });
       // console.log("Booking submission response:", booking);
       if (!booking?._id) {
         throw new Error("Booking created without an ID");

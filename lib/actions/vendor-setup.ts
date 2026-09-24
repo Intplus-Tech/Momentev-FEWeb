@@ -103,14 +103,14 @@ export async function updateBusinessProfile(
     }
 
     const data = await response.json().catch(() => null);
-    if (isDev) {
-      console.log("[Server][Vendor Profile][updateBusinessProfile]", {
-        businessProfileId,
-        status: response.status,
-        ok: response.ok,
-        message: data?.message,
-      });
-    }
+    // if (isDev) {
+    //   console.log("[Server][Vendor Profile][updateBusinessProfile]", {
+    //     businessProfileId,
+    //     status: response.status,
+    //     ok: response.ok,
+    //     message: data?.message,
+    //   });
+    // }
 
     if (!response.ok) {
       return {
@@ -264,8 +264,8 @@ export async function submitBusinessInformation(
     return { success: false, error: "Backend URL not configured" };
   }
   try {
-    console.log('📤 [Step 1 Submission] Starting business information submission...');
-    console.log('📋 [Step 1 Submission] Form data:', JSON.stringify(redactSensitiveFields(formData), null, 2));
+    // console.log('📤 [Step 1 Submission] Starting business information submission...');
+    // console.log('📋 [Step 1 Submission] Form data:', JSON.stringify(redactSensitiveFields(formData), null, 2));
 
     // First, get user profile to extract vendorId
     const profileResult = await getUserProfile();
@@ -288,7 +288,7 @@ export async function submitBusinessInformation(
       };
     }
 
-    console.log(`🎫 [Step 1 Submission] Vendor ID: ${vendorId}`);
+    // console.log(`🎫 [Step 1 Submission] Vendor ID: ${vendorId}`);
 
     // Check if vendor already has an address linked to their business profile to avoid duplicates
     const existingBusinessProfile = profileResult.data.vendor?.businessProfile;
@@ -310,9 +310,9 @@ export async function submitBusinessInformation(
     let addressId: string | undefined = existingAddressId;
 
     const payload = transformFormToPayload(formData, vendorId, addressId, documents);
-    console.log('🔄 [Step 1 Submission] Transformed payload:', JSON.stringify(redactSensitiveFields(payload), null, 2));
+    // console.log('🔄 [Step 1 Submission] Transformed payload:', JSON.stringify(redactSensitiveFields(payload), null, 2));
 
-    console.log(`🌐 [Step 1 Submission] Sending POST request to ${API_URL}/api/v1/business-profiles`);
+    // console.log(`🌐 [Step 1 Submission] Sending POST request to ${API_URL}/api/v1/business-profiles`);
 
     const { response, error, errorCode, token } = await fetchWithAuthRetry((authToken) =>
       fetch(`${API_URL}/api/v1/business-profiles`, {
@@ -334,7 +334,7 @@ export async function submitBusinessInformation(
       };
     }
 
-    console.log(`📡 [Step 1 Submission] Response status: ${response.status} ${response.statusText}`);
+    // console.log(`📡 [Step 1 Submission] Response status: ${response.status} ${response.statusText}`);
 
     if (errorCode === 'FORBIDDEN') {
 
@@ -372,10 +372,10 @@ export async function submitBusinessInformation(
     }
 
     const data: BusinessProfileResponse = await response.json();
-    console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(redactSensitiveFields(data), null, 2));
+    // console.log('✅ [Step 1 Submission] Success! Response data:', JSON.stringify(redactSensitiveFields(data), null, 2));
 
     // Update onboarding stage to 1 (Service Setup)
-    console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
+    // console.log('📋 [Step 1 Submission] Incrementing onboarding stage to 1...');
     const stageUpdateResult = await updateVendorOnboardingStage(1, {
       vendorId,
       accessToken: token,

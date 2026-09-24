@@ -214,6 +214,12 @@ export async function updateVendorOnboardingStage(
       onBoardingStage: newStage,
     };
 
+    console.log("[Onboarding] Sending stage update payload:", {
+      endpoint: `/api/v1/vendors/${vendorId}`,
+      method: "PATCH",
+      payload,
+    });
+
     // console.log(`🌐 [Onboarding] Sending PATCH request to ${API_URL}/api/v1/vendors/${vendorId}`);
 
     const { response, error, errorCode } = await fetchWithAuthRetry(

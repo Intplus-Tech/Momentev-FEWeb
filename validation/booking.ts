@@ -218,6 +218,14 @@ export function createUnifiedBookingSchema(minimumStartDate?: Date) {
           path: ["budget"],
         });
       }
+
+      if (data.pricingType === "custom_quotes" && !data.vendorSpecialtyId) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "vendorSpecialtyId is required for custom_quotes pricing type",
+          path: ["vendorSpecialtyId"],
+        });
+      }
     });
 }
 
