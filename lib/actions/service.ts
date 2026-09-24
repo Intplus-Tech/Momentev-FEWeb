@@ -2,7 +2,7 @@
 
 import { getAccessToken } from "@/lib/session";
 import { getUserProfile } from "@/lib/actions/user";
-import { updateVendorOnboardingStage } from "@/lib/actions/vendor-profile";
+import { advanceVendorOnboarding } from "@/lib/actions/vendor-profile";
 import { majorToMinor } from "@/lib/currency";
 import type {
   ServiceCategoriesFormData,
@@ -164,7 +164,7 @@ export async function submitServiceSetup(
     await Promise.all(specialtyPromises);
 
     // Update onboarding stage to 2 (Payment Setup)
-    const stageUpdateResult = await updateVendorOnboardingStage(2, {
+    const stageUpdateResult = await advanceVendorOnboarding({
       vendorId,
       accessToken,
     });

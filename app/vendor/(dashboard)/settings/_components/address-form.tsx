@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,6 +21,7 @@ import { createAddress, updateAddress } from "@/lib/actions/address";
 import type { Address } from "@/types/address";
 import { queryKeys } from "@/lib/react-query/keys";
 import { PermissionActionGate } from "@/components/auth/permission-gate";
+import { usePermissionsContext } from "@/contexts/permissions-context";
 import { useVendorActionGuard } from "@/hooks/use-vendor-action-guard";
 import { VendorActionBlockedDialog } from "@/components/shared/vendor-action-blocked-dialog";
 
@@ -54,6 +55,17 @@ export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
   const queryClient = useQueryClient();
   const { restriction, canPerformAction } = useVendorActionGuard();
   const [showBlockedDialog, setShowBlockedDialog] = useState(false);
+  const { role } = usePermissionsContext();
+  const isVendorZone = role === "VENDOR" || role === "VENDORSTAFF";
+
+  const gateWrite = (node: ReactNode) =>
+    isVendorZone ? (
+      <PermissionActionGate module="business_profile" action="write">
+        {node}
+      </PermissionActionGate>
+    ) : (
+      <>{node}</>
+    );
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
@@ -222,7 +234,7 @@ export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
           )}
         </div>
         <div className="flex justify-start p-4 bg-muted/30">
-          <PermissionActionGate module="business_profile" action="write">
+          {gateWrite(
             <Button
               type="button"
               variant="outline"
@@ -232,7 +244,7 @@ export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
               <Pencil className="h-4 w-4" />
               Edit Address
             </Button>
-          </PermissionActionGate>
+          )}
         </div>
       </div>
     );
@@ -383,7 +395,7 @@ export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
         />
 
         <div className="flex gap-2">
-          <PermissionActionGate module="business_profile" action="write">
+          {gateWrite(
             <Button
               type="submit"
               disabled={!isDirty || isSubmitting}
@@ -392,7 +404,7 @@ export function AddressForm({ address, onAddressCreated }: AddressFormProps) {
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {address ? "Update Address" : "Create Address"}
             </Button>
-          </PermissionActionGate>
+          )}
           {address && (
             <Button
               type="button"
