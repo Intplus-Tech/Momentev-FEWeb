@@ -21,6 +21,13 @@ export const metadata: Metadata = {
   description:
     "Momentev brings clients and vendors together with dedicated onboarding flows, verification, and landing experiences in one workspace.",
   metadataBase: new URL("https://momentev.local"),
+  icons: {
+    icon: [
+      { url: "/assets/svg/logo-small.svg", type: "image/svg+xml" },
+    ],
+    shortcut: "/assets/svg/logo-small.svg",
+    apple: "/assets/svg/logo-small.svg",
+  },
   openGraph: {
     title: "Momentev",
     description:
