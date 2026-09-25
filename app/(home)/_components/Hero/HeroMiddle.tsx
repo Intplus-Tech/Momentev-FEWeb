@@ -204,9 +204,7 @@ export default function HeroMiddle() {
         <div className="max-w-5xl w-full mx-auto text-center space-y-6">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-tight">
             <span className="bg-linear-to-r from-[#f6f2d5] via-[#f3ea8f] to-[#e8ef75] bg-clip-text text-transparent">
-              Plan with Confidence.
-              <br />
-              Grow with Confidence.
+              One-stop shop for events
             </span>
           </h1>
 

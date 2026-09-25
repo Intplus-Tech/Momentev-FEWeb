@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Momentev • Plan with Confidence.",
+  title: "Momentev • One-stop shop for events",
   description:
     "Momentev brings clients and vendors together with dedicated onboarding flows, verification, and landing experiences in one workspace.",
   metadataBase: new URL("https://momentev.local"),
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     apple: "/assets/svg/logo-small.svg",
   },
   openGraph: {
-    title: "Momentev",
+    title: "Momentev • One-stop shop for events",
     description:
       "Design unforgettable events and manage vendors with dedicated experiences for every persona.",
     url: "https://momentev.local",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Momentev",
+    title: "Momentev • One-stop shop for events",
     description:
       "Design unforgettable events that resonate with your audience and keep every vendor in sync.",
   },
