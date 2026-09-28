@@ -171,3 +171,34 @@
     var(--primary-foreground)
   );
 }
+
+/* Hero title: bright gold with a solid fallback so clip/fill bugs never hide it. */
+.hero-headline {
+  display: inline-block;
+  max-width: 100%;
+  text-wrap: balance;
+  color: #ffe44d;
+  background-image: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #fff6b0 32%,
+    #ffdd33 68%,
+    #fff176 100%
+  );
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 6px 18px rgba(0, 0, 0, 0.28));
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+  .hero-headline {
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+}
