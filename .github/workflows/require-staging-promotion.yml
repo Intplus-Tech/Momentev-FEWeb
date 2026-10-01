@@ -1,0 +1,19 @@
+name: Require staging promotion
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  require-staging:
+    name: require-staging
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow only staging as the pull request head
+        run: |
+          if [ "${GITHUB_HEAD_REF}" != "staging" ]; then
+            echo "PRs into master must come from staging (got '${GITHUB_HEAD_REF}')."
+            exit 1
+          fi
+          echo "Promotion source is staging."

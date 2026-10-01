@@ -29,10 +29,11 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const backendUrl =
+      process.env.NEXT_PUBLIC_BACKEND_URL?.trim() ||
+      process.env.BACKEND_URL?.trim();
 
     if (!backendUrl) {
-      console.error("SocketProvider: NEXT_PUBLIC_BACKEND_URL is not configured.");
       return;
     }
 
