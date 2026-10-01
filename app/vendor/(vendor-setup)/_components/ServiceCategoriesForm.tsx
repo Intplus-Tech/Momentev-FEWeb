@@ -17,6 +17,7 @@ import {
   useServiceSpecialties,
   useSuggestedTags,
 } from "@/hooks/api/use-service-categories";
+import { useCommissions } from "@/hooks/api/use-commissions";
 import { FormFieldLabel } from "./FormFieldLabel";
 
 // Removed hardcoded SERVICE_CATEGORIES and SPECIALTIES_BY_CATEGORY
@@ -88,9 +89,6 @@ export function ServiceCategoriesForm() {
     defaultValues: {
       serviceCategory: "",
       specialties: [],
-      minimumBookingDuration: "",
-      leadTimeRequired: "",
-      maximumEventSize: "",
       keywords: [],
     },
   });
@@ -106,6 +104,11 @@ export function ServiceCategoriesForm() {
     isError: isSpecialtiesError,
     error: specialtiesError,
   } = useServiceSpecialties(selectedCategory || null);
+  const {
+    data: commissionsData,
+    isLoading: isLoadingCommissions,
+    isError: isCommissionsError,
+  } = useCommissions();
 
   // Fetch suggested tags when category is selected
   const {
@@ -121,11 +124,16 @@ export function ServiceCategoriesForm() {
       label: cat.name,
     })) || [];
 
-  const availableSpecialties =
-    specialtiesData?.data?.map((spec) => ({
-      id: spec._id,
-      label: spec.name,
-    })) || [];
+  const commissionById = new Map(
+    (commissionsData ?? []).map((commission) => [commission._id, commission]),
+  );
+  const availableSpecialties = specialtiesData?.data?.map((spec) => ({
+    id: spec._id,
+    label: spec.name,
+    commission: spec.commissionId
+      ? commissionById.get(spec.commissionId)
+      : undefined,
+  })) || [];
 
   // Get suggested tags
   const suggestedTags = suggestedTagsData?.data?.tags || [];
@@ -272,21 +280,44 @@ export function ServiceCategoriesForm() {
           </p>
         ) : (
           <div className="space-y-3">
-            {availableSpecialties.map((specialty) => (
-              <div key={specialty.id} className="flex items-center space-x-2">
-                <Checkbox
-                  id={specialty.id}
-                  checked={selectedSpecialties.includes(specialty.id)}
-                  onCheckedChange={() => handleSpecialtyToggle(specialty.id)}
-                />
-                <label
-                  htmlFor={specialty.id}
-                  className="text-sm font-normal cursor-pointer capitalize"
+            {availableSpecialties.map((specialty) => {
+              const commissionLabel = specialty.commission
+                ? specialty.commission.type === "percentage"
+                  ? `${specialty.commission.amount}%`
+                  : `${new Intl.NumberFormat("en-GB", {
+                    style: "currency",
+                    currency: specialty.commission.currency,
+                  }).format(specialty.commission.amount)} per booking`
+                : isLoadingCommissions
+                  ? "Loading rate..."
+                  : isCommissionsError
+                    ? "Rate unavailable"
+                    : "Rate not configured";
+
+              return (
+                <div
+                  key={specialty.id}
+                  className="flex items-center justify-between gap-3"
                 >
-                  {specialty.label}
-                </label>
-              </div>
-            ))}
+                  <div className="flex min-w-0 items-center space-x-2">
+                    <Checkbox
+                      id={specialty.id}
+                      checked={selectedSpecialties.includes(specialty.id)}
+                      onCheckedChange={() => handleSpecialtyToggle(specialty.id)}
+                    />
+                    <label
+                      htmlFor={specialty.id}
+                      className="cursor-pointer text-sm font-normal capitalize"
+                    >
+                      {specialty.label}
+                    </label>
+                  </div>
+                  <span className="shrink-0 text-sm text-muted-foreground">
+                    {commissionLabel}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
         {errors.specialties && (

@@ -21,6 +21,23 @@ type ActionResponse<T = void> = {
 
 const toMinorPriceString = (value: unknown) => String(majorToMinor(value as number | string | null | undefined));
 
+const SERVICE_FIELD_LABELS: Record<string, string> = {
+  minimumBookingDuration: "Minimum booking duration",
+  leadTimeRequired: "Lead time required",
+  maximumEventSize: "Maximum event size",
+};
+
+function formatFieldList(fields: string[]): string {
+  if (fields.length < 2) return fields[0] ?? "service details";
+  if (fields.length === 2) return `${fields[0]} and ${fields[1]}`;
+  return `${fields.slice(0, -1).join(", ")}, and ${fields[fields.length - 1]}`;
+}
+
+function getFriendlyFieldLabel(field: string): string {
+  return SERVICE_FIELD_LABELS[field] ??
+    field.replace(/([a-z0-9])([A-Z])/g, "$1 $2").replace(/^\w/, (letter) => letter.toUpperCase());
+}
+
 /**
  * Submit service setup (Step 2)
  * Creates vendor service and vendor specialties
@@ -110,12 +127,10 @@ export async function submitServiceSetup(
       let errorMessage = err.message || "Failed to create service";
 
       if (err.errors?.body?.fieldErrors) {
-        const fieldErrors = err.errors.body.fieldErrors;
-        const detailedErrors = Object.entries(fieldErrors)
-          .map(([field, messages]) => `${field}: ${(messages as string[]).join(", ")}`)
-          .join("; ");
-        if (detailedErrors) {
-          errorMessage = `Validation failed: ${detailedErrors}`;
+        const invalidFields = Object.keys(err.errors.body.fieldErrors);
+        if (invalidFields.length > 0) {
+          const labels = invalidFields.map(getFriendlyFieldLabel);
+          errorMessage = `Please review these service details: ${formatFieldList(labels)}.`;
         }
       }
 
