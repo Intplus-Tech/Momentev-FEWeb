@@ -8,9 +8,18 @@ export const serviceCategoriesSchema = z.object({
   specialties: z.array(z.string()).min(1, "Please select at least one specialty"),
 
   // Service Details
-  minimumBookingDuration: z.string().min(1, "Please select minimum booking duration"),
-  leadTimeRequired: z.string().min(1, "Please select lead time required"),
-  maximumEventSize: z.string().min(1, "Please select maximum event size"),
+  minimumBookingDuration: z.enum(
+    ["two_hours", "an_hour", "four_hours", "full_day"],
+    { message: "Please select a valid minimum booking duration." },
+  ),
+  leadTimeRequired: z.enum(
+    ["two_weeks", "a_week", "four_weeks", "flexible"],
+    { message: "Please select a valid lead time." },
+  ),
+  maximumEventSize: z.enum(
+    ["unlimited", "fifty_guest", "hundred_guest", "two_hundred_guest"],
+    { message: "Please select a valid maximum event size." },
+  ),
 
   // Keywords/Tags
   keywords: z.array(z.string()).optional(),

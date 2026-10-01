@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowRight, Globe } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ interface StripeCreateAccountModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   countries?: StripeCountry[];
+  fixedCountryCode?: string;
   isLoadingCountries?: boolean;
   isCreating?: boolean;
   onConfirm: (country: string) => Promise<void> | void;
@@ -27,21 +28,32 @@ export function StripeCreateAccountModal({
   open,
   onOpenChange,
   countries,
+  fixedCountryCode,
   isLoadingCountries = false,
   isCreating = false,
   onConfirm,
 }: StripeCreateAccountModalProps) {
-  const defaultCountry = useMemo(() => countries?.[0] ?? null, [countries]);
-  const [selectedCountry, setSelectedCountry] = useState<StripeCountry | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-
-    const initialCountry = selectedCountry ?? defaultCountry;
-    if (initialCountry) {
-      setSelectedCountry(initialCountry);
-    }
-  }, [open, defaultCountry, selectedCountry]);
+  const defaultCountry = useMemo(
+    () => countries?.find((country) => country.code.toUpperCase() === "GB") ?? null,
+    [countries],
+  );
+  const countryOptions = useMemo(
+    () =>
+      [...(countries ?? [])].sort((first, second) => {
+        if (first.code.toUpperCase() === "GB") return -1;
+        if (second.code.toUpperCase() === "GB") return 1;
+        return first.name.localeCompare(second.name);
+      }),
+    [countries],
+  );
+  const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
+  const fixedCountry = fixedCountryCode
+    ? countries?.find((country) => country.code.toUpperCase() === fixedCountryCode.toUpperCase()) ?? null
+    : null;
+  const selectedCountry = fixedCountryCode
+    ? fixedCountry
+    : countries?.find((country) => country.code.toUpperCase() === selectedCountryCode?.toUpperCase()) ??
+    defaultCountry;
 
   const handleConfirm = async () => {
     if (!selectedCountry) return;
@@ -54,7 +66,9 @@ export function StripeCreateAccountModal({
         <DialogHeader>
           <DialogTitle>Choose your Stripe country</DialogTitle>
           <DialogDescription>
-            Select the country for the connected account before creating it.
+            {fixedCountryCode === "GB"
+              ? "Your Stripe account will be registered in the United Kingdom (GB) with GBP as its default currency."
+              : "Select the country where your business is legally registered. UK businesses should choose United Kingdom (GB), not Gibraltar (GI)."}
           </DialogDescription>
         </DialogHeader>
 
@@ -64,23 +78,31 @@ export function StripeCreateAccountModal({
               <Globe className="h-4 w-4" />
               Loading countries...
             </div>
+          ) : fixedCountryCode ? (
+            selectedCountry ? (
+              <div className="rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+                United Kingdom (GB) <span className="text-muted-foreground">(GBP)</span>
+              </div>
+            ) : (
+              <p className="rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+                United Kingdom is not currently available for Stripe Connect. Please try again later or contact support.
+              </p>
+            )
           ) : (
             <select
               value={selectedCountry?.code ?? ""}
               onChange={(event) => {
-                const country = countries?.find(
-                  (item) => item.code === event.target.value,
-                );
-                setSelectedCountry(country ?? null);
+                setSelectedCountryCode(event.target.value || null);
               }}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm"
             >
               <option value="" disabled>
                 Select a country
               </option>
-              {countries?.map((country) => (
+              {countryOptions.map((country) => (
                 <option key={country.code} value={country.code}>
                   {country.name} ({country.code})
+                  {country.defaultCurrency ? ` - ${country.defaultCurrency}` : ""}
                 </option>
               ))}
             </select>
