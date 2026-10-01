@@ -41,6 +41,8 @@ import { useStripeCountries } from "@/hooks/api/use-stripe-countries";
 import { useUserProfile } from "@/hooks/api/use-user-profile";
 import type { SpecialtyCommission } from "@/types/booking";
 
+const EMPTY_COMMISSIONS: SpecialtyCommission[] = [];
+
 export function PaymentConfigurationForm() {
   const router = useRouter();
 
@@ -87,10 +89,18 @@ export function PaymentConfigurationForm() {
     isLoading: isCountriesLoading,
     isError: isCountriesError,
   } = useStripeCountries();
-  const { data: userProfile, isLoading: isProfileLoading } = useUserProfile();
+  const {
+    data: userProfile,
+    isLoading: isProfileLoading,
+    refetch: refetchUserProfile,
+  } = useUserProfile();
   const commissions: SpecialtyCommission[] = Array.isArray(userProfile?.vendor?.commissionAgreement?.commissions)
     ? userProfile.vendor.commissionAgreement.commissions
-    : [];
+    : EMPTY_COMMISSIONS;
+
+  useEffect(() => {
+    void refetchUserProfile();
+  }, [refetchUserProfile]);
 
   // Initial Setup: Always start at Section 1 for this step
   useEffect(() => {
@@ -637,6 +647,7 @@ export function PaymentConfigurationForm() {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         countries={stripeCountries}
+        fixedCountryCode="GB"
         isLoadingCountries={isCountriesLoading}
         isCreating={isConnecting}
         onConfirm={handleConfirmStripeConnect}
